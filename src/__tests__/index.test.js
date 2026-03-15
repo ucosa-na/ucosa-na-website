@@ -4,10 +4,10 @@ const { app, server } = require('../index');
 afterAll(() => server.close());
 
 describe('GET /', () => {
-  it('returns 200 with message', async () => {
+  it('returns 200 with HTML page', async () => {
     const res = await request(app).get('/');
     expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe('Hello from ucosa-na!');
+    expect(res.headers['content-type']).toMatch(/html/);
   });
 });
 
