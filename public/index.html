@@ -653,6 +653,36 @@
     text-decoration: none;
   }
 
+  .nav-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 28px 10px 48px;
+    cursor: pointer;
+    color: var(--sidebar-muted);
+    font-size: 22px;
+    font-weight: 400;
+    border-left: 3px solid transparent;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .nav-sub-item:hover {
+    background: var(--hover);
+    color: #ffffff;
+    border-left-color: var(--accent);
+  }
+
+  .nav-sub-item.active {
+    color: #ffffff;
+    border-left-color: var(--accent);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .nav-sub-item .nav-icon {
+    width: 15px;
+    height: 15px;
+  }
+
   .nav-divider {
     height: 1px;
     background: var(--sidebar-border);
@@ -737,6 +767,20 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
       Executive Members
+    </div>
+
+    <div class="nav-sub-item" id="subnav-current" onclick="showExecSection('current', this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      Current Executive
+    </div>
+
+    <div class="nav-sub-item" id="subnav-past" onclick="showExecSection('past', this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Past Executive (2022–2026)
     </div>
 
     <div class="nav-item" onclick="showPage('members', this)">
@@ -908,10 +952,10 @@
     <h1 class="page-heading">Executive Members</h1>
     <p class="page-sub">The UCOSA-NA executive teams, past and present, dedicated to serving the association and our alma mater.</p>
 
-    <div class="exec-era-label">Current Executive Members</div>
+    <div class="exec-era-label" id="exec-section-current">Current Executive Members</div>
     <div class="exec-grid" id="exec-grid-current"></div>
 
-    <div class="exec-era-label" style="margin-top:48px;">Past Executive Members <span class="exec-era-year">2022 – 2026</span></div>
+    <div class="exec-era-label" id="exec-section-past" style="margin-top:48px;">Past Executive Members <span class="exec-era-year">2022 – 2026</span></div>
     <div class="exec-grid" id="exec-grid-past"></div>
   </section>
 
@@ -1061,9 +1105,20 @@
   function showPage(id, clickedEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + id).classList.add('active');
     if (clickedEl) clickedEl.classList.add('active');
     document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showExecSection(section, clickedEl) {
+    showPage('executive', null);
+    document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
+    if (clickedEl) clickedEl.classList.add('active');
+    setTimeout(() => {
+      document.getElementById('exec-section-' + section)
+        .scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
   }
 
   // ── Login ──
