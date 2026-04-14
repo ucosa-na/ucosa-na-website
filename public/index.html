@@ -653,6 +653,28 @@
     text-decoration: none;
   }
 
+  /* PDF VIEWER */
+  .pdf-toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .pdf-viewer-wrap {
+    border: 1px solid var(--border);
+    background: var(--card);
+    width: 100%;
+    height: 75vh;
+  }
+
+  .pdf-viewer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
   .nav-item-parent {
     cursor: default;
     opacity: 0.9;
@@ -771,6 +793,13 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
       About UCOSA
+    </div>
+
+    <div class="nav-item" onclick="showPage('constitution', this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      UCOSA-NA Constitution
     </div>
 
     <div class="nav-item nav-item-parent">
@@ -954,6 +983,32 @@
           <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- CONSTITUTION -->
+  <section class="page" id="page-constitution">
+    <div class="section-title">Governance</div>
+    <h1 class="page-heading">UCOSA-NA Constitution</h1>
+    <p class="page-sub">The governing document of the Ugbeka College Old Students' Association — North America Chapter.</p>
+    <div class="pdf-toolbar">
+      <a class="btn-primary" href="/UCOSA%20NA%20CONSTITUTION.pdf" download="UCOSA-NA-Constitution.pdf">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:6px">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Download PDF
+      </a>
+      <a class="btn-secondary" href="/UCOSA%20NA%20CONSTITUTION.pdf" target="_blank">Open in New Tab</a>
+    </div>
+    <div class="pdf-viewer-wrap">
+      <iframe
+        src="/UCOSA%20NA%20CONSTITUTION.pdf"
+        class="pdf-viewer"
+        title="UCOSA-NA Constitution">
+        <p>Your browser does not support embedded PDFs.
+          <a href="/UCOSA%20NA%20CONSTITUTION.pdf">Download the Constitution</a> to view it.
+        </p>
+      </iframe>
     </div>
   </section>
 
