@@ -621,6 +621,51 @@
     text-decoration: none;
   }
 
+  .nav-divider {
+    height: 1px;
+    background: var(--sidebar-border);
+    margin: 12px 28px;
+  }
+
+  .nav-item-admin {
+    color: #f0c080;
+  }
+
+  .nav-item-admin:hover {
+    background: #3a0a20;
+    color: #ffd080;
+    border-left-color: #f0c080;
+  }
+
+  .nav-item-admin.active {
+    background: linear-gradient(90deg, rgba(240,192,128,0.15) 0%, transparent 100%);
+    border-left-color: #f0c080;
+    color: #ffd080;
+  }
+
+  /* ADMIN LOGIN */
+  .admin-login-box {
+    background: var(--card);
+    border: 1px solid #c8a030;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(200,160,48,0.1);
+    border: 1px solid rgba(200,160,48,0.3);
+    color: #a07820;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    margin-bottom: 20px;
+  }
+
   /* SCROLLBAR */
   .main::-webkit-scrollbar { width: 4px; }
   .main::-webkit-scrollbar-track { background: var(--bg); }
@@ -674,6 +719,16 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
       </svg>
       Member Login
+    </div>
+
+    <div class="nav-divider"></div>
+    <div class="nav-label">Administration</div>
+
+    <div class="nav-item nav-item-admin" onclick="showPage('admin', this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      Admin Portal
     </div>
   </nav>
 
@@ -836,6 +891,41 @@
     <div class="members-grid" id="members-grid"></div>
   </section>
 
+  <!-- ADMIN PORTAL -->
+  <section class="page" id="page-admin">
+    <div class="section-title">Administration</div>
+    <div class="login-wrap">
+      <div class="admin-login-box">
+        <div class="admin-badge">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          Administrator Access
+        </div>
+        <div class="login-title">Admin Portal</div>
+        <div class="login-sub">Sign in with your administrator credentials to manage members.</div>
+
+        <div class="login-error" id="admin-error"></div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-email">Email Address</label>
+          <input class="form-input" id="admin-email" type="email" placeholder="admin@example.com" autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-password">Password</label>
+          <input class="form-input" id="admin-password" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <div style="margin-bottom:28px;"></div>
+
+        <button class="btn-login-full" id="admin-btn" onclick="doAdminLogin()" style="background:#a07820;">
+          Sign In to Admin Panel
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- LOGIN -->
   <section class="page" id="page-login">
     <div class="section-title">Access Portal</div>
@@ -961,7 +1051,13 @@
       }
 
       localStorage.setItem('token', data.token);
-      window.location.href = data.mustChangePassword ? '/change-password.html' : '/members.html';
+      if (data.mustChangePassword) {
+        window.location.href = '/change-password.html';
+      } else if (data.user.role === 'admin') {
+        window.location.href = '/admin.html';
+      } else {
+        window.location.href = '/members.html';
+      }
     } catch (err) {
       errorEl.textContent = 'Network error — please try again.';
       errorEl.style.display = 'block';
@@ -971,10 +1067,65 @@
     }
   }
 
-  // Allow Enter key in login form
+  // ── Admin Login ──
+  async function doAdminLogin() {
+    const email    = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const errorEl  = document.getElementById('admin-error');
+    const btn      = document.getElementById('admin-btn');
+
+    errorEl.style.display = 'none';
+
+    if (!email || !password) {
+      errorEl.textContent = 'Please enter your email and password.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    try {
+      const res  = await fetch('/api/auth/login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorEl.textContent = data.error || 'Invalid credentials.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      if (data.user.role !== 'admin') {
+        errorEl.textContent = 'Access denied. Administrator credentials required.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      localStorage.setItem('token', data.token);
+      window.location.href = data.mustChangePassword ? '/change-password.html' : '/admin.html';
+    } catch (err) {
+      errorEl.textContent = 'Network error — please try again.';
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In to Admin Panel';
+    }
+  }
+
+  // Allow Enter key in login forms
   ['login-email', 'login-password'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  ['admin-email', 'admin-password'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') doAdminLogin();
     });
   });
 </script>
