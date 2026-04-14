@@ -428,6 +428,38 @@
     line-height: 1.65;
   }
 
+  .exec-era-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .exec-era-year {
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    background: rgba(200,169,110,0.1);
+    border: 1px solid rgba(200,169,110,0.3);
+    padding: 3px 10px;
+  }
+
+  .exec-card.past {
+    opacity: 0.75;
+  }
+
+  .exec-card.past:hover {
+    opacity: 1;
+  }
+
   /* MEMBERS */
   .members-grid {
     display: grid;
@@ -874,11 +906,13 @@
   <section class="page" id="page-executive">
     <div class="section-title">Leadership</div>
     <h1 class="page-heading">Executive Members</h1>
-    <p class="page-sub">The UCOSA-NA executive team, dedicated to serving the association and our alma mater.</p>
+    <p class="page-sub">The UCOSA-NA executive teams, past and present, dedicated to serving the association and our alma mater.</p>
 
-    <div class="exec-grid" id="exec-grid">
-      <!-- Populated by JS; update execData below with real names/roles -->
-    </div>
+    <div class="exec-era-label">Current Executive Members</div>
+    <div class="exec-grid" id="exec-grid-current"></div>
+
+    <div class="exec-era-label" style="margin-top:48px;">Past Executive Members <span class="exec-era-year">2022 – 2026</span></div>
+    <div class="exec-grid" id="exec-grid-past"></div>
   </section>
 
   <!-- CURRENT MEMBERS -->
@@ -967,7 +1001,7 @@
 
 <script>
   // ── Executive data — update with real names and roles ──
-  const execData = [
+  const currentExec = [
     { initials: 'PD', name: 'President',          role: 'President' },
     { initials: 'VP', name: 'Vice President',      role: 'Vice President' },
     { initials: 'SG', name: 'Secretary General',   role: 'Secretary General' },
@@ -976,15 +1010,29 @@
     { initials: 'FO', name: 'Financial Secretary', role: 'Financial Secretary' },
   ];
 
-  const execGrid = document.getElementById('exec-grid');
-  execData.forEach(e => {
-    execGrid.innerHTML += `
-      <div class="exec-card">
-        <div class="exec-avatar">${e.initials}</div>
-        <div class="exec-name">${e.name}</div>
-        <div class="exec-role">${e.role}</div>
-      </div>`;
-  });
+  const pastExec = [
+    { initials: 'PD', name: 'President',          role: 'President' },
+    { initials: 'VP', name: 'Vice President',      role: 'Vice President' },
+    { initials: 'SG', name: 'Secretary General',   role: 'Secretary General' },
+    { initials: 'TR', name: 'Treasurer',           role: 'Treasurer' },
+    { initials: 'PR', name: 'P.R.O.',              role: 'Public Relations Officer' },
+    { initials: 'FO', name: 'Financial Secretary', role: 'Financial Secretary' },
+  ];
+
+  function renderExecGrid(data, gridId, past = false) {
+    const grid = document.getElementById(gridId);
+    data.forEach(e => {
+      grid.innerHTML += `
+        <div class="exec-card${past ? ' past' : ''}">
+          <div class="exec-avatar">${e.initials}</div>
+          <div class="exec-name">${e.name}</div>
+          <div class="exec-role">${e.role}</div>
+        </div>`;
+    });
+  }
+
+  renderExecGrid(currentExec, 'exec-grid-current');
+  renderExecGrid(pastExec,    'exec-grid-past', true);
 
   // ── Members placeholder ──
   const colors = ['#3a2e1a','#1a2e2a','#2a1a2e','#1a2a3a','#2e1a1a','#1a2e1a'];
