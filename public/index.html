@@ -653,6 +653,17 @@
     text-decoration: none;
   }
 
+  .nav-item-parent {
+    cursor: default;
+    opacity: 0.9;
+  }
+
+  .nav-item-parent:hover {
+    background: transparent;
+    color: var(--sidebar-text);
+    border-left-color: transparent;
+  }
+
   .nav-sub-item {
     display: flex;
     align-items: center;
@@ -762,21 +773,21 @@
       About UCOSA
     </div>
 
-    <div class="nav-item" onclick="showPage('executive', this)">
+    <div class="nav-item nav-item-parent">
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
       Executive Members
     </div>
 
-    <div class="nav-sub-item" id="subnav-current" onclick="showExecSection('current', this)">
+    <div class="nav-sub-item" onclick="showPage('executive-current', this)">
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
       Current Executive
     </div>
 
-    <div class="nav-sub-item" id="subnav-past" onclick="showExecSection('past', this)">
+    <div class="nav-sub-item" onclick="showPage('executive-past', this)">
       <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
@@ -946,16 +957,19 @@
     </div>
   </section>
 
-  <!-- EXECUTIVE MEMBERS -->
-  <section class="page" id="page-executive">
+  <!-- CURRENT EXECUTIVE MEMBERS -->
+  <section class="page" id="page-executive-current">
     <div class="section-title">Leadership</div>
-    <h1 class="page-heading">Executive Members</h1>
-    <p class="page-sub">The UCOSA-NA executive teams, past and present, dedicated to serving the association and our alma mater.</p>
-
-    <div class="exec-era-label" id="exec-section-current">Current Executive Members</div>
+    <h1 class="page-heading">Current Executive Members</h1>
+    <p class="page-sub">The current UCOSA-NA executive team, dedicated to serving the association and our alma mater.</p>
     <div class="exec-grid" id="exec-grid-current"></div>
+  </section>
 
-    <div class="exec-era-label" id="exec-section-past" style="margin-top:48px;">Past Executive Members <span class="exec-era-year">2022 – 2026</span></div>
+  <!-- PAST EXECUTIVE MEMBERS -->
+  <section class="page" id="page-executive-past">
+    <div class="section-title">Leadership</div>
+    <h1 class="page-heading">Past Executive Members <span class="exec-era-year">2022 – 2026</span></h1>
+    <p class="page-sub">Former UCOSA-NA executive officers who served with dedication from 2022 to 2026.</p>
     <div class="exec-grid" id="exec-grid-past"></div>
   </section>
 
@@ -1075,8 +1089,8 @@
     });
   }
 
-  renderExecGrid(currentExec, 'exec-grid-current');
-  renderExecGrid(pastExec,    'exec-grid-past', true);
+  renderExecGrid(currentExec, 'exec-grid-current', false);
+  renderExecGrid(pastExec,    'exec-grid-past',    true);
 
   // ── Members placeholder ──
   const colors = ['#3a2e1a','#1a2e2a','#2a1a2e','#1a2a3a','#2e1a1a','#1a2e1a'];
@@ -1104,22 +1118,13 @@
   // ── Page navigation ──
   function showPage(id, clickedEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item:not(.nav-item-parent)').forEach(n => n.classList.remove('active'));
     document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + id).classList.add('active');
     if (clickedEl) clickedEl.classList.add('active');
     document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function showExecSection(section, clickedEl) {
-    showPage('executive', null);
-    document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
-    if (clickedEl) clickedEl.classList.add('active');
-    setTimeout(() => {
-      document.getElementById('exec-section-' + section)
-        .scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 60);
-  }
 
   // ── Login ──
   async function doLogin() {
