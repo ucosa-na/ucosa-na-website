@@ -55,9 +55,10 @@
     gap: 0;
   }
 
-  .sidebar-logo svg {
+  .sidebar-logo img {
     width: 150px;
     height: 150px;
+    object-fit: contain;
     flex-shrink: 0;
   }
 
@@ -631,51 +632,7 @@
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="Georgia, serif">
-      <circle cx="100" cy="100" r="96" fill="#1a0a0a" stroke="#c8a96e" stroke-width="2.5"/>
-      <circle cx="100" cy="100" r="88" fill="#7a1a1a"/>
-      <circle cx="100" cy="100" r="88" fill="none" stroke="#f0e6c8" stroke-width="1.5"/>
-      <circle cx="100" cy="100" r="84" fill="none" stroke="#f0e6c8" stroke-width="0.5"/>
-      <defs>
-        <path id="topArc" d="M 100,100 m -74,0 a 74,74 0 1,1 148,0"/>
-        <path id="bottomArc" d="M 100,100 m -74,0 a 74,74 0 0,0 148,0"/>
-      </defs>
-      <text font-size="10" fill="#f0e6c8" font-weight="bold" letter-spacing="3">
-        <textPath href="#topArc" startOffset="5%">UCOSA · NORTH AMERICA ·</textPath>
-      </text>
-      <text font-size="9" fill="#f0e6c8" letter-spacing="2.2">
-        <textPath href="#bottomArc" startOffset="8%">OLD STUDENTS ASSOCIATION</textPath>
-      </text>
-      <path d="M100 38 L138 52 L138 95 Q138 128 100 148 Q62 128 62 95 L62 52 Z" fill="#5a1010" stroke="#c8a96e" stroke-width="2"/>
-      <path d="M100 44 L133 57 L133 95 Q133 124 100 142 Q67 124 67 95 L67 57 Z" fill="none" stroke="#f0e6c8" stroke-width="1"/>
-      <rect x="97" y="80" width="6" height="18" rx="1" fill="#c8a96e"/>
-      <ellipse cx="100" cy="74" rx="6" ry="8" fill="#ff9a00" opacity="0.95"/>
-      <ellipse cx="100" cy="71" rx="3.5" ry="5.5" fill="#ffe066"/>
-      <ellipse cx="100" cy="70" rx="1.8" ry="3" fill="white" opacity="0.7"/>
-      <path d="M78 95 Q78 83 97 83 L97 113 Q78 113 78 107 Z" fill="#f0e6c8"/>
-      <path d="M103 83 Q122 83 122 95 L122 107 Q122 113 103 113 Z" fill="#f0e6c8"/>
-      <rect x="97" y="83" width="6" height="30" fill="#c8a96e"/>
-      <line x1="82" y1="91" x2="95" y2="91" stroke="#7a1a1a" stroke-width="1"/>
-      <line x1="82" y1="97" x2="95" y2="97" stroke="#7a1a1a" stroke-width="1"/>
-      <line x1="82" y1="103" x2="95" y2="103" stroke="#7a1a1a" stroke-width="1"/>
-      <line x1="105" y1="91" x2="118" y2="91" stroke="#7a1a1a" stroke-width="1"/>
-      <line x1="105" y1="97" x2="118" y2="97" stroke="#7a1a1a" stroke-width="1"/>
-      <line x1="105" y1="103" x2="118" y2="103" stroke="#7a1a1a" stroke-width="1"/>
-      <circle cx="71" cy="112" r="9" fill="#1a4a7a" stroke="#f0e6c8" stroke-width="1"/>
-      <ellipse cx="71" cy="112" rx="9" ry="5" fill="none" stroke="#f0e6c8" stroke-width="0.7"/>
-      <line x1="62" y1="112" x2="80" y2="112" stroke="#f0e6c8" stroke-width="0.7"/>
-      <line x1="71" y1="103" x2="71" y2="121" stroke="#f0e6c8" stroke-width="0.7"/>
-      <circle cx="129" cy="112" r="9" fill="#1a4a7a" stroke="#f0e6c8" stroke-width="1"/>
-      <ellipse cx="129" cy="112" rx="9" ry="5" fill="none" stroke="#f0e6c8" stroke-width="0.7"/>
-      <line x1="120" y1="112" x2="138" y2="112" stroke="#f0e6c8" stroke-width="0.7"/>
-      <line x1="129" y1="103" x2="129" y2="121" stroke="#f0e6c8" stroke-width="0.7"/>
-      <path d="M66 130 Q100 140 134 130 L137 139 Q100 150 63 139 Z" fill="#c8a96e"/>
-      <path d="M63 139 L66 130 L67 137 Z" fill="#a07840"/>
-      <path d="M137 139 L134 130 L133 137 Z" fill="#a07840"/>
-      <text x="100" y="143" text-anchor="middle" font-size="7.2" fill="#1a0a0a" font-weight="bold" letter-spacing="0.8">KNOWLEDGE IS LIGHT</text>
-      <text x="100" y="54" text-anchor="middle" font-size="6.5" fill="#f0e6c8" font-weight="bold" letter-spacing="0.8">UGBEKA COLLEGE</text>
-      <text x="100" y="152" text-anchor="middle" font-size="6" fill="#f0e6c8" letter-spacing="0.5">EVBOEHIGHAE</text>
-    </svg>
+    <img src="/logo.jpg" alt="UCOSA-NA Logo">
     <div class="sidebar-logo-text">
       <div class="wordmark">UCOSA-NA</div>
     </div>
