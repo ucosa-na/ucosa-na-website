@@ -655,6 +655,21 @@
     text-decoration: none;
   }
 
+  /* PAST EXEC PHOTO */
+  .past-exec-photo-wrap {
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 24px;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .past-exec-photo {
+    width: 100%;
+    max-width: 860px;
+    display: block;
+  }
+
   /* PDF VIEWER */
   .pdf-toolbar {
     display: flex;
@@ -1027,7 +1042,9 @@
     <div class="section-title">Leadership</div>
     <h1 class="page-heading">Past Executive Members <span class="exec-era-year">2022 – 2026</span></h1>
     <p class="page-sub">Former UCOSA-NA executive officers who served with dedication from 2022 to 2026.</p>
-    <div class="exec-grid" id="exec-grid-past"></div>
+    <div class="past-exec-photo-wrap">
+      <img src="/past-executives.jpg" alt="UCOSA-NA North America Chapter Executive Board 2022–2026" class="past-exec-photo">
+    </div>
   </section>
 
   <!-- CURRENT MEMBERS -->
@@ -1126,12 +1143,16 @@
   ];
 
   const pastExec = [
-    { initials: 'PD', name: 'President',          role: 'President' },
-    { initials: 'VP', name: 'Vice President',      role: 'Vice President' },
-    { initials: 'SG', name: 'Secretary General',   role: 'Secretary General' },
-    { initials: 'TR', name: 'Treasurer',           role: 'Treasurer' },
-    { initials: 'PR', name: 'P.R.O.',              role: 'Public Relations Officer' },
-    { initials: 'FO', name: 'Financial Secretary', role: 'Financial Secretary' },
+    { initials: 'SA', name: 'Dr. Sonnie Avenbuan',          role: 'President' },
+    { initials: 'DO', name: 'Dons. Osatehanmwen O.S. JP',   role: 'Vice President' },
+    { initials: 'SE', name: 'Mr. Sunny Ehiorobo',           role: 'Assist. Secretary' },
+    { initials: 'EG', name: 'Dr. Eunice Ihaza Gbenoba',     role: 'Welfare Officer 1 — U.S.' },
+    { initials: 'FO', name: 'Mr. Friday Osadiaye JP',       role: 'Secretary' },
+    { initials: 'SA', name: 'Dr. Sampson Aigbehaen',        role: 'Financial Secretary' },
+    { initials: 'AI', name: 'Eson Antonia Inneh',           role: 'Welfare Officer — CAN' },
+    { initials: 'EI', name: 'Mr. Eric Iyirhiaro',           role: 'P.R.O.' },
+    { initials: 'EA', name: 'Dr. Ellen Osifo Agho',         role: 'Treasurer' },
+    { initials: 'EO', name: 'Mr. Edebor Onosigho',          role: 'Welfare Officer 2 — U.S.' },
   ];
 
   function renderExecGrid(data, gridId, past = false) {
