@@ -72,18 +72,36 @@ jobs:
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
+            set -e
+
+            # Ensure the app-network exists
+            docker network inspect app-network >/dev/null 2>&1 || docker network create app-network
+
+            # Start PostgreSQL if not already running
+            if ! docker ps --format '{{.Names}}' | grep -q '^ucosa-postgres$'; then
+              echo "Starting PostgreSQL container..."
+              docker run -d \
+                --name ucosa-postgres \
+                --restart unless-stopped \
+                --network app-network \
+                --env-file /opt/ucosa-na/.env \
+                -v ucosa-postgres-data:/var/lib/postgresql/data \
+                postgres:16-alpine
+              echo "Waiting for PostgreSQL to be ready..."
+              sleep 10
+            fi
+
+            # Deploy app
             cd /opt/ucosa-na
             docker pull ${{ env.IMAGE_NAME }}:latest
             docker stop ${{ env.CONTAINER_NAME }} || true
             docker rm ${{ env.CONTAINER_NAME }} || true
-            mkdir -p /opt/ucosa-na/data
             docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
               --restart unless-stopped \
               --network app-network \
               -p 3000:3000 \
               --env-file /opt/ucosa-na/.env \
-              -v /opt/ucosa-na/data:/app/data \
               ${{ env.IMAGE_NAME }}:latest
             docker image prune -f
             echo "Deployed ${{ github.sha }} at $(date)"

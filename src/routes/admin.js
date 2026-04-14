@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-const db = require('../db');
+const pool = require('../db');
 const requireAdmin = require('../middleware/requireAdmin');
 
 const router = express.Router();
@@ -30,58 +30,77 @@ router.post('/users', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Full name and email are required' });
   }
 
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
-  if (existing) return res.status(409).json({ error: 'A member with this email already exists' });
-
-  const tempPassword = generatePassword();
-  const hash = bcrypt.hashSync(tempPassword, 10);
-
-  db.prepare(
-    'INSERT INTO users (full_name, email, password_hash, must_change_password, role) VALUES (?, ?, ?, 1, ?)'
-  ).run(fullName.trim(), email.toLowerCase().trim(), hash, 'member');
-
   try {
+    const { rows: existing } = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'A member with this email already exists' });
+    }
+
+    const tempPassword = generatePassword();
+    const hash = await bcrypt.hash(tempPassword, 10);
+
+    await pool.query(
+      'INSERT INTO users (full_name, email, password_hash, must_change_password, role) VALUES ($1, $2, $3, TRUE, $4)',
+      [fullName.trim(), email.toLowerCase().trim(), hash, 'member']
+    );
+
     const transport = makeTransport();
     await transport.sendMail({
       from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Welcome to UCOSA-North America — Your Login Details',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;background:#f4f6f9;border-radius:12px">
-          <h2 style="color:#1a1a2e">Welcome to UCOSA-North America!</h2>
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;background:#fdf6ec;border-radius:12px">
+          <h2 style="color:#7b2152">Welcome to UCOSA-North America!</h2>
           <p>Dear <strong>${fullName}</strong>,</p>
           <p>Your member account has been created. Use the details below to log in:</p>
-          <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #1a1a2e">
-            <p><strong>Login URL:</strong> <a href="https://ucosa-na.org/login.html">https://ucosa-na.org/login.html</a></p>
+          <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+            <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
             <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Temporary Password:</strong> <code style="background:#f0f4ff;padding:4px 8px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
+            <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
           </div>
-          <p style="color:#e63946"><strong>You will be asked to change your password on first login.</strong></p>
+          <p style="color:#7b2152"><strong>You will be asked to change your password on first login.</strong></p>
           <p>Welcome back to your old friends and brothers and sisters!</p>
-          <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a></p>
+          <p style="color:#888;font-size:0.85em;margin-top:24px">
+            UCOSA-North America &mdash;
+            <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
+          </p>
         </div>
       `,
     });
-  } catch (err) {
-    console.error('Email error:', err.message);
-    return res.status(500).json({ error: 'Member created but email failed to send. Check EMAIL_USER and EMAIL_PASS.' });
-  }
 
-  res.status(201).json({ message: `Member created and welcome email sent to ${email}` });
+    res.status(201).json({ message: `Member created and welcome email sent to ${email}` });
+  } catch (err) {
+    console.error('Create member error:', err.message);
+    res.status(500).json({ error: 'Failed to create member. ' + err.message });
+  }
 });
 
 // GET /api/admin/users — list all members
-router.get('/users', requireAdmin, (req, res) => {
-  const users = db.prepare(
-    'SELECT id, full_name, email, role, must_change_password, created_at FROM users ORDER BY created_at DESC'
-  ).all();
-  res.json(users);
+router.get('/users', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, full_name, email, role, must_change_password, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('List users error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // DELETE /api/admin/users/:id
-router.delete('/users/:id', requireAdmin, (req, res) => {
-  db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
-  res.json({ message: 'Member removed' });
+router.delete('/users/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Member removed' });
+  } catch (err) {
+    console.error('Delete user error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;

@@ -1,39 +1,48 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db');
+const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
-  if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+    const user = rows[0];
+    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
-  const valid = bcrypt.compareSync(password, user.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role, mustChangePassword: !!user.must_change_password },
-    process.env.JWT_SECRET,
-    { expiresIn: '8h' }
-  );
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, mustChangePassword: user.must_change_password },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
 
-  res.json({
-    token,
-    user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role },
-    mustChangePassword: !!user.must_change_password,
-  });
+    res.json({
+      token,
+      user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role },
+      mustChangePassword: user.must_change_password,
+    });
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // POST /api/auth/change-password
-router.post('/change-password', requireAuth, (req, res) => {
+router.post('/change-password', requireAuth, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Both current and new password required' });
@@ -48,22 +57,47 @@ router.post('/change-password', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Password must contain at least one special character' });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  if (!bcrypt.compareSync(currentPassword, user.password_hash)) {
-    return res.status(401).json({ error: 'Current password is incorrect' });
+  try {
+    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, must_change_password = FALSE WHERE id = $2',
+      [hash, user.id]
+    );
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('Change-password error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  const hash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?').run(hash, user.id);
-
-  res.json({ message: 'Password changed successfully' });
 });
 
 // GET /api/auth/me
-router.get('/me', requireAuth, (req, res) => {
-  const user = db.prepare('SELECT id, full_name, email, role, must_change_password FROM users WHERE id = ?').get(req.user.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json({ id: user.id, fullName: user.full_name, email: user.email, role: user.role, mustChangePassword: !!user.must_change_password });
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, full_name, email, role, must_change_password FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      id: user.id,
+      fullName: user.full_name,
+      email: user.email,
+      role: user.role,
+      mustChangePassword: user.must_change_password,
+    });
+  } catch (err) {
+    console.error('Me error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;

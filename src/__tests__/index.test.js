@@ -1,16 +1,10 @@
-// Mock better-sqlite3 so tests run without the native binary
-jest.mock('better-sqlite3', () => {
-  const stmtMock = {
-    get: jest.fn().mockReturnValue(undefined),
-    all: jest.fn().mockReturnValue([]),
-    run: jest.fn().mockReturnValue({ lastInsertRowid: 1, changes: 1 }),
+// Mock pg so tests run without a real database
+jest.mock('pg', () => {
+  const mPool = {
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    end:   jest.fn().mockResolvedValue(undefined),
   };
-  const dbMock = {
-    prepare: jest.fn().mockReturnValue(stmtMock),
-    exec: jest.fn(),
-    close: jest.fn(),
-  };
-  return jest.fn().mockReturnValue(dbMock);
+  return { Pool: jest.fn(() => mPool) };
 });
 
 // Set JWT_SECRET before requiring the app
