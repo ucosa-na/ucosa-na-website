@@ -216,21 +216,74 @@
 
   .banner-nav-bar {
     background: #0d1120;
-    padding: 10px 40px;
+    padding: 12px 40px;
     display: flex;
     align-items: center;
-    gap: 28px;
-    font-size: 14px;
-    color: #8892a4;
+    gap: 32px;
+    font-size: 17px;
+    color: #c8a96e;
     font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
   }
 
-  .banner-nav-bar span {
+  .banner-nav-bar > span {
     cursor: pointer;
     transition: color 0.2s;
+    letter-spacing: 0.3px;
   }
 
-  .banner-nav-bar span:hover {
+  .banner-nav-bar > span:hover {
+    color: #ffffff;
+  }
+
+  /* Dropdown */
+  .nav-dropdown {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .nav-dropdown-trigger {
+    color: #c8a96e;
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: color 0.2s;
+    user-select: none;
+  }
+
+  .nav-dropdown:hover .nav-dropdown-trigger {
+    color: #ffffff;
+  }
+
+  .nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: #0d1120;
+    border: 1px solid #c8a96e55;
+    min-width: 190px;
+    z-index: 200;
+    flex-direction: column;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .nav-dropdown:hover .nav-dropdown-menu {
+    display: flex;
+  }
+
+  .nav-dropdown-menu span {
+    padding: 10px 18px;
+    color: #c8a96e;
+    font-size: 16px;
+    font-weight: 400;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .nav-dropdown-menu span:hover {
+    background: #1a2235;
     color: #ffffff;
   }
 
@@ -239,9 +292,10 @@
     background: #d32f2f;
     color: white;
     border: none;
-    padding: 8px 22px;
-    font-size: 14px;
+    padding: 9px 24px;
+    font-size: 17px;
     font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
     cursor: pointer;
     border-radius: 3px;
   }
@@ -892,10 +946,14 @@
     <span onclick="showPage('welcome',  document.querySelectorAll('.nav-item')[0])">Welcome</span>
     <span onclick="showPage('about',    document.querySelectorAll('.nav-item')[1])">About UCOSA</span>
     <span onclick="showPage('constitution', document.querySelectorAll('.nav-item')[2])">Constitution</span>
-    <span onclick="showPage('executive-current', document.querySelectorAll('.nav-sub-item')[0])">Current Executive</span>
-    <span onclick="showPage('executive-past',    document.querySelectorAll('.nav-sub-item')[1])">Past Executive</span>
+    <div class="nav-dropdown">
+      <span class="nav-dropdown-trigger">Executive ▾</span>
+      <div class="nav-dropdown-menu">
+        <span onclick="showPage('executive-current', document.querySelectorAll('.nav-sub-item')[0])">Current Executive</span>
+        <span onclick="showPage('executive-past',    document.querySelectorAll('.nav-sub-item')[1])">Past Executive</span>
+      </div>
+    </div>
     <span onclick="showPage('members',  document.querySelectorAll('.nav-item')[4])">Current Members</span>
-    <span onclick="showPage('login',    document.querySelectorAll('.nav-item')[5])" style="color:#ff8a80;font-weight:600;">Member Login</span>
     <button class="banner-login-btn" onclick="showPage('login', document.querySelectorAll('.nav-item')[5])">Member Login</button>
   </div>
 </div>
