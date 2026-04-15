@@ -171,8 +171,20 @@
   }
 
   .banner-content {
-    padding: 32px 40px 20px;
+    display: flex;
+    align-items: flex-start;
+    padding: 0 20px 20px;
+  }
+
+  .banner-center {
+    flex: 1;
     text-align: center;
+    padding-top: 28px;
+  }
+
+  .banner-flag {
+    flex-shrink: 0;
+    padding-top: 8px;
   }
 
   .banner-logo {
@@ -182,10 +194,8 @@
     object-fit: contain;
     background: white;
     padding: 6px;
-    margin-bottom: 18px;
+    margin: 0 auto 18px;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .banner-title {
@@ -868,9 +878,80 @@
 <!-- ── FULL-WIDTH BANNER ── -->
 <div class="banner-header">
   <div class="banner-content">
-    <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
-    <h2 class="banner-title">Welcome to UCOSA-North America</h2>
-    <p class="banner-sub">Ugbeka College Old Students&#39; Association — North America Chapter</p>
+
+    <!-- US FLAG — left pole -->
+    <div class="banner-flag">
+      <svg width="115" height="240" viewBox="0 0 115 240" xmlns="http://www.w3.org/2000/svg">
+        <!-- Pole finial (gold ball) -->
+        <circle cx="7" cy="6" r="6" fill="#c8a96e"/>
+        <!-- Pole -->
+        <rect x="5" y="6" width="4" height="234" fill="#b0b8c8" rx="2"/>
+        <!-- Flag body: x=9, y=18, w=100, h=67 -->
+        <rect x="9" y="18" width="100" height="67" fill="white"/>
+        <!-- Red stripes (7): each 10px, alternating with white -->
+        <rect x="9" y="18" width="100" height="10" fill="#B22234"/>
+        <rect x="9" y="38" width="100" height="10" fill="#B22234"/>
+        <rect x="9" y="58" width="100" height="10" fill="#B22234"/>
+        <rect x="9" y="78" width="100" height="7"  fill="#B22234"/>
+        <!-- Remaining red stripes lower portion -->
+        <rect x="9" y="57" width="100" height="1"  fill="#B22234" opacity="0"/>
+        <!-- Actually redo: 13 stripes in 67px = 5.15px each. Use 5px stripes -->
+        <!-- White base already set. Red at: 18,28,38,48,58,68,78 (7 red) -->
+        <rect x="9" y="18" width="100" height="5" fill="#B22234"/>
+        <rect x="9" y="28" width="100" height="5" fill="#B22234"/>
+        <rect x="9" y="38" width="100" height="5" fill="#B22234"/>
+        <rect x="9" y="48" width="100" height="5" fill="#B22234"/>
+        <rect x="9" y="58" width="100" height="5" fill="#B22234"/>
+        <rect x="9" y="68" width="100" height="5" fill="#B22234"/>
+        <rect x="9" y="78" width="100" height="7" fill="#B22234"/>
+        <!-- Blue canton: 40x35 -->
+        <rect x="9" y="18" width="40" height="35" fill="#3C3B6E"/>
+        <!-- Stars — 5 rows of 6 + 4 rows of 5 (simplified) -->
+        <circle cx="13" cy="22" r="1.5" fill="white"/><circle cx="19" cy="22" r="1.5" fill="white"/><circle cx="25" cy="22" r="1.5" fill="white"/><circle cx="31" cy="22" r="1.5" fill="white"/><circle cx="37" cy="22" r="1.5" fill="white"/><circle cx="43" cy="22" r="1.5" fill="white"/>
+        <circle cx="16" cy="27" r="1.5" fill="white"/><circle cx="22" cy="27" r="1.5" fill="white"/><circle cx="28" cy="27" r="1.5" fill="white"/><circle cx="34" cy="27" r="1.5" fill="white"/><circle cx="40" cy="27" r="1.5" fill="white"/>
+        <circle cx="13" cy="32" r="1.5" fill="white"/><circle cx="19" cy="32" r="1.5" fill="white"/><circle cx="25" cy="32" r="1.5" fill="white"/><circle cx="31" cy="32" r="1.5" fill="white"/><circle cx="37" cy="32" r="1.5" fill="white"/><circle cx="43" cy="32" r="1.5" fill="white"/>
+        <circle cx="16" cy="37" r="1.5" fill="white"/><circle cx="22" cy="37" r="1.5" fill="white"/><circle cx="28" cy="37" r="1.5" fill="white"/><circle cx="34" cy="37" r="1.5" fill="white"/><circle cx="40" cy="37" r="1.5" fill="white"/>
+        <circle cx="13" cy="42" r="1.5" fill="white"/><circle cx="19" cy="42" r="1.5" fill="white"/><circle cx="25" cy="42" r="1.5" fill="white"/><circle cx="31" cy="42" r="1.5" fill="white"/><circle cx="37" cy="42" r="1.5" fill="white"/><circle cx="43" cy="42" r="1.5" fill="white"/>
+        <!-- Flag border -->
+        <rect x="9" y="18" width="100" height="67" fill="none" stroke="#888" stroke-width="0.5"/>
+        <!-- Label -->
+        <text x="59" y="100" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#8892a4" letter-spacing="1">UNITED STATES</text>
+      </svg>
+    </div>
+
+    <!-- CENTRE: logo + title + subtitle -->
+    <div class="banner-center">
+      <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
+      <h2 class="banner-title">Welcome to UCOSA-North America</h2>
+      <p class="banner-sub">Ugbeka College Old Students&#39; Association — North America Chapter</p>
+    </div>
+
+    <!-- CANADIAN FLAG — right pole -->
+    <div class="banner-flag">
+      <svg width="115" height="240" viewBox="0 0 115 240" xmlns="http://www.w3.org/2000/svg">
+        <!-- Pole finial -->
+        <circle cx="108" cy="6" r="6" fill="#c8a96e"/>
+        <!-- Pole (right side) -->
+        <rect x="106" y="6" width="4" height="234" fill="#b0b8c8" rx="2"/>
+        <!-- Flag body: x=6, y=18, w=100, h=67 (flag hangs left of pole) -->
+        <!-- Left red bar (25px) -->
+        <rect x="6"  y="18" width="25" height="67" fill="#FF0000"/>
+        <!-- White centre (50px) -->
+        <rect x="31" y="18" width="50" height="67" fill="white"/>
+        <!-- Right red bar (25px) -->
+        <rect x="81" y="18" width="25" height="67" fill="#FF0000"/>
+        <!-- Maple leaf centred in white: centre x=56, centre y=51 -->
+        <g transform="translate(56,51) scale(0.52)" fill="#FF0000">
+          <path d="M 0,-28 L 4,-18 L 15,-21 L 10,-12 L 22,-6 L 13,-2 L 15,7 L 7,3 L 0,24 L -7,3 L -15,7 L -13,-2 L -22,-6 L -10,-12 L -15,-21 L -4,-18 Z"/>
+          <rect x="-2" y="24" width="4" height="10"/>
+        </g>
+        <!-- Flag border -->
+        <rect x="6" y="18" width="100" height="67" fill="none" stroke="#888" stroke-width="0.5"/>
+        <!-- Label -->
+        <text x="56" y="100" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#8892a4" letter-spacing="1">CANADA</text>
+      </svg>
+    </div>
+
   </div>
   <div class="banner-nav-bar">
     <span onclick="showPage('welcome',  document.querySelectorAll('.nav-item')[0])">Welcome</span>
@@ -879,6 +960,7 @@
     <span onclick="showPage('executive-current', document.querySelectorAll('.nav-sub-item')[0])">Current Executive</span>
     <span onclick="showPage('executive-past',    document.querySelectorAll('.nav-sub-item')[1])">Past Executive</span>
     <span onclick="showPage('members',  document.querySelectorAll('.nav-item')[4])">Current Members</span>
+    <span onclick="showPage('login',    document.querySelectorAll('.nav-item')[5])" style="color:#ff8a80;font-weight:600;">Member Login</span>
     <button class="banner-login-btn" onclick="showPage('login', document.querySelectorAll('.nav-item')[5])">Member Login</button>
   </div>
 </div>
