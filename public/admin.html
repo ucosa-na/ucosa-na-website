@@ -399,6 +399,65 @@
       font-style: italic;
     }
 
+    /* FINANCIAL RECORDS */
+    select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #dde3f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #333;
+      background: white;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: #1a1a2e; }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #dde3f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #333;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="number"]:focus { border-color: #1a1a2e; }
+
+    .fin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 16px;
+    }
+    .fin-table th {
+      background: #7b2152;
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .fin-table th:first-child { border-radius: 6px 0 0 0; }
+    .fin-table th:last-child  { border-radius: 0 6px 0 0; }
+    .fin-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .fin-table tr:last-child td { border-bottom: none; }
+    .fin-table tr:hover td { background: #faf6f8; }
+    .fin-total td { background: #f5ece8 !important; font-weight: 700; color: #7b2152; }
+    .member-fin-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #7b2152;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: #fdf5f9;
+      border-radius: 8px;
+      border-left: 4px solid #7b2152;
+    }
+
     /* STATS ROW */
     .stats-row {
       display: flex;
@@ -478,6 +537,7 @@
       <a href="#testEmail">Test Email</a>
       <a href="#membersList">Member List</a>
       <a href="#siteMaintenance">Site Maintenance</a>
+      <a href="#financialRecords">Financial Records</a>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -520,12 +580,36 @@
         <form id="createForm">
           <div class="form-row">
             <div class="form-group">
-              <label for="fullName">Full Name</label>
-              <input type="text" id="fullName" placeholder="e.g. John Doe" required />
+              <label for="firstName">First Name <span style="color:#e63946;">*</span></label>
+              <input type="text" id="firstName" placeholder="e.g. John" required />
             </div>
             <div class="form-group">
-              <label for="email">Email Address</label>
+              <label for="lastName">Last Name <span style="color:#e63946;">*</span></label>
+              <input type="text" id="lastName" placeholder="e.g. Doe" required />
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address <span style="color:#e63946;">*</span></label>
               <input type="email" id="email" placeholder="member@example.com" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="text" id="phone" placeholder="e.g. +1 416 555 0100" />
+            </div>
+            <div class="form-group" style="flex:2;">
+              <label for="address">Address</label>
+              <input type="text" id="address" placeholder="e.g. 123 Main St, Toronto, ON" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="max-width:160px;">
+              <label for="yearJoined">Year Joined</label>
+              <input type="number" id="yearJoined" placeholder="e.g. 2010" min="1960" max="2099" />
+            </div>
+            <div class="form-group" style="max-width:160px;">
+              <label for="graduationYear">Year of Graduation</label>
+              <input type="number" id="graduationYear" placeholder="e.g. 1995" min="1960" max="2099" />
             </div>
           </div>
           <button type="submit" class="btn-primary" id="createBtn">Create Member &amp; Send Email</button>
@@ -557,17 +641,21 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>Name</th>
+                <th>First Name</th>
+                <th>Last Name</th>
                 <th>Email</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Yr Joined</th>
+                <th>Yr Grad</th>
                 <th>Role</th>
-                <th>Joined</th>
                 <th>Last Login &#128336;</th>
                 <th>Must Change PW</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="membersTableBody">
-              <tr class="empty-row"><td colspan="8">Loading members…</td></tr>
+              <tr class="empty-row"><td colspan="12">Loading members…</td></tr>
             </tbody>
           </table>
         </div>
@@ -706,6 +794,70 @@
         </div><!-- /maint-layout -->
       </section>
 
+      <!-- FINANCIAL RECORDS -->
+      <section id="financialRecords">
+        <h2>&#128181; Financial Records</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:20px;">
+          Enter or update annual dues and endowment fund contributions for each member.
+        </p>
+
+        <div class="form-row" style="margin-bottom:20px;">
+          <div class="form-group" style="max-width:380px;">
+            <label for="finMemberSelect">Select Member</label>
+            <select id="finMemberSelect" onchange="loadMemberFinancials()">
+              <option value="">— Choose a member —</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="finMemberName" class="member-fin-name" style="display:none;"></div>
+
+        <div id="finFormWrap" style="display:none;">
+          <h3 style="font-size:1.05rem;color:#1a1a2e;margin-bottom:14px;">Add / Update Record</h3>
+          <div id="finError"   class="msg error"></div>
+          <div id="finSuccess" class="msg success"></div>
+          <div class="form-row">
+            <div class="form-group" style="max-width:120px;">
+              <label for="finYear">Year</label>
+              <input type="number" id="finYear" placeholder="2024" min="2000" max="2099" />
+            </div>
+            <div class="form-group" style="max-width:180px;">
+              <label for="finDues">Annual Dues ($)</label>
+              <input type="number" id="finDues" placeholder="0.00" min="0" step="0.01" />
+            </div>
+            <div class="form-group" style="max-width:180px;">
+              <label for="finEndowment">Endowment Fund ($)</label>
+              <input type="number" id="finEndowment" placeholder="0.00" min="0" step="0.01" />
+            </div>
+            <div class="form-group" style="flex:2;min-width:200px;">
+              <label for="finNotes">Notes</label>
+              <input type="text" id="finNotes" placeholder="Optional notes" />
+            </div>
+          </div>
+          <button class="btn-primary" id="finSaveBtn" onclick="saveFinancialRecord()">Save Record</button>
+        </div>
+
+        <div id="finTableWrap" style="display:none;margin-top:24px;">
+          <h3 style="font-size:1.05rem;color:#1a1a2e;margin-bottom:10px;">Existing Records</h3>
+          <div class="table-wrap">
+            <table class="fin-table">
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Annual Dues</th>
+                  <th>Endowment Fund</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="finTableBody">
+                <tr><td colspan="4" style="text-align:center;color:#aaa;font-style:italic;">No records yet.</td></tr>
+              </tbody>
+              <tfoot id="finTableFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -808,18 +960,25 @@
         document.getElementById('statAdmins').textContent = members.filter(m => m.role === 'admin').length;
         document.getElementById('statPending').textContent = members.filter(m => m.must_change_password).length;
 
+        // Populate financial records member dropdown
+        populateMemberSelect(members);
+
         if (members.length === 0) {
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No members yet.</td></tr>';
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No members yet.</td></tr>';
           return;
         }
 
         tbody.innerHTML = members.map((m, i) => `
           <tr>
             <td style="color:#999;">${i + 1}</td>
-            <td><strong>${escapeHtml(m.full_name)}</strong></td>
+            <td><strong>${escapeHtml(m.first_name || '')}</strong></td>
+            <td><strong>${escapeHtml(m.last_name || m.full_name || '')}</strong></td>
             <td>${escapeHtml(m.email)}</td>
+            <td>${escapeHtml(m.phone || '—')}</td>
+            <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(m.address || '')}">${escapeHtml(m.address || '—')}</td>
+            <td>${m.year_joined || '—'}</td>
+            <td>${m.graduation_year || '—'}</td>
             <td><span class="badge ${m.role}">${m.role}</span></td>
-            <td>${formatDate(m.created_at)}</td>
             <td>
               ${m.last_login
                 ? `<span style="color:#1a1a2e;font-weight:600;">${formatDateTime(m.last_login)}</span>
@@ -837,7 +996,7 @@
         `).join('');
 
       } catch (err) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Error loading members: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="12">Error loading members: ${err.message}</td></tr>`;
       }
     }
 
@@ -865,9 +1024,14 @@
     document.getElementById('createForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
-      const fullName = document.getElementById('fullName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const errorMsg = document.getElementById('createError');
+      const firstName      = document.getElementById('firstName').value.trim();
+      const lastName       = document.getElementById('lastName').value.trim();
+      const email          = document.getElementById('email').value.trim();
+      const phone          = document.getElementById('phone').value.trim();
+      const address        = document.getElementById('address').value.trim();
+      const yearJoined     = document.getElementById('yearJoined').value;
+      const graduationYear = document.getElementById('graduationYear').value;
+      const errorMsg  = document.getElementById('createError');
       const successMsg = document.getElementById('createSuccess');
       const createBtn = document.getElementById('createBtn');
 
@@ -884,7 +1048,7 @@
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + getToken(),
           },
-          body: JSON.stringify({ fullName, email }),
+          body: JSON.stringify({ firstName, lastName, email, phone, address, yearJoined, graduationYear }),
         });
 
         const data = await res.json();
@@ -1022,6 +1186,126 @@
       } finally {
         btn.disabled = false;
         btn.textContent = '⬇ Download Database Backup';
+      }
+    }
+
+    // ---- FINANCIAL RECORDS ----
+
+    let allMembers = [];
+
+    function populateMemberSelect(members) {
+      allMembers = members;
+      const sel = document.getElementById('finMemberSelect');
+      sel.innerHTML = '<option value="">— Choose a member —</option>' +
+        members.map(m => `<option value="${m.id}">${escapeHtml(m.full_name)} &lt;${escapeHtml(m.email)}&gt;</option>`).join('');
+    }
+
+    async function loadMemberFinancials() {
+      const userId = document.getElementById('finMemberSelect').value;
+      const nameEl = document.getElementById('finMemberName');
+      const formWrap  = document.getElementById('finFormWrap');
+      const tableWrap = document.getElementById('finTableWrap');
+
+      if (!userId) {
+        nameEl.style.display = 'none';
+        formWrap.style.display = 'none';
+        tableWrap.style.display = 'none';
+        return;
+      }
+
+      const member = allMembers.find(m => String(m.id) === String(userId));
+      nameEl.textContent = member ? member.full_name : '';
+      nameEl.style.display = 'block';
+      formWrap.style.display = 'block';
+      tableWrap.style.display = 'block';
+
+      // Pre-fill year to current year
+      document.getElementById('finYear').value = new Date().getFullYear();
+
+      const tbody = document.getElementById('finTableBody');
+      const tfoot = document.getElementById('finTableFoot');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;">Loading…</td></tr>';
+      tfoot.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/admin/financials/' + userId, {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!res.ok) throw new Error('Failed to load');
+        const rows = await res.json();
+
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;font-style:italic;">No records yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td><strong>${r.year}</strong></td>
+            <td>$${parseFloat(r.annual_dues || 0).toFixed(2)}</td>
+            <td>$${parseFloat(r.endowment_fund || 0).toFixed(2)}</td>
+            <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
+          </tr>
+        `).join('');
+
+        const totalDues = rows.reduce((s, r) => s + parseFloat(r.annual_dues || 0), 0);
+        const totalEnd  = rows.reduce((s, r) => s + parseFloat(r.endowment_fund || 0), 0);
+        tfoot.innerHTML = `
+          <tr class="fin-total">
+            <td>Total</td>
+            <td>$${totalDues.toFixed(2)}</td>
+            <td>$${totalEnd.toFixed(2)}</td>
+            <td></td>
+          </tr>`;
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#e63946;">${err.message}</td></tr>`;
+      }
+    }
+
+    async function saveFinancialRecord() {
+      const userId    = document.getElementById('finMemberSelect').value;
+      const year      = document.getElementById('finYear').value;
+      const dues      = document.getElementById('finDues').value;
+      const endowment = document.getElementById('finEndowment').value;
+      const notes     = document.getElementById('finNotes').value.trim();
+      const errEl     = document.getElementById('finError');
+      const okEl      = document.getElementById('finSuccess');
+      const btn       = document.getElementById('finSaveBtn');
+
+      errEl.style.display = 'none';
+      okEl.style.display  = 'none';
+
+      if (!userId) { errEl.textContent = 'Please select a member.'; errEl.style.display = 'block'; return; }
+      if (!year)   { errEl.textContent = 'Year is required.';       errEl.style.display = 'block'; return; }
+
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const res = await fetch('/api/admin/financials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getToken()
+          },
+          body: JSON.stringify({
+            userId: parseInt(userId),
+            year: parseInt(year),
+            annualDues:    parseFloat(dues)      || 0,
+            endowmentFund: parseFloat(endowment) || 0,
+            notes: notes || null
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed to save.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = 'Record saved!'; okEl.style.display = 'block';
+        // Clear inputs and reload table
+        document.getElementById('finDues').value = '';
+        document.getElementById('finEndowment').value = '';
+        document.getElementById('finNotes').value = '';
+        loadMemberFinancials();
+      } catch {
+        errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Record';
       }
     }
 

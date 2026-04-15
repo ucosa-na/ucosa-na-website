@@ -84,20 +84,27 @@ router.post('/change-password', requireAuth, async (req, res) => {
 // GET /api/auth/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT id, full_name, email, role, must_change_password, address, phone FROM users WHERE id = $1',
-      [req.user.id]
-    );
+    const { rows } = await pool.query(`
+      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password,
+             p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.id = $1
+    `, [req.user.id]);
     const user = rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({
       id: user.id,
       fullName: user.full_name,
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
       email: user.email,
       role: user.role,
       mustChangePassword: user.must_change_password,
       address: user.address || '',
       phone: user.phone || '',
+      yearJoined: user.year_joined || '',
+      graduationYear: user.graduation_year || '',
     });
   } catch (err) {
     console.error('Me error:', err.message);
@@ -105,7 +112,7 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/auth/profile — update address and phone
+// PUT /api/auth/profile — update contact info
 router.put('/profile', requireAuth, async (req, res) => {
   const { address, phone } = req.body;
   try {
@@ -113,6 +120,11 @@ router.put('/profile', requireAuth, async (req, res) => {
       'UPDATE users SET address = $1, phone = $2 WHERE id = $3',
       [address || null, phone || null, req.user.id]
     );
+    await pool.query(`
+      INSERT INTO member_profiles (user_id, address, phone)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id) DO UPDATE SET address = EXCLUDED.address, phone = EXCLUDED.phone, updated_at = NOW()
+    `, [req.user.id, address || null, phone || null]);
     res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     console.error('Profile update error:', err.message);

@@ -27,10 +27,12 @@ function generatePassword(length = 10) {
 
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', requireAdmin, async (req, res) => {
-  const { fullName, email } = req.body;
-  if (!fullName || !email) {
-    return res.status(400).json({ error: 'Full name and email are required' });
+  const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
+  if (!firstName || !lastName || !email) {
+    return res.status(400).json({ error: 'First name, last name, and email are required' });
   }
+
+  const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
   try {
     const { rows: existing } = await pool.query(
@@ -44,14 +46,28 @@ router.post('/users', requireAdmin, async (req, res) => {
     const tempPassword = generatePassword();
     const hash = await bcrypt.hash(tempPassword, 10);
 
+    const { rows: inserted } = await pool.query(
+      'INSERT INTO users (full_name, email, password_hash, must_change_password, role) VALUES ($1, $2, $3, TRUE, $4) RETURNING id',
+      [fullName, email.toLowerCase().trim(), hash, 'member']
+    );
+    const userId = inserted[0].id;
+
     await pool.query(
-      'INSERT INTO users (full_name, email, password_hash, must_change_password, role) VALUES ($1, $2, $3, TRUE, $4)',
-      [fullName.trim(), email.toLowerCase().trim(), hash, 'member']
+      `INSERT INTO member_profiles (user_id, first_name, last_name, address, phone, year_joined, graduation_year)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [userId, firstName.trim(), lastName.trim(), address || null, phone || null,
+       yearJoined ? parseInt(yearJoined) : null, graduationYear ? parseInt(graduationYear) : null]
     );
 
-    // Respond immediately with temp password — admin can share it manually if email fails.
-    // Email is sent in the background so a slow/failing SMTP connection never
-    // causes a client-side "Network error".
+    // Also mirror address/phone to users table for backward compatibility
+    if (address || phone) {
+      await pool.query(
+        'UPDATE users SET address = $1, phone = $2 WHERE id = $3',
+        [address || null, phone || null, userId]
+      );
+    }
+
+    // Respond immediately with temp password
     res.status(201).json({
       message: `Member created. Welcome email will be sent to ${email}`,
       tempPassword,
@@ -107,12 +123,16 @@ router.post('/test-email', requireAdmin, async (req, res) => {
   }
 });
 
-// GET /api/admin/users — list all members
+// GET /api/admin/users — list all members with profile data
 router.get('/users', requireAdmin, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT id, full_name, email, role, must_change_password, created_at, last_login FROM users ORDER BY created_at DESC'
-    );
+    const { rows } = await pool.query(`
+      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.created_at, u.last_login,
+             p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      ORDER BY u.created_at DESC
+    `);
     res.json(rows);
   } catch (err) {
     console.error('List users error:', err.message);

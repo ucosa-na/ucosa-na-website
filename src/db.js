@@ -35,6 +35,21 @@ pool.query(`
       UNIQUE(user_id, year)
     );
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS member_profiles (
+      id              SERIAL PRIMARY KEY,
+      user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      first_name      TEXT DEFAULT NULL,
+      last_name       TEXT DEFAULT NULL,
+      address         TEXT DEFAULT NULL,
+      phone           TEXT DEFAULT NULL,
+      year_joined     INTEGER DEFAULT NULL,
+      graduation_year INTEGER DEFAULT NULL,
+      updated_at      TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id)
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
