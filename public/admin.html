@@ -75,12 +75,63 @@
     /* LAYOUT */
     .layout {
       display: flex;
-      max-width: 1100px;
+      width: 95vw;
+      max-width: 95vw;
       margin: 32px auto;
       padding: 0 20px 60px;
       gap: 28px;
       align-items: flex-start;
       flex: 1;
+    }
+
+    /* SITE MAINTENANCE — 60% page width, breaking out of content column */
+    #siteMaintenance {
+      width: 60vw;
+      max-width: 60vw;
+      flex-shrink: 0;
+    }
+
+    #siteMaintenance h2 {
+      font-size: 1.6rem;
+      margin-bottom: 24px;
+    }
+
+    .maint-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 22px;
+    }
+
+    .maint-card {
+      background: #f8f9fb;
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    .maint-card h4 {
+      font-size: 1.1rem;
+      color: #1a1a2e;
+      margin-bottom: 14px;
+    }
+
+    .maint-card p {
+      font-size: 1rem;
+      line-height: 1.85;
+      color: #555;
+    }
+
+    .maint-card-full {
+      grid-column: 1 / -1;
+    }
+
+    .maint-code {
+      display: block;
+      background: #1a1a2e;
+      color: #cdd6f4;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-top: 10px;
     }
 
     /* SIDEBAR */
@@ -408,11 +459,11 @@
       <section id="siteMaintenance">
         <h2>&#9881; Site Maintenance</h2>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="maint-grid">
 
-          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
-            <h4 style="margin-bottom:12px;color:#1a1a2e;">System Status</h4>
-            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+          <div class="maint-card">
+            <h4>System Status</h4>
+            <p>
               <strong>Application:</strong> Running<br>
               <strong>Database:</strong> PostgreSQL (connected)<br>
               <strong>Environment:</strong> Production<br>
@@ -420,37 +471,36 @@
             </p>
           </div>
 
-          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
-            <h4 style="margin-bottom:12px;color:#1a1a2e;">Email Service</h4>
-            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+          <div class="maint-card">
+            <h4>Email Service</h4>
+            <p>
               Welcome emails sent via <strong>SendGrid</strong> on member creation.<br>
               Ensure <code>SENDGRID_API_KEY</code> is set in <code>/opt/ucosa-na/.env</code>.
             </p>
           </div>
 
-          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
-            <h4 style="margin-bottom:12px;color:#1a1a2e;">Deployment</h4>
-            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+          <div class="maint-card">
+            <h4>Server Info</h4>
+            <p>
+              <strong>Host:</strong> DigitalOcean Droplet<br>
+              <strong>Container:</strong> ucosa-na-app<br>
+              <strong>Port:</strong> 3000<br>
+              <strong>Config:</strong> /opt/ucosa-na/.env
+            </p>
+          </div>
+
+          <div class="maint-card">
+            <h4>Deployment</h4>
+            <p>
               Auto-deployed via <strong>GitHub Actions</strong> on push to <em>main</em>.<br>
               Docker image → Docker Hub → DigitalOcean droplet.
             </p>
           </div>
 
-          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
-            <h4 style="margin-bottom:12px;color:#1a1a2e;">Server Info</h4>
-            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
-              <strong>Host:</strong> DigitalOcean Droplet<br>
-              <strong>Container:</strong> ucosa-na-app<br>
-              <strong>Port:</strong> 3000 &nbsp;|&nbsp; <strong>Config:</strong> /opt/ucosa-na/.env
-            </p>
-          </div>
-
-          <div style="background:#f8f9fb;border-radius:10px;padding:22px;grid-column:1/-1;">
-            <h4 style="margin-bottom:12px;color:#1a1a2e;">Database Backup</h4>
-            <p style="font-size:0.9rem;color:#555;margin-bottom:10px;">Run the following on the server to create a backup:</p>
-            <code style="display:block;background:#1a1a2e;color:#cdd6f4;padding:12px 16px;border-radius:8px;font-size:0.88rem;">
-              docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup_$(date +%Y%m%d).sql
-            </code>
+          <div class="maint-card maint-card-full" style="grid-column: span 2;">
+            <h4>Database Backup</h4>
+            <p>Run the following on the server to create a timestamped backup:</p>
+            <code class="maint-code">docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup_$(date +%Y%m%d).sql</code>
           </div>
 
         </div>
