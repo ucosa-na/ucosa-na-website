@@ -606,6 +606,21 @@
     border: 2px solid var(--border);
   }
 
+  .exec-avatar-photo {
+    width: 120px;
+    height: 120px;
+    background: none;
+    overflow: hidden;
+    border: 3px solid var(--accent);
+  }
+
+  .exec-avatar-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
   .exec-name {
     font-family: 'Cormorant Garamond', serif;
     font-size: 20px;
@@ -1499,12 +1514,12 @@
 
   // ── Executive data — update with real names and roles ──
   const currentExec = [
-    { initials: 'PD', name: 'President',          role: 'President' },
-    { initials: 'VP', name: 'Vice President',      role: 'Vice President' },
-    { initials: 'SG', name: 'Secretary General',   role: 'Secretary General' },
-    { initials: 'TR', name: 'Treasurer',           role: 'Treasurer' },
-    { initials: 'PR', name: 'P.R.O.',              role: 'Public Relations Officer' },
-    { initials: 'FO', name: 'Financial Secretary', role: 'Financial Secretary' },
+    { initials: 'EG', name: 'Dr. Eunice Ihaza Gbenoba', role: 'President', photo: '/current executive/Ihaza.jpg' },
+    { initials: 'VP', name: 'Vice President',            role: 'Vice President' },
+    { initials: 'SG', name: 'Secretary General',         role: 'Secretary General' },
+    { initials: 'TR', name: 'Treasurer',                 role: 'Treasurer' },
+    { initials: 'PR', name: 'P.R.O.',                    role: 'Public Relations Officer' },
+    { initials: 'FO', name: 'Financial Secretary',       role: 'Financial Secretary' },
   ];
 
   const pastExec = [
@@ -1523,9 +1538,12 @@
   function renderExecGrid(data, gridId, past = false) {
     const grid = document.getElementById(gridId);
     data.forEach(e => {
+      const avatar = e.photo
+        ? `<div class="exec-avatar exec-avatar-photo"><img src="${e.photo}" alt="${e.name}"></div>`
+        : `<div class="exec-avatar">${e.initials}</div>`;
       grid.innerHTML += `
         <div class="exec-card${past ? ' past' : ''}">
-          <div class="exec-avatar">${e.initials}</div>
+          ${avatar}
           <div class="exec-name">${e.name}</div>
           <div class="exec-role">${e.role}</div>
         </div>`;
