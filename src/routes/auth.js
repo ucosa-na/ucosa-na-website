@@ -100,4 +100,14 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/auth/member-count — public, returns total member count
+router.get('/member-count', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT COUNT(*) AS count FROM users WHERE role = $1', ['member']);
+    res.json({ count: parseInt(rows[0].count, 10) });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

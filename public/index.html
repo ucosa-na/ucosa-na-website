@@ -1180,7 +1180,7 @@
 
     <div class="stats-bar">
       <div class="stat-item">
-        <div class="stat-number">US &amp; CA</div>
+        <div class="stat-number" id="member-count-display">—</div>
         <div class="stat-label">Members</div>
       </div>
       <div class="stat-item">
@@ -1409,6 +1409,15 @@
 </main>
 
 <script>
+  // ── Live member count ──
+  fetch('/api/auth/member-count')
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('member-count-display');
+      if (el && typeof data.count === 'number') el.textContent = data.count;
+    })
+    .catch(() => {});
+
   // ── Executive data — update with real names and roles ──
   const currentExec = [
     { initials: 'PD', name: 'President',          role: 'President' },
