@@ -199,14 +199,6 @@
     min-height: 320px;
   }
 
-  .banner-center {
-    text-align: left;
-    padding-top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .banner-logo {
     width: 150px;
     height: 150px;
@@ -226,6 +218,20 @@
     letter-spacing: 0.5px;
     margin: 0 0 10px;
     white-space: nowrap;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+    filter: none;
+  }
+
+  .banner-center {
+    text-align: left;
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 18px 24px;
+    border-radius: 8px;
   }
 
   .banner-sub {
