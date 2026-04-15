@@ -925,6 +925,28 @@
   .main::-webkit-scrollbar { width: 4px; }
   .main::-webkit-scrollbar-track { background: var(--bg); }
   .main::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* FOOTER */
+  .site-footer {
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    text-align: center;
+    padding: 8px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--sidebar-border);
+  }
+
+  .site-footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
 </style>
 </head>
 <body>
@@ -1633,5 +1655,10 @@
   });
 </script>
 </div><!-- end .content-wrapper -->
+
+<footer class="site-footer">
+  © 2026 UCOSA-North America. All rights reserved. &nbsp;|&nbsp;
+  <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
+</footer>
 </body>
 </html>
