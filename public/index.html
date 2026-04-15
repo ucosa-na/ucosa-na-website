@@ -165,15 +165,26 @@
 
   /* FULL-WIDTH BANNER */
   .banner-header {
-    background: #141829;
+    background: #141829 url('/ucosa-image1.jpg') center center / cover no-repeat;
     width: 100%;
     flex-shrink: 0;
+    position: relative;
+  }
+
+  .banner-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.45);
+    pointer-events: none;
   }
 
   .banner-content {
     display: flex;
     align-items: flex-start;
     padding: 0 20px 20px;
+    position: relative;
+    z-index: 1;
   }
 
   .banner-center {
@@ -224,6 +235,8 @@
     color: #c8a96e;
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
+    position: relative;
+    z-index: 2;
   }
 
   .banner-nav-bar > span {
