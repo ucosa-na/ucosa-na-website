@@ -894,13 +894,13 @@
   <section class="page active" id="page-welcome">
     <div class="skyline-banner">
       <!-- Combined New York + Toronto skyline silhouette (transparent) -->
-      <svg viewBox="0 0 1200 340" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+      <svg viewBox="0 0 1200 340" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMax meet">
         <defs>
           <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#7b2152" stop-opacity="0.13"/>
             <stop offset="100%" stop-color="#7b2152" stop-opacity="0.22"/>
           </linearGradient>
-          <path id="titleArc" d="M 60,90 Q 600,10 1140,90"/>
+          <path id="titleArc" d="M 100,75 Q 600,5 1100,75"/>
         </defs>
 
         <!-- ── NEW YORK skyline (left side) ── -->
@@ -931,17 +931,18 @@
         <text x="195" y="326" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
               font-size="13" letter-spacing="3" fill="#7b2152" opacity="0.55" font-weight="600">NEW YORK</text>
 
-        <!-- ── CENTRE TITLE ── -->
-        <text font-family="Cormorant Garamond, Georgia, serif" font-size="46" font-weight="700" fill="#7b2152" letter-spacing="2" opacity="0.92">
-          <textPath href="#titleArc" startOffset="50%" text-anchor="middle">Welcome to UCOSA-North America</textPath>
+        <!-- ── CENTRE: Logo + Title ── -->
+        <!-- Logo centred between the two skylines -->
+        <image href="/logo.jpg" x="530" y="140" width="140" height="140"
+               preserveAspectRatio="xMidYMid meet" opacity="0.92"
+               clip-path="inset(0% round 50%)"/>
+        <!-- Decorative double rule above subtitle -->
+        <line x1="360" y1="290" x2="840" y2="290" stroke="#c8a96e" stroke-width="1"   opacity="0.5"/>
+        <line x1="360" y1="294" x2="840" y2="294" stroke="#c8a96e" stroke-width="0.5" opacity="0.35"/>
+        <text x="600" y="314" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
+              font-size="18" font-weight="500" fill="#4a1535" letter-spacing="1.5" opacity="0.80">
+          Ugbeka College Old Students&#39; Association — North America
         </text>
-        <text x="600" y="115" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
-              font-size="18" font-weight="500" fill="#4a1535" letter-spacing="1.5" opacity="0.75">
-          Ugbeka College Old Students&#39; Association
-        </text>
-        <!-- Decorative double rule -->
-        <line x1="360" y1="130" x2="840" y2="130" stroke="#c8a96e" stroke-width="1"   opacity="0.5"/>
-        <line x1="360" y1="134" x2="840" y2="134" stroke="#c8a96e" stroke-width="0.5" opacity="0.35"/>
 
         <!-- ── TORONTO skyline (right side) ── -->
         <!-- CN Tower -->
