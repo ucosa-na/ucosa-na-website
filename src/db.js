@@ -13,9 +13,15 @@ pool.query(`
     password_hash TEXT    NOT NULL,
     must_change_password BOOLEAN DEFAULT TRUE,
     role      TEXT        DEFAULT 'member',
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_login TIMESTAMPTZ DEFAULT NULL
   );
-`).catch(err => {
+`).then(() =>
+  // Add last_login to existing tables that predate this column
+  pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ DEFAULT NULL;
+  `)
+).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
 });

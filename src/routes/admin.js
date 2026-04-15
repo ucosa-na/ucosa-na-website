@@ -110,7 +110,7 @@ router.post('/test-email', requireAdmin, async (req, res) => {
 router.get('/users', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, full_name, email, role, must_change_password, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, full_name, email, role, must_change_password, created_at, last_login FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {

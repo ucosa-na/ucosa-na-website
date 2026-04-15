@@ -561,12 +561,13 @@
                 <th>Email</th>
                 <th>Role</th>
                 <th>Joined</th>
+                <th>Last Login</th>
                 <th>Must Change PW</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="membersTableBody">
-              <tr class="empty-row"><td colspan="7">Loading members…</td></tr>
+              <tr class="empty-row"><td colspan="8">Loading members…</td></tr>
             </tbody>
           </table>
         </div>
@@ -797,6 +798,9 @@
             <td>${escapeHtml(m.email)}</td>
             <td><span class="badge ${m.role}">${m.role}</span></td>
             <td>${formatDate(m.created_at)}</td>
+            <td style="color:${m.last_login ? '#333' : '#aaa'};font-style:${m.last_login ? 'normal' : 'italic'};">
+              ${m.last_login ? formatDate(m.last_login) : 'Never logged in'}
+            </td>
             <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
             <td>
               <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">
@@ -807,7 +811,7 @@
         `).join('');
 
       } catch (err) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Error loading members: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Error loading members: ${err.message}</td></tr>`;
       }
     }
 
