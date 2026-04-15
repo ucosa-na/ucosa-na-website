@@ -17,9 +17,23 @@ pool.query(`
     last_login TIMESTAMPTZ DEFAULT NULL
   );
 `).then(() =>
-  // Add last_login to existing tables that predate this column
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT NULL;`)
+).then(() =>
   pool.query(`
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ DEFAULT NULL;
+    CREATE TABLE IF NOT EXISTS financial_records (
+      id            SERIAL PRIMARY KEY,
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year          INTEGER NOT NULL,
+      annual_dues   NUMERIC(10,2) DEFAULT 0,
+      endowment_fund NUMERIC(10,2) DEFAULT 0,
+      notes         TEXT DEFAULT NULL,
+      updated_at    TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, year)
+    );
   `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);

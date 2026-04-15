@@ -215,4 +215,38 @@ router.get('/backup', requireAdmin, (req, res) => {
   });
 });
 
+// POST /api/admin/financials — upsert a financial record for a member
+router.post('/financials', requireAdmin, async (req, res) => {
+  const { userId, year, annualDues, endowmentFund, notes } = req.body;
+  if (!userId || !year) return res.status(400).json({ error: 'userId and year are required' });
+  try {
+    await pool.query(`
+      INSERT INTO financial_records (user_id, year, annual_dues, endowment_fund, notes, updated_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      ON CONFLICT (user_id, year) DO UPDATE
+        SET annual_dues    = EXCLUDED.annual_dues,
+            endowment_fund = EXCLUDED.endowment_fund,
+            notes          = EXCLUDED.notes,
+            updated_at     = NOW()
+    `, [userId, year, annualDues || 0, endowmentFund || 0, notes || null]);
+    res.json({ message: 'Financial record saved' });
+  } catch (err) {
+    console.error('Financials upsert error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/financials/:userId — get all financial records for a member
+router.get('/financials/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT year, annual_dues, endowment_fund, notes FROM financial_records WHERE user_id = $1 ORDER BY year DESC',
+      [req.params.userId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

@@ -85,7 +85,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, full_name, email, role, must_change_password FROM users WHERE id = $1',
+      'SELECT id, full_name, email, role, must_change_password, address, phone FROM users WHERE id = $1',
       [req.user.id]
     );
     const user = rows[0];
@@ -96,9 +96,26 @@ router.get('/me', requireAuth, async (req, res) => {
       email: user.email,
       role: user.role,
       mustChangePassword: user.must_change_password,
+      address: user.address || '',
+      phone: user.phone || '',
     });
   } catch (err) {
     console.error('Me error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/auth/profile — update address and phone
+router.put('/profile', requireAuth, async (req, res) => {
+  const { address, phone } = req.body;
+  try {
+    await pool.query(
+      'UPDATE users SET address = $1, phone = $2 WHERE id = $3',
+      [address || null, phone || null, req.user.id]
+    );
+    res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error('Profile update error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
