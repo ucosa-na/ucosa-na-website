@@ -157,23 +157,20 @@
   }
 
   /* WELCOME PAGE */
-  .curved-banner {
+  .skyline-banner {
     width: calc(100% + 80px);
     margin-left: -40px;
     margin-top: -48px;
-    margin-bottom: -20px;
-    overflow: visible;
-    line-height: 0;
-    text-align: center;
-    background: rgba(0, 210, 220, 0.10);
-    padding-top: 48px;
+    margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+    background: rgba(0, 210, 220, 0.07);
   }
 
-  .curved-banner svg {
+  .skyline-banner svg {
     width: 100%;
     height: auto;
     display: block;
-    overflow: visible;
   }
 
   .welcome-hero {
@@ -895,17 +892,85 @@
 
   <!-- WELCOME -->
   <section class="page active" id="page-welcome">
-    <div class="curved-banner">
-      <svg viewBox="0 0 960 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <div class="skyline-banner">
+      <!-- Combined New York + Toronto skyline silhouette (transparent) -->
+      <svg viewBox="0 0 1200 340" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
         <defs>
-          <path id="titleCurve" d="M 20,170 Q 480,20 940,170"/>
+          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#7b2152" stop-opacity="0.13"/>
+            <stop offset="100%" stop-color="#7b2152" stop-opacity="0.22"/>
+          </linearGradient>
+          <path id="titleArc" d="M 60,90 Q 600,10 1140,90"/>
         </defs>
-        <text font-family="Cormorant Garamond, Georgia, serif" font-size="48" font-weight="700" fill="#7b2152" letter-spacing="2">
-          <textPath href="#titleCurve" startOffset="50%" text-anchor="middle">Welcome to UCOSA-North America</textPath>
+
+        <!-- ── NEW YORK skyline (left side) ── -->
+        <!-- One World Trade -->
+        <rect x="60"  y="60"  width="22" height="240" fill="url(#skyGrad)"/>
+        <polygon points="71,60 65,30 77,30" fill="url(#skyGrad)"/>
+        <!-- Spire -->
+        <rect x="70" y="30" width="2" height="30" fill="url(#skyGrad)" opacity="0.5"/>
+        <!-- Empire State -->
+        <rect x="100" y="110" width="30" height="190" fill="url(#skyGrad)"/>
+        <rect x="107" y="85"  width="16" height="30"  fill="url(#skyGrad)"/>
+        <rect x="113" y="65"  width="4"  height="25"  fill="url(#skyGrad)"/>
+        <!-- Chrysler Building -->
+        <rect x="148" y="130" width="26" height="170" fill="url(#skyGrad)"/>
+        <rect x="153" y="108" width="16" height="28"  fill="url(#skyGrad)"/>
+        <polygon points="161,90 155,110 167,110" fill="url(#skyGrad)"/>
+        <!-- Mid buildings -->
+        <rect x="182" y="155" width="28" height="145" fill="url(#skyGrad)"/>
+        <rect x="218" y="170" width="22" height="130" fill="url(#skyGrad)"/>
+        <rect x="248" y="145" width="32" height="155" fill="url(#skyGrad)"/>
+        <rect x="288" y="180" width="20" height="120" fill="url(#skyGrad)"/>
+        <!-- Brooklyn Bridge towers (simplified) -->
+        <rect x="316" y="150" width="14" height="150" fill="url(#skyGrad)"/>
+        <path d="M 316,165 Q 323,135 330,165" fill="none" stroke="url(#skyGrad)" stroke-width="1.5" opacity="0.7"/>
+        <rect x="330" y="150" width="14" height="150" fill="url(#skyGrad)"/>
+
+        <!-- ── LABEL: NEW YORK ── -->
+        <text x="195" y="326" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
+              font-size="13" letter-spacing="3" fill="#7b2152" opacity="0.55" font-weight="600">NEW YORK</text>
+
+        <!-- ── CENTRE TITLE ── -->
+        <text font-family="Cormorant Garamond, Georgia, serif" font-size="46" font-weight="700" fill="#7b2152" letter-spacing="2" opacity="0.92">
+          <textPath href="#titleArc" startOffset="50%" text-anchor="middle">Welcome to UCOSA-North America</textPath>
         </text>
-        <text x="50%" y="210" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="28" font-weight="600" fill="#000000" letter-spacing="2">Ugbeka College Old Students&#39; Association — North America Chapter</text>
-        <line x1="60" y1="222" x2="900" y2="222" stroke="#000000" stroke-width="2"/>
-        <line x1="60" y1="229" x2="900" y2="229" stroke="#000000" stroke-width="2"/>
+        <text x="600" y="115" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
+              font-size="18" font-weight="500" fill="#4a1535" letter-spacing="1.5" opacity="0.75">
+          Ugbeka College Old Students&#39; Association
+        </text>
+        <!-- Decorative double rule -->
+        <line x1="360" y1="130" x2="840" y2="130" stroke="#c8a96e" stroke-width="1"   opacity="0.5"/>
+        <line x1="360" y1="134" x2="840" y2="134" stroke="#c8a96e" stroke-width="0.5" opacity="0.35"/>
+
+        <!-- ── TORONTO skyline (right side) ── -->
+        <!-- CN Tower -->
+        <rect x="860" y="200" width="10"  height="100" fill="url(#skyGrad)"/>
+        <rect x="857" y="155" width="16"  height="50"  fill="url(#skyGrad)"/>
+        <rect x="862" y="100" width="6"   height="58"  fill="url(#skyGrad)"/>
+        <ellipse cx="865" cy="155" rx="18" ry="8"      fill="url(#skyGrad)"/>
+        <rect x="864" y="70"  width="2"   height="35"  fill="url(#skyGrad)" opacity="0.6"/>
+        <!-- First Canadian Place -->
+        <rect x="885" y="120" width="28"  height="180" fill="url(#skyGrad)"/>
+        <rect x="890" y="108" width="18"  height="16"  fill="url(#skyGrad)"/>
+        <!-- Scotia Plaza -->
+        <rect x="922" y="140" width="24"  height="160" fill="url(#skyGrad)"/>
+        <polygon points="934,128 922,142 946,142" fill="url(#skyGrad)"/>
+        <!-- Commerce Court -->
+        <rect x="954" y="160" width="26"  height="140" fill="url(#skyGrad)"/>
+        <!-- TD Centre towers -->
+        <rect x="988"  y="155" width="22" height="145" fill="url(#skyGrad)"/>
+        <rect x="1018" y="175" width="20" height="125" fill="url(#skyGrad)"/>
+        <rect x="1046" y="165" width="24" height="135" fill="url(#skyGrad)"/>
+        <rect x="1078" y="190" width="18" height="110" fill="url(#skyGrad)"/>
+        <rect x="1104" y="175" width="22" height="125" fill="url(#skyGrad)"/>
+
+        <!-- ── LABEL: TORONTO ── -->
+        <text x="990" y="326" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
+              font-size="13" letter-spacing="3" fill="#7b2152" opacity="0.55" font-weight="600">TORONTO</text>
+
+        <!-- Ground line -->
+        <line x1="40" y1="300" x2="1160" y2="300" stroke="#7b2152" stroke-width="1" opacity="0.15"/>
       </svg>
     </div>
 
