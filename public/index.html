@@ -956,6 +956,13 @@
       </svg>
       Admin Portal
     </div>
+
+    <div class="nav-item nav-item-admin" onclick="showPage('maintenance', this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l5.654-4.654m5.765-5.689a2.548 2.548 0 013.586 3.586l-5.654 4.654"/>
+      </svg>
+      Site Maintenance
+    </div>
   </nav>
 
   <div class="sidebar-footer">
@@ -1282,6 +1289,71 @@
         <button class="btn-login-full" id="admin-btn" onclick="doAdminLogin()" style="background:#a07820;">
           Sign In to Admin Panel
         </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SITE MAINTENANCE -->
+  <section class="page" id="page-maintenance">
+    <div class="section-title">Administration</div>
+    <h1 class="page-heading">Site Maintenance</h1>
+    <p class="page-sub">Tools and status information for managing the UCOSA-NA website.</p>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <h3>System Status</h3>
+        <p>
+          <strong>Application:</strong> Running<br>
+          <strong>Database:</strong> PostgreSQL (connected)<br>
+          <strong>Environment:</strong> Production<br>
+          <strong>Node Version:</strong> &ge;18.0.0
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>User Accounts</h3>
+        <p>
+          Manage member accounts, reset passwords, and review new registrations via the
+          <strong>Admin Portal</strong>. Only administrators can add or deactivate members.
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>Email Service</h3>
+        <p>
+          Welcome emails are sent automatically via <strong>SendGrid</strong> when a new member
+          is added. Ensure the <code>SENDGRID_API_KEY</code> environment variable is set on
+          the server.
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>Deployment</h3>
+        <p>
+          The site is deployed automatically via <strong>GitHub Actions</strong> on every push
+          to the <em>main</em> branch. Docker images are built, pushed to Docker Hub, and pulled
+          to the DigitalOcean droplet.
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>Database Backups</h3>
+        <p>
+          Back up the PostgreSQL database by running:<br>
+          <code style="font-size:13px;background:#f0f0f0;padding:4px 8px;display:inline-block;margin-top:8px;">
+            docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup.sql
+          </code>
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>Server Info</h3>
+        <p>
+          <strong>Host:</strong> DigitalOcean Droplet<br>
+          <strong>Container:</strong> ucosa-na-app (Docker)<br>
+          <strong>Port:</strong> 3000<br>
+          <strong>Config:</strong> /opt/ucosa-na/.env
+        </p>
       </div>
     </div>
   </section>
