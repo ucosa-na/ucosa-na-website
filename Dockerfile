@@ -6,6 +6,7 @@ RUN npm ci --only=production
 
 # ---- Production Stage ----
 FROM node:20-alpine AS production
+RUN apk add --no-cache postgresql-client
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules

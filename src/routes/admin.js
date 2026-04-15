@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const os = require('os');
+const { spawn } = require('child_process');
 const pool = require('../db');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -177,6 +178,41 @@ router.get('/metrics', requireAdmin, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// GET /api/admin/backup — stream pg_dump as a downloadable SQL file
+router.get('/backup', requireAdmin, (req, res) => {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    return res.status(500).json({ error: 'DATABASE_URL not configured' });
+  }
+
+  const date = new Date().toISOString().slice(0, 10);
+  const filename = `ucosa_backup_${date}.sql`;
+
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Type', 'application/octet-stream');
+
+  const dump = spawn('pg_dump', [dbUrl]);
+
+  dump.stdout.pipe(res);
+
+  dump.stderr.on('data', data => {
+    console.error('pg_dump stderr:', data.toString());
+  });
+
+  dump.on('error', err => {
+    console.error('pg_dump spawn error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'pg_dump not available: ' + err.message });
+    } else {
+      res.end();
+    }
+  });
+
+  dump.on('close', code => {
+    if (code !== 0) console.error('pg_dump exited with code', code);
+  });
 });
 
 module.exports = router;

@@ -622,8 +622,9 @@
 
               <div class="maint-card maint-card-full" style="grid-column:span 2;">
                 <h4>Database Backup</h4>
-                <p>Run the following on the server to create a timestamped backup:</p>
-                <code class="maint-code">docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup_$(date +%Y%m%d).sql</code>
+                <p style="margin-bottom:16px;">Download a full SQL dump of the database. The file will be saved to your computer and can be used to restore the database if needed.</p>
+                <div id="backupMsg" class="msg" style="display:none;margin-bottom:12px;"></div>
+                <button class="btn-primary" id="backupBtn" onclick="downloadBackup()">&#11015; Download Database Backup</button>
               </div>
 
             </div>
@@ -982,6 +983,45 @@
         errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = 'Send Test Email';
+      }
+    }
+
+    async function downloadBackup() {
+      const btn = document.getElementById('backupBtn');
+      const msg = document.getElementById('backupMsg');
+      msg.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Creating backup…';
+      try {
+        const res = await fetch('/api/admin/backup', {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+          msg.className = 'msg error';
+          msg.textContent = 'Backup failed: ' + (data.error || 'Unknown error');
+          msg.style.display = 'block';
+          return;
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ucosa_backup_${new Date().toISOString().slice(0,10)}.sql`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        msg.className = 'msg success';
+        msg.textContent = 'Backup downloaded successfully.';
+        msg.style.display = 'block';
+      } catch (err) {
+        msg.className = 'msg error';
+        msg.textContent = 'Network error: ' + err.message;
+        msg.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⬇ Download Database Backup';
       }
     }
 
