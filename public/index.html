@@ -893,85 +893,168 @@
   <!-- WELCOME -->
   <section class="page active" id="page-welcome">
     <div class="skyline-banner">
-      <!-- Combined New York + Toronto skyline silhouette (transparent) -->
+      <!-- New York + Toronto landmark skyline silhouette -->
       <svg viewBox="0 0 1200 340" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMax meet">
         <defs>
           <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#7b2152" stop-opacity="0.13"/>
-            <stop offset="100%" stop-color="#7b2152" stop-opacity="0.22"/>
+            <stop offset="0%" stop-color="#7b2152" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#7b2152" stop-opacity="0.24"/>
           </linearGradient>
-          <path id="titleArc" d="M 100,75 Q 600,5 1100,75"/>
         </defs>
 
-        <!-- ── NEW YORK skyline (left side) ── -->
-        <!-- One World Trade -->
-        <rect x="60"  y="60"  width="22" height="240" fill="url(#skyGrad)"/>
-        <polygon points="71,60 65,30 77,30" fill="url(#skyGrad)"/>
-        <!-- Spire -->
-        <rect x="70" y="30" width="2" height="30" fill="url(#skyGrad)" opacity="0.5"/>
-        <!-- Empire State -->
-        <rect x="100" y="110" width="30" height="190" fill="url(#skyGrad)"/>
-        <rect x="107" y="85"  width="16" height="30"  fill="url(#skyGrad)"/>
-        <rect x="113" y="65"  width="4"  height="25"  fill="url(#skyGrad)"/>
-        <!-- Chrysler Building -->
-        <rect x="148" y="130" width="26" height="170" fill="url(#skyGrad)"/>
-        <rect x="153" y="108" width="16" height="28"  fill="url(#skyGrad)"/>
-        <polygon points="161,90 155,110 167,110" fill="url(#skyGrad)"/>
-        <!-- Mid buildings -->
-        <rect x="182" y="155" width="28" height="145" fill="url(#skyGrad)"/>
-        <rect x="218" y="170" width="22" height="130" fill="url(#skyGrad)"/>
-        <rect x="248" y="145" width="32" height="155" fill="url(#skyGrad)"/>
-        <rect x="288" y="180" width="20" height="120" fill="url(#skyGrad)"/>
-        <!-- Brooklyn Bridge towers (simplified) -->
-        <rect x="316" y="150" width="14" height="150" fill="url(#skyGrad)"/>
-        <path d="M 316,165 Q 323,135 330,165" fill="none" stroke="url(#skyGrad)" stroke-width="1.5" opacity="0.7"/>
-        <rect x="330" y="150" width="14" height="150" fill="url(#skyGrad)"/>
+        <!-- ════ NEW YORK SKYLINE (x: 20–400) ════ -->
 
-        <!-- ── LABEL: NEW YORK ── -->
-        <text x="195" y="326" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
-              font-size="13" letter-spacing="3" fill="#7b2152" opacity="0.55" font-weight="600">NEW YORK</text>
+        <!-- Low foreground buildings far left -->
+        <rect x="20" y="255" width="18" height="45" fill="url(#skyGrad)"/>
+        <rect x="40" y="240" width="14" height="60" fill="url(#skyGrad)"/>
 
-        <!-- ── CENTRE: Logo + Title ── -->
-        <!-- Logo centred between the two skylines -->
-        <image href="/logo.jpg" x="530" y="140" width="140" height="140"
-               preserveAspectRatio="xMidYMid meet" opacity="0.92"
-               clip-path="inset(0% round 50%)"/>
-        <!-- Decorative double rule above subtitle -->
-        <line x1="360" y1="290" x2="840" y2="290" stroke="#c8a96e" stroke-width="1"   opacity="0.5"/>
-        <line x1="360" y1="294" x2="840" y2="294" stroke="#c8a96e" stroke-width="0.5" opacity="0.35"/>
-        <text x="600" y="314" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
-              font-size="18" font-weight="500" fill="#4a1535" letter-spacing="1.5" opacity="0.80">
+        <!-- ONE WORLD TRADE CENTER
+             Tall tapered glass tower — square cross-section narrowing toward top, needle spire -->
+        <polygon points="
+          56,300  56,248  53,238  54,175  56,165  57,95  58,28  59,95  60,165  62,175  63,238  60,248  60,300
+        " fill="url(#skyGrad)"/>
+        <!-- OWT spire tip -->
+        <line x1="58" y1="28" x2="58" y2="8" stroke="#7b2152" stroke-width="1.5" stroke-opacity="0.35"/>
+
+        <!-- Filler mid-rises between OWT and Empire State -->
+        <rect x="65" y="210" width="16" height="90"  fill="url(#skyGrad)"/>
+        <rect x="83" y="225" width="12" height="75"  fill="url(#skyGrad)"/>
+        <rect x="97" y="195" width="20" height="105" fill="url(#skyGrad)"/>
+
+        <!-- EMPIRE STATE BUILDING
+             Classic stepped Art Deco silhouette with 5 setbacks + mooring mast antenna -->
+        <polygon points="
+          122,300  122,268  120,262  120,248  118,242  118,226  120,220  120,208
+          122,202  122,190  124,184  124,172  126,166  126,156  128,150  128,142
+          130,136  131,130  132,124  133,118  134,114  135,112
+          136,114  137,118  138,124  139,130  140,136  142,142  142,150
+          144,156  144,166  146,172  146,184  148,190  148,202
+          150,208  150,220  152,226  152,242  150,248  150,262  148,268  148,300
+        " fill="url(#skyGrad)"/>
+        <!-- Empire State antenna -->
+        <line x1="135" y1="112" x2="135" y2="80" stroke="#7b2152" stroke-width="2" stroke-opacity="0.5"/>
+        <line x1="135" y1="80"  x2="135" y2="62" stroke="#7b2152" stroke-width="1" stroke-opacity="0.35"/>
+
+        <!-- Buildings between Empire State and Chrysler -->
+        <rect x="155" y="215" width="16" height="85"  fill="url(#skyGrad)"/>
+        <rect x="173" y="230" width="12" height="70"  fill="url(#skyGrad)"/>
+
+        <!-- CHRYSLER BUILDING
+             Distinctive Art Deco sunburst crown of eagle-head arches + triangular crown -->
+        <!-- Body -->
+        <polygon points="
+          190,300  190,268  188,262  188,246  190,240  190,224  192,218  192,205  194,200
+          196,192  196,185  194,178  192,165
+          194,158  196,148  194,140  196,130  198,118
+          200,108  201,103  202,98  204,92  205,87  206,84
+          207,87  208,92  209,98  210,103  211,108
+          213,118  215,130  213,140  215,148  213,158
+          216,165  214,178  212,185  212,192  214,200  216,205  216,218  218,224  218,240  220,246  220,262  218,268  218,300
+        " fill="url(#skyGrad)"/>
+        <!-- Chrysler sunburst crown arches (3 layered tiers) -->
+        <path d="M 192,165 Q 196,150 200,143 Q 204,136 206,130 Q 208,136 212,143 Q 216,150 220,165" fill="url(#skyGrad)" opacity="0.7"/>
+        <path d="M 194,150 Q 197,138 200,132 Q 203,125 206,120 Q 209,125 212,132 Q 215,138 218,150" fill="url(#skyGrad)" opacity="0.55"/>
+        <!-- Eagle brow fins -->
+        <path d="M 192,205 Q 185,200 181,205" stroke="#7b2152" stroke-width="1.5" fill="none" stroke-opacity="0.3"/>
+        <path d="M 220,205 Q 227,200 231,205" stroke="#7b2152" stroke-width="1.5" fill="none" stroke-opacity="0.3"/>
+
+        <!-- FLATIRON BUILDING (triangular wedge — recognizable) -->
+        <polygon points="235,300  241,300  241,190  238,185  235,190" fill="url(#skyGrad)"/>
+        <polygon points="235,190  238,185  241,190  238,188" fill="url(#skyGrad)"/>
+
+        <!-- Filler buildings east toward centre -->
+        <rect x="245" y="220" width="18" height="80"  fill="url(#skyGrad)"/>
+        <rect x="265" y="205" width="22" height="95"  fill="url(#skyGrad)"/>
+        <rect x="289" y="230" width="16" height="70"  fill="url(#skyGrad)"/>
+        <rect x="307" y="215" width="20" height="85"  fill="url(#skyGrad)"/>
+        <rect x="329" y="240" width="14" height="60"  fill="url(#skyGrad)"/>
+        <rect x="345" y="255" width="12" height="45"  fill="url(#skyGrad)"/>
+        <rect x="359" y="265" width="18" height="35"  fill="url(#skyGrad)"/>
+        <rect x="379" y="270" width="14" height="30"  fill="url(#skyGrad)"/>
+
+        <!-- NEW YORK label -->
+        <text x="200" y="322" text-anchor="middle"
+              font-family="Cormorant Garamond, Georgia, serif"
+              font-size="12" letter-spacing="4" fill="#7b2152" opacity="0.55" font-weight="700">NEW YORK</text>
+
+
+        <!-- ════ CENTRE: Logo ════ -->
+        <image href="/logo.jpg" x="530" y="120" width="140" height="140"
+               preserveAspectRatio="xMidYMid meet" opacity="0.93"/>
+        <!-- Gold rule below logo -->
+        <line x1="400" y1="278" x2="800" y2="278" stroke="#c8a96e" stroke-width="1"   opacity="0.45"/>
+        <line x1="400" y1="282" x2="800" y2="282" stroke="#c8a96e" stroke-width="0.5" opacity="0.30"/>
+        <text x="600" y="300" text-anchor="middle"
+              font-family="Cormorant Garamond, Georgia, serif"
+              font-size="16" font-weight="500" fill="#4a1535" letter-spacing="1.5" opacity="0.75">
           Ugbeka College Old Students&#39; Association — North America
         </text>
 
-        <!-- ── TORONTO skyline (right side) ── -->
-        <!-- CN Tower -->
-        <rect x="860" y="200" width="10"  height="100" fill="url(#skyGrad)"/>
-        <rect x="857" y="155" width="16"  height="50"  fill="url(#skyGrad)"/>
-        <rect x="862" y="100" width="6"   height="58"  fill="url(#skyGrad)"/>
-        <ellipse cx="865" cy="155" rx="18" ry="8"      fill="url(#skyGrad)"/>
-        <rect x="864" y="70"  width="2"   height="35"  fill="url(#skyGrad)" opacity="0.6"/>
-        <!-- First Canadian Place -->
-        <rect x="885" y="120" width="28"  height="180" fill="url(#skyGrad)"/>
-        <rect x="890" y="108" width="18"  height="16"  fill="url(#skyGrad)"/>
-        <!-- Scotia Plaza -->
-        <rect x="922" y="140" width="24"  height="160" fill="url(#skyGrad)"/>
-        <polygon points="934,128 922,142 946,142" fill="url(#skyGrad)"/>
-        <!-- Commerce Court -->
-        <rect x="954" y="160" width="26"  height="140" fill="url(#skyGrad)"/>
-        <!-- TD Centre towers -->
-        <rect x="988"  y="155" width="22" height="145" fill="url(#skyGrad)"/>
-        <rect x="1018" y="175" width="20" height="125" fill="url(#skyGrad)"/>
-        <rect x="1046" y="165" width="24" height="135" fill="url(#skyGrad)"/>
-        <rect x="1078" y="190" width="18" height="110" fill="url(#skyGrad)"/>
-        <rect x="1104" y="175" width="22" height="125" fill="url(#skyGrad)"/>
 
-        <!-- ── LABEL: TORONTO ── -->
-        <text x="990" y="326" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif"
-              font-size="13" letter-spacing="3" fill="#7b2152" opacity="0.55" font-weight="600">TORONTO</text>
+        <!-- ════ TORONTO SKYLINE (x: 800–1180) ════ -->
+
+        <!-- Low filler buildings approaching from left -->
+        <rect x="800" y="268" width="14" height="32"  fill="url(#skyGrad)"/>
+        <rect x="816" y="255" width="16" height="45"  fill="url(#skyGrad)"/>
+        <rect x="834" y="240" width="14" height="60"  fill="url(#skyGrad)"/>
+
+        <!-- CN TOWER
+             World-famous needle: wide concrete base tapering to thin shaft, large SkyPod disc, then antenna -->
+        <!-- Base legs (3 buttresses at ground) -->
+        <polygon points="848,300  851,265  858,265  861,300" fill="url(#skyGrad)"/>
+        <polygon points="862,300  865,265  872,265  875,300" fill="url(#skyGrad)"/>
+        <!-- Main concrete shaft -->
+        <polygon points="851,265  852,230  854,210  855,185  856,160  857,125  858,60  861,60  862,125  863,160  864,185  865,210  867,230  869,265  858,265" fill="url(#skyGrad)"/>
+        <!-- SkyPod observation disc -->
+        <ellipse cx="859" cy="152" rx="22" ry="9"   fill="url(#skyGrad)" opacity="0.95"/>
+        <rect    x="850"  y="152" width="18" height="20" fill="url(#skyGrad)"/>
+        <!-- Glass top pod (smaller) -->
+        <ellipse cx="859" cy="125" rx="10" ry="5"   fill="url(#skyGrad)" opacity="0.75"/>
+        <!-- Antenna mast -->
+        <line x1="859" y1="60" x2="859" y2="18" stroke="#7b2152" stroke-width="1.8" stroke-opacity="0.45"/>
+
+        <!-- FIRST CANADIAN PLACE
+             Tallest building in Canada — tall white marble rectangular tower, slight crown -->
+        <rect x="882" y="108" width="34" height="192" fill="url(#skyGrad)"/>
+        <!-- Crown parapet -->
+        <polygon points="882,108  884,100  888,95  910,95  914,100  916,108" fill="url(#skyGrad)"/>
+
+        <!-- SCOTIA PLAZA
+             Distinctive tapered top with stepped pyramidal crown, red granite -->
+        <polygon points="
+          924,300  924,270  922,264  922,248  924,242  924,226  926,218
+          926,205  928,198  928,183  930,176  931,166  932,158  933,150  934,144  935,140
+          936,144  937,150  938,158  939,166  940,176  942,183  942,198
+          944,205  944,218  946,226  946,242  948,248  948,264  946,270  946,300
+        " fill="url(#skyGrad)"/>
+
+        <!-- TD BANK TOWER (TD Centre) — tall flat-top glass box -->
+        <rect x="953" y="143" width="28" height="157" fill="url(#skyGrad)"/>
+        <!-- Parapet -->
+        <rect x="955" y="135" width="24" height="10"  fill="url(#skyGrad)"/>
+
+        <!-- COMMERCE COURT WEST — stepped modernist -->
+        <rect x="986"  y="158" width="26" height="142" fill="url(#skyGrad)"/>
+        <rect x="989"  y="148" width="20" height="12"  fill="url(#skyGrad)"/>
+
+        <!-- BAY ADELAIDE CENTRE / other towers -->
+        <rect x="1016" y="168" width="24" height="132" fill="url(#skyGrad)"/>
+        <rect x="1044" y="153" width="26" height="147" fill="url(#skyGrad)"/>
+        <rect x="1074" y="178" width="20" height="122" fill="url(#skyGrad)"/>
+        <rect x="1098" y="192" width="22" height="108" fill="url(#skyGrad)"/>
+
+        <!-- Filler low-rises toward far right -->
+        <rect x="1124" y="215" width="18" height="85"  fill="url(#skyGrad)"/>
+        <rect x="1144" y="235" width="16" height="65"  fill="url(#skyGrad)"/>
+        <rect x="1162" y="252" width="18" height="48"  fill="url(#skyGrad)"/>
+
+        <!-- TORONTO label -->
+        <text x="1000" y="322" text-anchor="middle"
+              font-family="Cormorant Garamond, Georgia, serif"
+              font-size="12" letter-spacing="4" fill="#7b2152" opacity="0.55" font-weight="700">TORONTO</text>
 
         <!-- Ground line -->
-        <line x1="40" y1="300" x2="1160" y2="300" stroke="#7b2152" stroke-width="1" opacity="0.15"/>
+        <line x1="20" y1="300" x2="1180" y2="300" stroke="#7b2152" stroke-width="1" opacity="0.12"/>
       </svg>
     </div>
 
