@@ -981,6 +981,30 @@
     margin-bottom: 20px;
   }
 
+  /* GALLERY */
+  .gallery-item {
+    overflow: hidden;
+    border-radius: 8px;
+    background: #000;
+    cursor: zoom-in;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    aspect-ratio: 4/3;
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s, opacity 0.3s;
+    opacity: 0.92;
+  }
+
+  .gallery-item:hover img {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
   /* SCROLLBAR */
   .main::-webkit-scrollbar { width: 4px; }
   .main::-webkit-scrollbar-track { background: var(--bg); }
@@ -1522,6 +1546,15 @@
       </div>`;
   });
 
+  // ── Gallery lightbox ──
+  document.querySelectorAll('.gallery-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const lb = document.getElementById('lightbox');
+      document.getElementById('lightbox-img').src = item.querySelector('img').src;
+      lb.style.display = 'flex';
+    });
+  });
+
   // ── Page navigation ──
   function showPage(id, clickedEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1666,7 +1699,25 @@
     <div class="section-title">Events</div>
     <h1 class="page-heading">Ucosa-NA Inaugural Convention</h1>
     <p class="page-sub">The first UCOSA North America Chapter Convention</p>
-    <div style="padding:40px 0;color:var(--muted);font-size:18px;">Details coming soon.</div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:32px 0;">
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan.jpg"    alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(1).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(2).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(3).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(4).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(5).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(6).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(7).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(8).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(9).jpg" alt="Inaugural Convention"></div>
+      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(10).jpg" alt="Inaugural Convention"></div>
+    </div>
+
+    <!-- Lightbox overlay -->
+    <div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+      <img id="lightbox-img" src="" alt="" style="max-width:92vw;max-height:92vh;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,0.7);">
+    </div>
   </section>
 
 </div><!-- end .content-wrapper -->
