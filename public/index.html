@@ -165,8 +165,9 @@
 
   /* FULL-WIDTH BANNER */
   .banner-header {
-    background: #141829 url('/ucosa-image1.jpg') center center / cover no-repeat;
+    background: #141829 url('/ucosa-image1.jpg') center 30% / cover no-repeat;
     width: 100%;
+    min-height: 260px;
     flex-shrink: 0;
     position: relative;
   }
@@ -175,14 +176,14 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: rgba(10, 10, 20, 0.45);
+    background: rgba(10, 10, 20, 0.52);
     pointer-events: none;
   }
 
   .banner-content {
     display: flex;
     align-items: center;
-    padding: 16px 20px;
+    padding: 28px 20px 28px;
     position: relative;
     z-index: 1;
   }
@@ -226,7 +227,7 @@
   }
 
   .banner-nav-bar {
-    background: #7b2152;
+    background: #111111;
     padding: 0 0 0 0;
     display: flex;
     align-items: stretch;
@@ -996,8 +997,9 @@
 <div class="banner-header">
   <div class="banner-content">
 
-    <!-- CENTRE: title + subtitle + flags -->
+    <!-- CENTRE: logo + title + subtitle + flags -->
     <div class="banner-center">
+      <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
       <h2 class="banner-title">Welcome to UCOSA-North America</h2>
       <p class="banner-sub">Ugbeka College Old Students&#39; Association — North America Chapter</p>
       <img src="/flag.png" alt="US and Canadian Flags" style="display:block;margin:8px auto 0;height:60px;object-fit:contain;">
