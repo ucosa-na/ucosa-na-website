@@ -47,8 +47,13 @@ router.post('/users', requireAdmin, async (req, res) => {
       [fullName.trim(), email.toLowerCase().trim(), hash, 'member']
     );
 
+    // Respond immediately — email is sent in the background so a slow/failing
+    // SMTP connection never causes a client-side "Network error".
+    res.status(201).json({ message: `Member created. Welcome email will be sent to ${email}` });
+
+    // Fire-and-forget email
     const transport = makeTransport();
-    await transport.sendMail({
+    transport.sendMail({
       from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Welcome to UCOSA-North America — Your Login Details',
@@ -70,9 +75,8 @@ router.post('/users', requireAdmin, async (req, res) => {
           </p>
         </div>
       `,
-    });
+    }).catch(err => console.error('Welcome email failed for', email, ':', err.message));
 
-    res.status(201).json({ message: `Member created and welcome email sent to ${email}` });
   } catch (err) {
     console.error('Create member error:', err.message);
     res.status(500).json({ error: 'Failed to create member. ' + err.message });
