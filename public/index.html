@@ -1067,6 +1067,51 @@
     opacity: 1;
   }
 
+  /* GALLERY SECTIONS */
+  .gallery-section {
+    margin-bottom: 52px;
+  }
+  .gallery-section-heading {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--sidebar);
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .gallery-section-sub {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-bottom: 20px;
+  }
+  .gallery-placeholder {
+    aspect-ratio: 4/3;
+    border: 2px dashed var(--accent);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-align: center;
+    background: #fdf6ec;
+    gap: 8px;
+  }
+  .gallery-placeholder svg { opacity: 0.5; }
+
+  .event-info-box {
+    background: #fdf6ec;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+  .event-info-box strong { color: var(--sidebar); }
+
   /* SCROLLBAR */
   .main::-webkit-scrollbar { width: 4px; }
   .main::-webkit-scrollbar-track { background: var(--bg); }
@@ -1616,13 +1661,19 @@
     btn.classList.add('active');
   }
 
-  // ── Gallery lightbox ──
-  document.querySelectorAll('.gallery-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const lb = document.getElementById('lightbox');
-      document.getElementById('lightbox-img').src = item.querySelector('img').src;
-      lb.style.display = 'flex';
-    });
+  // ── Gallery lightbox (global — covers all pages) ──
+  document.addEventListener('click', e => {
+    const item = e.target.closest('.gallery-item');
+    if (!item) return;
+    const img = item.querySelector('img');
+    if (!img) return;
+    document.getElementById('lightbox-img').src = img.src;
+    document.getElementById('lightbox').style.display = 'flex';
+  });
+
+  // Close lightbox on Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('lightbox').style.display = 'none';
   });
 
   // ── Page navigation ──
@@ -1752,16 +1803,77 @@
   <section class="page" id="page-gallery">
     <div class="section-title">Media</div>
     <h1 class="page-heading">Photo Gallery</h1>
-    <p class="page-sub">Memories from our events and gatherings</p>
-    <div style="padding:40px 0;color:var(--muted);font-size:18px;">Photos coming soon.</div>
+    <p class="page-sub">Memories from our events and gatherings across North America</p>
+
+    <!-- Ucosa-NA Inaugural Convention -->
+    <div class="gallery-section">
+      <div class="gallery-section-heading">&#127970; Ucosa-NA Inaugural Convention</div>
+      <p class="gallery-section-sub">Welcome Dinner &amp; Tour of Times Square &bull; Visit to 9/11 Memorial Museum &bull; Gala Night &amp; Fundraising Night</p>
+      <div class="gallery-grid">
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan.jpg"     alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(1).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(2).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(3).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(4).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(5).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(6).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(7).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(8).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(9).jpg"  alt="Inaugural Convention"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(10).jpg" alt="Inaugural Convention"></div>
+      </div>
+    </div>
+
+    <!-- Golden Jubilee — placeholder -->
+    <div class="gallery-section">
+      <div class="gallery-section-heading">&#127881; Golden Jubilee</div>
+      <p class="gallery-section-sub">Celebrating 50 years of UCOSA — photos will be posted here.</p>
+      <div class="gallery-grid">
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+      </div>
+    </div>
+
+    <!-- More Events — placeholder -->
+    <div class="gallery-section">
+      <div class="gallery-section-heading">&#128247; More Events</div>
+      <p class="gallery-section-sub">Additional event photos will be added here.</p>
+      <div class="gallery-grid">
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+      </div>
+    </div>
   </section>
 
   <!-- GOLDEN JUBILEE -->
   <section class="page" id="page-event-golden-jubilee">
     <div class="section-title">Events</div>
     <h1 class="page-heading">Golden Jubilee</h1>
-    <p class="page-sub">Celebrating 50 years of UCOSA</p>
-    <div style="padding:40px 0;color:var(--muted);font-size:18px;">Details coming soon.</div>
+    <p class="page-sub">Celebrating 50 years of Ugbeka College Old Students' Association</p>
+
+    <div class="event-info-box">
+      <strong>&#127881; Golden Jubilee — 50th Anniversary Celebration</strong><br>
+      A landmark celebration marking 50 years of the Ugbeka College Old Students' Association.
+      This milestone event brings together alumni from across the world to celebrate fellowship,
+      achievements, and the enduring bonds of Ugbeka College.<br><br>
+      <strong>Details:</strong> Event date and venue to be announced. Check back for updates.
+    </div>
+
+    <!-- Photos -->
+    <div class="gallery-section">
+      <div class="gallery-section-heading">&#128247; Event Photos</div>
+      <p class="gallery-section-sub">Photos will be posted here as they become available.</p>
+      <div class="gallery-grid">
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+      </div>
+    </div>
   </section>
 
   <!-- UCOSA-NA INAUGURAL CONVENTION -->
@@ -1806,13 +1918,14 @@
       </div>
     </div>
 
-    <!-- Lightbox overlay -->
-    <div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
-      <img id="lightbox-img" src="" alt="" style="max-width:92vw;max-height:92vh;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,0.7);">
-    </div>
   </section>
 
 </div><!-- end .content-wrapper -->
+
+<!-- GLOBAL LIGHTBOX -->
+<div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="lightbox-img" src="" alt="" style="max-width:92vw;max-height:92vh;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,0.7);">
+</div>
 
 <footer class="site-footer">
   © 2026 UCOSA-North America. All rights reserved. &nbsp;|&nbsp;
