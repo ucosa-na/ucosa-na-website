@@ -561,7 +561,7 @@
                 <th>Email</th>
                 <th>Role</th>
                 <th>Joined</th>
-                <th>Last Login</th>
+                <th>Last Login &#128336;</th>
                 <th>Must Change PW</th>
                 <th>Action</th>
               </tr>
@@ -731,6 +731,27 @@
       } catch { return dateStr; }
     }
 
+    function formatDateTime(dateStr) {
+      if (!dateStr) return 'N/A';
+      try {
+        return new Date(dateStr).toLocaleString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch { return dateStr; }
+    }
+
+    function timeAgo(dateStr) {
+      if (!dateStr) return '';
+      const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+      if (diff < 60)          return 'just now';
+      if (diff < 3600)        return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400)       return `${Math.floor(diff / 3600)}h ago`;
+      if (diff < 2592000)     return `${Math.floor(diff / 86400)}d ago`;
+      if (diff < 31536000)    return `${Math.floor(diff / 2592000)}mo ago`;
+      return `${Math.floor(diff / 31536000)}y ago`;
+    }
+
     function escapeHtml(str) {
       const d = document.createElement('div');
       d.textContent = str || '';
@@ -798,8 +819,12 @@
             <td>${escapeHtml(m.email)}</td>
             <td><span class="badge ${m.role}">${m.role}</span></td>
             <td>${formatDate(m.created_at)}</td>
-            <td style="color:${m.last_login ? '#333' : '#aaa'};font-style:${m.last_login ? 'normal' : 'italic'};">
-              ${m.last_login ? formatDate(m.last_login) : 'Never logged in'}
+            <td>
+              ${m.last_login
+                ? `<span style="color:#1a1a2e;font-weight:600;">${formatDateTime(m.last_login)}</span>
+                   <br><span style="color:#888;font-size:0.78rem;">${timeAgo(m.last_login)}</span>`
+                : `<span style="color:#aaa;font-style:italic;">Never logged in</span>`
+              }
             </td>
             <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
             <td>
