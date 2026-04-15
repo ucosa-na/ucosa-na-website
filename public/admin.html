@@ -381,6 +381,7 @@
       <h3>Admin Menu</h3>
       <a href="/admin.html" class="active">Dashboard</a>
       <a href="#createMember">Create Member</a>
+      <a href="#testEmail">Test Email</a>
       <a href="#membersList">Member List</a>
       <a href="#siteMaintenance">Site Maintenance</a>
       <a href="/members.html">My Profile</a>
@@ -416,6 +417,11 @@
 
         <div id="createError" class="msg error"></div>
         <div id="createSuccess" class="msg success"></div>
+        <div id="tempPasswordBox" style="display:none;background:#fff8e1;border:1px solid #f59e0b;border-radius:8px;padding:14px 18px;margin-bottom:16px;">
+          <strong style="color:#7c5700;">&#128274; Temporary Password</strong>
+          <p style="font-size:0.9rem;color:#555;margin:6px 0 4px;">Share this with the new member if they don't receive the email:</p>
+          <code id="tempPasswordValue" style="font-size:1.15rem;background:#fef3c7;padding:6px 14px;border-radius:6px;display:inline-block;letter-spacing:1px;color:#1a1a2e;"></code>
+        </div>
 
         <form id="createForm">
           <div class="form-row">
@@ -430,6 +436,23 @@
           </div>
           <button type="submit" class="btn-primary" id="createBtn">Create Member &amp; Send Email</button>
         </form>
+      </section>
+
+      <!-- TEST EMAIL -->
+      <section id="testEmail">
+        <h2>&#9993; Test Email Delivery</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:16px;">
+          Send a test email to verify that SendGrid is configured correctly on the server.
+        </p>
+        <div id="testEmailError" class="msg error"></div>
+        <div id="testEmailSuccess" class="msg success"></div>
+        <div style="display:flex;gap:12px;align-items:flex-end;">
+          <div style="flex:1;">
+            <label for="testEmailAddr" style="font-size:0.875rem;font-weight:600;color:#444;display:block;margin-bottom:6px;">Recipient Email</label>
+            <input type="email" id="testEmailAddr" placeholder="you@example.com" style="width:100%;padding:11px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:0.95rem;outline:none;"/>
+          </div>
+          <button class="btn-primary" id="testEmailBtn" onclick="sendTestEmail()" style="white-space:nowrap;">Send Test Email</button>
+        </div>
       </section>
 
       <!-- MEMBERS LIST -->
@@ -669,6 +692,10 @@
 
         successMsg.textContent = data.message || 'Member created successfully!';
         successMsg.style.display = 'block';
+        if (data.tempPassword) {
+          document.getElementById('tempPasswordValue').textContent = data.tempPassword;
+          document.getElementById('tempPasswordBox').style.display = 'block';
+        }
         document.getElementById('createForm').reset();
         loadMembers();
 
@@ -680,6 +707,31 @@
         createBtn.textContent = 'Create Member & Send Email';
       }
     });
+
+    async function sendTestEmail() {
+      const to = document.getElementById('testEmailAddr').value.trim();
+      const errEl = document.getElementById('testEmailError');
+      const okEl  = document.getElementById('testEmailSuccess');
+      const btn   = document.getElementById('testEmailBtn');
+      errEl.style.display = 'none';
+      okEl.style.display  = 'none';
+      if (!to) { errEl.textContent = 'Enter a recipient email.'; errEl.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/test-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ to }),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; }
+        else          { okEl.textContent  = data.message;            okEl.style.display  = 'block'; }
+      } catch {
+        errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send Test Email';
+      }
+    }
 
     // Init
     (async function () {

@@ -47,9 +47,13 @@ router.post('/users', requireAdmin, async (req, res) => {
       [fullName.trim(), email.toLowerCase().trim(), hash, 'member']
     );
 
-    // Respond immediately — email is sent in the background so a slow/failing
-    // SMTP connection never causes a client-side "Network error".
-    res.status(201).json({ message: `Member created. Welcome email will be sent to ${email}` });
+    // Respond immediately with temp password — admin can share it manually if email fails.
+    // Email is sent in the background so a slow/failing SMTP connection never
+    // causes a client-side "Network error".
+    res.status(201).json({
+      message: `Member created. Welcome email will be sent to ${email}`,
+      tempPassword,
+    });
 
     // Fire-and-forget email
     const transport = makeTransport();
@@ -80,6 +84,24 @@ router.post('/users', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Create member error:', err.message);
     res.status(500).json({ error: 'Failed to create member. ' + err.message });
+  }
+});
+
+// POST /api/admin/test-email — send a test email to verify SMTP config
+router.post('/test-email', requireAdmin, async (req, res) => {
+  const { to } = req.body;
+  if (!to) return res.status(400).json({ error: 'Recipient email required' });
+  try {
+    const transport = makeTransport();
+    await transport.sendMail({
+      from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: 'UCOSA-NA — Email Test',
+      html: '<p>This is a test email from the UCOSA-NA admin panel. If you received this, email delivery is working correctly.</p>',
+    });
+    res.json({ message: `Test email sent to ${to}` });
+  } catch (err) {
+    res.status(500).json({ error: 'Email failed: ' + err.message });
   }
 });
 
