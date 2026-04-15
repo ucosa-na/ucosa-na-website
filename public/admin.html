@@ -95,7 +95,7 @@
       top: 16px;
     }
     .sidebar h3 {
-      font-size: 0.75rem;
+      font-size: 0.95rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: #999;
@@ -105,10 +105,10 @@
     }
     .sidebar a {
       display: block;
-      padding: 9px 20px;
+      padding: 11px 20px;
       color: #444;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 1.1rem;
       transition: background 0.15s, color 0.15s;
       border-left: 3px solid transparent;
     }
@@ -331,6 +331,7 @@
       <a href="/admin.html" class="active">Dashboard</a>
       <a href="#createMember">Create Member</a>
       <a href="#membersList">Member List</a>
+      <a href="#siteMaintenance">Site Maintenance</a>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -400,6 +401,58 @@
               <tr class="empty-row"><td colspan="7">Loading members…</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- SITE MAINTENANCE -->
+      <section id="siteMaintenance">
+        <h2>&#9881; Site Maintenance</h2>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
+            <h4 style="margin-bottom:12px;color:#1a1a2e;">System Status</h4>
+            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+              <strong>Application:</strong> Running<br>
+              <strong>Database:</strong> PostgreSQL (connected)<br>
+              <strong>Environment:</strong> Production<br>
+              <strong>Node Version:</strong> &ge;18.0.0
+            </p>
+          </div>
+
+          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
+            <h4 style="margin-bottom:12px;color:#1a1a2e;">Email Service</h4>
+            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+              Welcome emails sent via <strong>SendGrid</strong> on member creation.<br>
+              Ensure <code>SENDGRID_API_KEY</code> is set in <code>/opt/ucosa-na/.env</code>.
+            </p>
+          </div>
+
+          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
+            <h4 style="margin-bottom:12px;color:#1a1a2e;">Deployment</h4>
+            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+              Auto-deployed via <strong>GitHub Actions</strong> on push to <em>main</em>.<br>
+              Docker image → Docker Hub → DigitalOcean droplet.
+            </p>
+          </div>
+
+          <div style="background:#f8f9fb;border-radius:10px;padding:22px;">
+            <h4 style="margin-bottom:12px;color:#1a1a2e;">Server Info</h4>
+            <p style="font-size:0.9rem;line-height:1.8;color:#555;">
+              <strong>Host:</strong> DigitalOcean Droplet<br>
+              <strong>Container:</strong> ucosa-na-app<br>
+              <strong>Port:</strong> 3000 &nbsp;|&nbsp; <strong>Config:</strong> /opt/ucosa-na/.env
+            </p>
+          </div>
+
+          <div style="background:#f8f9fb;border-radius:10px;padding:22px;grid-column:1/-1;">
+            <h4 style="margin-bottom:12px;color:#1a1a2e;">Database Backup</h4>
+            <p style="font-size:0.9rem;color:#555;margin-bottom:10px;">Run the following on the server to create a backup:</p>
+            <code style="display:block;background:#1a1a2e;color:#cdd6f4;padding:12px 16px;border-radius:8px;font-size:0.88rem;">
+              docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup_$(date +%Y%m%d).sql
+            </code>
+          </div>
+
         </div>
       </section>
 
