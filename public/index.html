@@ -1048,9 +1048,10 @@
     overflow: hidden;
     border-radius: 8px;
     background: #000;
-    cursor: zoom-in;
+    cursor: default;
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     aspect-ratio: 4/3;
+    position: relative;
   }
 
   .gallery-item img {
@@ -1058,13 +1059,18 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.3s, opacity 0.3s;
-    opacity: 0.92;
+    opacity: 1;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
-  .gallery-item:hover img {
-    transform: scale(1.05);
-    opacity: 1;
+  /* Transparent overlay blocks right-click / save-image on photos */
+  .gallery-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
   }
 
   /* GALLERY SECTIONS */
@@ -1661,20 +1667,7 @@
     btn.classList.add('active');
   }
 
-  // ── Gallery lightbox (global — covers all pages) ──
-  document.addEventListener('click', e => {
-    const item = e.target.closest('.gallery-item');
-    if (!item) return;
-    const img = item.querySelector('img');
-    if (!img) return;
-    document.getElementById('lightbox-img').src = img.src;
-    document.getElementById('lightbox').style.display = 'flex';
-  });
-
-  // Close lightbox on Escape key
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.getElementById('lightbox').style.display = 'none';
-  });
+  // Gallery images are static — no lightbox, no download
 
   // ── Page navigation ──
   function showPage(id, clickedEl) {
@@ -1918,10 +1911,6 @@
 
 </div><!-- end .content-wrapper -->
 
-<!-- GLOBAL LIGHTBOX -->
-<div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
-  <img id="lightbox-img" src="" alt="" style="max-width:92vw;max-height:92vh;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,0.7);">
-</div>
 
 <footer class="site-footer">
   © 2026 UCOSA-North America. All rights reserved. &nbsp;|&nbsp;
