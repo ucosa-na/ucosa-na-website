@@ -181,32 +181,30 @@
 
   .banner-content {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 28px 40px;
+    align-items: flex-start;
+    padding: 36px 48px;
     position: relative;
     z-index: 1;
+    min-height: 320px;
   }
 
   .banner-center {
     text-align: left;
     padding-top: 0;
-    flex: 1;
-  }
-
-  .banner-logo-wrap {
-    flex-shrink: 0;
-    margin-left: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .banner-logo {
-    width: 140px;
-    height: 140px;
+    width: 150px;
+    height: 150px;
     border-radius: 14px;
     object-fit: contain;
     background: white;
     padding: 6px;
     display: block;
+    margin: 0 0 16px 0;
   }
 
   .banner-title {
@@ -998,16 +996,12 @@
 <div class="banner-header">
   <div class="banner-content">
 
-    <!-- LEFT: title + subtitle + flags -->
+    <!-- LEFT: logo + title + subtitle + flags -->
     <div class="banner-center">
+      <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
       <h2 class="banner-title">Welcome to UCOSA-North America</h2>
       <p class="banner-sub">Ugbeka College Old Students&#39; Association — North America Chapter</p>
-      <img src="/flag.png" alt="US and Canadian Flags" style="display:block;margin:8px 0 0;height:60px;object-fit:contain;">
-    </div>
-
-    <!-- RIGHT: logo -->
-    <div class="banner-logo-wrap">
-      <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
+      <img src="/flag.png" alt="US and Canadian Flags" style="display:block;margin:10px 0 0;height:60px;object-fit:contain;">
     </div>
 
   </div>
