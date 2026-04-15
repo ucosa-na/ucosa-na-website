@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
+const os = require('os');
 const pool = require('../db');
 const requireAdmin = require('../middleware/requireAdmin');
 
@@ -126,6 +127,55 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Delete user error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/metrics — live server metrics
+router.get('/metrics', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT role, COUNT(*) AS count FROM users GROUP BY role`
+    );
+    const users = { total: 0, members: 0, admins: 0, pending: 0 };
+    rows.forEach(r => {
+      users.total += parseInt(r.count);
+      if (r.role === 'member') users.members = parseInt(r.count);
+      if (r.role === 'admin')  users.admins  = parseInt(r.count);
+    });
+    const { rows: pending } = await pool.query(
+      `SELECT COUNT(*) AS count FROM users WHERE must_change_password = TRUE`
+    );
+    users.pending = parseInt(pending[0].count);
+
+    const totalMem = os.totalmem();
+    const freeMem  = os.freemem();
+    const usedMem  = totalMem - freeMem;
+    const mem      = process.memoryUsage();
+
+    res.json({
+      status:  'running',
+      uptime:  Math.floor(process.uptime()),
+      cpu: {
+        cores:    os.cpus().length,
+        model:    os.cpus()[0]?.model || 'N/A',
+        loadAvg1: os.loadavg()[0].toFixed(2),
+        loadAvg5: os.loadavg()[1].toFixed(2),
+      },
+      memory: {
+        totalMB:     Math.round(totalMem / 1048576),
+        usedMB:      Math.round(usedMem  / 1048576),
+        freeMB:      Math.round(freeMem  / 1048576),
+        usedPercent: Math.round((usedMem / totalMem) * 100),
+      },
+      process: {
+        heapUsedMB:  Math.round(mem.heapUsed  / 1048576),
+        heapTotalMB: Math.round(mem.heapTotal / 1048576),
+        rssMB:       Math.round(mem.rss       / 1048576),
+      },
+      users,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

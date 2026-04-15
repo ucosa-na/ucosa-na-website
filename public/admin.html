@@ -84,16 +84,26 @@
       flex: 1;
     }
 
-    /* SITE MAINTENANCE — 60% page width, breaking out of content column */
+    /* SITE MAINTENANCE */
     #siteMaintenance {
-      width: 60vw;
-      max-width: 60vw;
+      width: 80vw;
+      max-width: 80vw;
       flex-shrink: 0;
     }
 
     #siteMaintenance h2 {
       font-size: 1.6rem;
       margin-bottom: 24px;
+    }
+
+    .maint-layout {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .maint-cards {
+      flex: 1;
     }
 
     .maint-grid {
@@ -133,6 +143,90 @@
       font-size: 0.95rem;
       margin-top: 10px;
     }
+
+    /* METRICS PANEL */
+    .metrics-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: #f8f9fb;
+      border-radius: 12px;
+      padding: 22px;
+      position: sticky;
+      top: 16px;
+    }
+
+    .metrics-panel h4 {
+      font-size: 1rem;
+      color: #1a1a2e;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8ecf4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #eef0f4;
+      font-size: 0.88rem;
+    }
+
+    .metric-row:last-child { border-bottom: none; }
+
+    .metric-label { color: #666; }
+
+    .metric-value { font-weight: 700; color: #1a1a2e; }
+
+    .metric-bar-wrap {
+      width: 100%;
+      background: #e8ecf4;
+      border-radius: 4px;
+      height: 6px;
+      margin-top: 4px;
+    }
+
+    .metric-bar {
+      height: 6px;
+      border-radius: 4px;
+      background: #1a1a2e;
+      transition: width 0.5s;
+    }
+
+    .metric-bar.warn  { background: #f59e0b; }
+    .metric-bar.danger{ background: #e63946; }
+
+    .metric-section {
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed #dde3f0;
+    }
+
+    .metric-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+    .metric-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #999;
+      margin-bottom: 8px;
+    }
+
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .status-running  { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .status-stopped  { background: #e63946; box-shadow: 0 0 6px #e63946; }
+
+    .text-green { color: #16a34a; font-weight: 700; }
+    .text-red   { color: #dc2626; font-weight: 700; }
 
     /* SIDEBAR */
     .sidebar {
@@ -482,51 +576,132 @@
       <section id="siteMaintenance">
         <h2>&#9881; Site Maintenance</h2>
 
-        <div class="maint-grid">
+        <div class="maint-layout">
 
-          <div class="maint-card">
-            <h4>System Status</h4>
-            <p>
-              <strong>Application:</strong> Running<br>
-              <strong>Database:</strong> PostgreSQL (connected)<br>
-              <strong>Environment:</strong> Production<br>
-              <strong>Node Version:</strong> &ge;18.0.0
-            </p>
+          <!-- Left: info cards -->
+          <div class="maint-cards">
+            <div class="maint-grid">
+
+              <div class="maint-card">
+                <h4>System Status</h4>
+                <p>
+                  <strong>Application:</strong>
+                  <span id="maint-app-status" class="text-green">&#9679; Running</span><br>
+                  <strong>Database:</strong> PostgreSQL (connected)<br>
+                  <strong>Environment:</strong> Production<br>
+                  <strong>Node Version:</strong> &ge;18.0.0
+                </p>
+              </div>
+
+              <div class="maint-card">
+                <h4>Email Service</h4>
+                <p>
+                  Welcome emails sent via <strong>SendGrid</strong> on member creation.<br>
+                  Ensure <code>SENDGRID_API_KEY</code> is set in <code>/opt/ucosa-na/.env</code>.
+                </p>
+              </div>
+
+              <div class="maint-card">
+                <h4>Server Info</h4>
+                <p>
+                  <strong>Host:</strong> DigitalOcean Droplet<br>
+                  <strong>Container:</strong> ucosa-na-app<br>
+                  <strong>Port:</strong> 3000<br>
+                  <strong>Config:</strong> /opt/ucosa-na/.env
+                </p>
+              </div>
+
+              <div class="maint-card">
+                <h4>Deployment</h4>
+                <p>
+                  Auto-deployed via <strong>GitHub Actions</strong> on push to <em>main</em>.<br>
+                  Docker image → Docker Hub → DigitalOcean droplet.
+                </p>
+              </div>
+
+              <div class="maint-card maint-card-full" style="grid-column:span 2;">
+                <h4>Database Backup</h4>
+                <p>Run the following on the server to create a timestamped backup:</p>
+                <code class="maint-code">docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup_$(date +%Y%m%d).sql</code>
+              </div>
+
+            </div>
           </div>
 
-          <div class="maint-card">
-            <h4>Email Service</h4>
-            <p>
-              Welcome emails sent via <strong>SendGrid</strong> on member creation.<br>
-              Ensure <code>SENDGRID_API_KEY</code> is set in <code>/opt/ucosa-na/.env</code>.
-            </p>
-          </div>
+          <!-- Right: live metrics panel -->
+          <div class="metrics-panel" id="metricsPanel">
+            <h4>&#128200; Live Metrics <span style="font-size:0.7rem;color:#aaa;font-weight:400;" id="metricsRefreshLabel"></span></h4>
 
-          <div class="maint-card">
-            <h4>Server Info</h4>
-            <p>
-              <strong>Host:</strong> DigitalOcean Droplet<br>
-              <strong>Container:</strong> ucosa-na-app<br>
-              <strong>Port:</strong> 3000<br>
-              <strong>Config:</strong> /opt/ucosa-na/.env
-            </p>
-          </div>
+            <div class="metric-section">
+              <div class="metric-section-title">Application</div>
+              <div class="metric-row">
+                <span class="metric-label">Status</span>
+                <span class="metric-value" id="m-status">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Uptime</span>
+                <span class="metric-value" id="m-uptime">—</span>
+              </div>
+            </div>
 
-          <div class="maint-card">
-            <h4>Deployment</h4>
-            <p>
-              Auto-deployed via <strong>GitHub Actions</strong> on push to <em>main</em>.<br>
-              Docker image → Docker Hub → DigitalOcean droplet.
-            </p>
-          </div>
+            <div class="metric-section">
+              <div class="metric-section-title">CPU</div>
+              <div class="metric-row">
+                <span class="metric-label">Cores</span>
+                <span class="metric-value" id="m-cpu-cores">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Load (1 min)</span>
+                <span class="metric-value" id="m-load1">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Load (5 min)</span>
+                <span class="metric-value" id="m-load5">—</span>
+              </div>
+            </div>
 
-          <div class="maint-card maint-card-full" style="grid-column: span 2;">
-            <h4>Database Backup</h4>
-            <p>Run the following on the server to create a timestamped backup:</p>
-            <code class="maint-code">docker exec ucosa-postgres pg_dump -U ucosa ucosa &gt; backup_$(date +%Y%m%d).sql</code>
-          </div>
+            <div class="metric-section">
+              <div class="metric-section-title">System Memory</div>
+              <div class="metric-row">
+                <span class="metric-label">Used / Total</span>
+                <span class="metric-value" id="m-mem">—</span>
+              </div>
+              <div class="metric-bar-wrap">
+                <div class="metric-bar" id="m-mem-bar" style="width:0%"></div>
+              </div>
+            </div>
 
-        </div>
+            <div class="metric-section">
+              <div class="metric-section-title">Node.js Process</div>
+              <div class="metric-row">
+                <span class="metric-label">Heap Used</span>
+                <span class="metric-value" id="m-heap">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">RSS</span>
+                <span class="metric-value" id="m-rss">—</span>
+              </div>
+            </div>
+
+            <div class="metric-section">
+              <div class="metric-section-title">Users</div>
+              <div class="metric-row">
+                <span class="metric-label">Total Members</span>
+                <span class="metric-value" id="m-members">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Admins</span>
+                <span class="metric-value" id="m-admins">—</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Pending PW Change</span>
+                <span class="metric-value" id="m-pending">—</span>
+              </div>
+            </div>
+
+          </div><!-- /metrics-panel -->
+
+        </div><!-- /maint-layout -->
       </section>
 
     </main>
@@ -708,6 +883,54 @@
       }
     });
 
+    function formatUptime(seconds) {
+      const d = Math.floor(seconds / 86400);
+      const h = Math.floor((seconds % 86400) / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+
+    async function fetchMetrics() {
+      try {
+        const res  = await fetch('/api/admin/metrics', {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!res.ok) throw new Error('not ok');
+        const d = await res.json();
+
+        // Application status — bold green
+        document.getElementById('m-status').innerHTML =
+          '<span class="text-green">&#9679; Running</span>';
+        document.getElementById('maint-app-status').className = 'text-green';
+        document.getElementById('maint-app-status').textContent = '● Running';
+
+        document.getElementById('m-uptime').textContent   = formatUptime(d.uptime);
+        document.getElementById('m-cpu-cores').textContent = d.cpu.cores;
+        document.getElementById('m-load1').textContent    = d.cpu.loadAvg1;
+        document.getElementById('m-load5').textContent    = d.cpu.loadAvg5;
+        document.getElementById('m-mem').textContent      = `${d.memory.usedMB} MB / ${d.memory.totalMB} MB (${d.memory.usedPercent}%)`;
+        document.getElementById('m-heap').textContent     = `${d.process.heapUsedMB} MB / ${d.process.heapTotalMB} MB`;
+        document.getElementById('m-rss').textContent      = `${d.process.rssMB} MB`;
+        document.getElementById('m-members').textContent  = d.users.members;
+        document.getElementById('m-admins').textContent   = d.users.admins;
+        document.getElementById('m-pending').textContent  = d.users.pending;
+
+        const bar = document.getElementById('m-mem-bar');
+        bar.style.width = d.memory.usedPercent + '%';
+        bar.className = 'metric-bar' +
+          (d.memory.usedPercent >= 85 ? ' danger' : d.memory.usedPercent >= 65 ? ' warn' : '');
+
+        document.getElementById('metricsRefreshLabel').textContent =
+          'Updated ' + new Date().toLocaleTimeString();
+
+      } catch {
+        document.getElementById('m-status').innerHTML =
+          '<span class="text-red">&#9679; Not Running</span>';
+        document.getElementById('maint-app-status').className = 'text-red';
+        document.getElementById('maint-app-status').textContent = '● Not Running';
+      }
+    }
+
     async function sendTestEmail() {
       const to = document.getElementById('testEmailAddr').value.trim();
       const errEl = document.getElementById('testEmailError');
@@ -742,6 +965,8 @@
       document.getElementById('mainLayout').style.display = 'flex';
 
       loadMembers();
+      fetchMetrics();
+      setInterval(fetchMetrics, 10000);
     })();
   </script>
 
