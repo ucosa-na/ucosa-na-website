@@ -981,6 +981,53 @@
     margin-bottom: 20px;
   }
 
+  /* CONVENTION TABS */
+  .conv-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 28px 0 0;
+    flex-wrap: wrap;
+  }
+
+  .conv-tab {
+    background: #f0e8d8;
+    border: 2px solid #c8a96e;
+    color: #7b2152;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .conv-tab:hover {
+    background: #c8a96e;
+    color: #fff;
+  }
+
+  .conv-tab.active {
+    background: #7b2152;
+    color: #fff;
+    border-color: #7b2152;
+  }
+
+  .conv-panel {
+    display: none;
+    margin-top: 24px;
+  }
+
+  .conv-panel.active {
+    display: block;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
   /* GALLERY */
   .gallery-item {
     overflow: hidden;
@@ -1543,6 +1590,14 @@
       </div>`;
   });
 
+  // ── Convention tabs ──
+  function switchConvTab(panel, btn) {
+    document.querySelectorAll('.conv-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.conv-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('conv-' + panel).classList.add('active');
+    btn.classList.add('active');
+  }
+
   // ── Gallery lightbox ──
   document.querySelectorAll('.gallery-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -1697,18 +1752,40 @@
     <h1 class="page-heading">Ucosa-NA Inaugural Convention</h1>
     <p class="page-sub">The first UCOSA North America Chapter Convention</p>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:32px 0;">
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan.jpg"    alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(1).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(2).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(3).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(4).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(5).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(6).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(7).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(8).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(9).jpg" alt="Inaugural Convention"></div>
-      <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(10).jpg" alt="Inaugural Convention"></div>
+    <!-- Tabs -->
+    <div class="conv-tabs">
+      <button class="conv-tab active" onclick="switchConvTab('dinner',   this)">🍽 Welcome Dinner &amp; Tour of Times Square, NY</button>
+      <button class="conv-tab"        onclick="switchConvTab('memorial', this)">🏛 Visit to 9/11 Memorial Museum</button>
+      <button class="conv-tab"        onclick="switchConvTab('gala',     this)">🎉 Gala Night &amp; Fundraising Night</button>
+    </div>
+
+    <!-- Panel 1: Welcome Dinner & Times Square -->
+    <div class="conv-panel active" id="conv-dinner">
+      <div class="gallery-grid">
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan.jpg"    alt="Welcome Dinner"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(1).jpg" alt="Welcome Dinner"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(2).jpg" alt="Welcome Dinner"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(3).jpg" alt="Welcome Dinner"></div>
+      </div>
+    </div>
+
+    <!-- Panel 2: 9/11 Memorial Museum -->
+    <div class="conv-panel" id="conv-memorial">
+      <div class="gallery-grid">
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(4).jpg" alt="911 Memorial"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(5).jpg" alt="911 Memorial"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(6).jpg" alt="911 Memorial"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(7).jpg" alt="911 Memorial"></div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Gala Night -->
+    <div class="conv-panel" id="conv-gala">
+      <div class="gallery-grid">
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(8).jpg"  alt="Gala Night"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(9).jpg"  alt="Gala Night"></div>
+        <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(10).jpg" alt="Gala Night"></div>
+      </div>
     </div>
 
     <!-- Lightbox overlay -->
