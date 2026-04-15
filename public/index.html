@@ -185,11 +185,25 @@
 
   .hero-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(44px, 5vw, 72px);
+    font-size: clamp(32px, 4vw, 64px);
     font-weight: 300;
     line-height: 1.05;
     color: #000000;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .hero-title-wrap {
+    display: inline-block;
     margin-bottom: 24px;
+  }
+
+  .hero-title-wrap::after {
+    content: '';
+    display: block;
+    margin-top: 10px;
+    height: 2px;
+    background: linear-gradient(to right, var(--accent), transparent);
   }
 
   .hero-title em {
@@ -896,7 +910,9 @@
     </div>
 
     <div class="welcome-hero">
-      <h1 class="hero-title">Alumni United<br>Across <em>North America</em></h1>
+      <div class="hero-title-wrap">
+        <h1 class="hero-title">Alumni United Across <em>North America</em></h1>
+      </div>
       <p class="hero-desc">
         Former students of Ugbeka College Evboehighae, residing in the U.S. and Canada,
         staying connected — supporting our alma mater, uplifting one another.
