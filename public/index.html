@@ -28,7 +28,14 @@
     background: var(--bg);
     color: var(--text);
     display: flex;
+    flex-direction: column;
     height: 100vh;
+    overflow: hidden;
+  }
+
+  .content-wrapper {
+    display: flex;
+    flex: 1;
     overflow: hidden;
   }
 
@@ -156,13 +163,11 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* WELCOME PAGE BANNER */
+  /* FULL-WIDTH BANNER */
   .banner-header {
     background: #141829;
-    width: calc(100% + 80px);
-    margin-left: -40px;
-    margin-top: -48px;
-    margin-bottom: 24px;
+    width: 100%;
+    flex-shrink: 0;
   }
 
   .banner-content {
@@ -211,7 +216,12 @@
   }
 
   .banner-nav-bar span {
-    cursor: default;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .banner-nav-bar span:hover {
+    color: #ffffff;
   }
 
   .banner-login-btn {
@@ -855,6 +865,27 @@
 </head>
 <body>
 
+<!-- ── FULL-WIDTH BANNER ── -->
+<div class="banner-header">
+  <div class="banner-content">
+    <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
+    <h2 class="banner-title">Welcome to UCOSA-North America</h2>
+    <p class="banner-sub">Ugbeka College Old Students&#39; Association — North America Chapter</p>
+  </div>
+  <div class="banner-nav-bar">
+    <span onclick="showPage('welcome',  document.querySelectorAll('.nav-item')[0])">Welcome</span>
+    <span onclick="showPage('about',    document.querySelectorAll('.nav-item')[1])">About UCOSA</span>
+    <span onclick="showPage('constitution', document.querySelectorAll('.nav-item')[2])">Constitution</span>
+    <span onclick="showPage('executive-current', document.querySelectorAll('.nav-sub-item')[0])">Current Executive</span>
+    <span onclick="showPage('executive-past',    document.querySelectorAll('.nav-sub-item')[1])">Past Executive</span>
+    <span onclick="showPage('members',  document.querySelectorAll('.nav-item')[4])">Current Members</span>
+    <button class="banner-login-btn" onclick="showPage('login', document.querySelectorAll('.nav-item')[5])">Member Login</button>
+  </div>
+</div>
+
+<!-- ── BELOW-BANNER LAYOUT ── -->
+<div class="content-wrapper">
+
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
   <nav class="sidebar-nav">
@@ -938,22 +969,6 @@
 
   <!-- WELCOME -->
   <section class="page active" id="page-welcome">
-    <div class="banner-header">
-      <div class="banner-content">
-        <img src="/logo.jpg" alt="UCOSA-NA Logo" class="banner-logo">
-        <h2 class="banner-title">Welcome to UCOSA-North America</h2>
-        <p class="banner-sub">Ugbeka College Old Students&#39; Association — North America Chapter</p>
-      </div>
-      <div class="banner-nav-bar">
-        <span>About</span>
-        <span>Membership</span>
-        <span>Objectives</span>
-        <span>Revenue</span>
-        <span>Meetings</span>
-        <span>Events</span>
-        <button class="banner-login-btn">Member Login</button>
-      </div>
-    </div>
 
     <div class="skyline-banner" style="display:none">
       <svg viewBox="0 0 1200 360" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet">
@@ -1526,5 +1541,6 @@
     });
   });
 </script>
+</div><!-- end .content-wrapper -->
 </body>
 </html>
