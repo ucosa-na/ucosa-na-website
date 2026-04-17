@@ -11,13 +11,20 @@ const router = express.Router();
 function makeTransport() {
   return nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
-    port: 587,
-    secure: false,
+    port: 465,
+    secure: true,
     auth: {
       user: 'apikey',
       pass: process.env.SENDGRID_API_KEY,
     },
   });
+}
+
+function checkEmailConfig() {
+  const missing = [];
+  if (!process.env.SENDGRID_API_KEY) missing.push('SENDGRID_API_KEY');
+  if (!process.env.EMAIL_USER)        missing.push('EMAIL_USER');
+  return missing;
 }
 
 function generatePassword(length = 10) {
@@ -97,7 +104,7 @@ router.post('/users', requireAdmin, async (req, res) => {
           </p>
         </div>
       `,
-    }).catch(err => console.error('Welcome email failed for', email, ':', err.message));
+    }).catch(err => console.error('Welcome email failed for', email, '— code:', err.code, '— message:', err.message));
 
   } catch (err) {
     console.error('Create member error:', err.message);
@@ -109,8 +116,17 @@ router.post('/users', requireAdmin, async (req, res) => {
 router.post('/test-email', requireAdmin, async (req, res) => {
   const { to } = req.body;
   if (!to) return res.status(400).json({ error: 'Recipient email required' });
+
+  const missing = checkEmailConfig();
+  if (missing.length) {
+    return res.status(500).json({
+      error: `Missing server environment variable(s): ${missing.join(', ')}. Set these in /opt/ucosa-na/.env on the server and restart the container.`
+    });
+  }
+
   try {
     const transport = makeTransport();
+    await transport.verify();   // confirm SMTP connection before sending
     await transport.sendMail({
       from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
       to,
@@ -119,6 +135,7 @@ router.post('/test-email', requireAdmin, async (req, res) => {
     });
     res.json({ message: `Test email sent to ${to}` });
   } catch (err) {
+    console.error('Test email error:', err.message);
     res.status(500).json({ error: 'Email failed: ' + err.message });
   }
 });
