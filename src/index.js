@@ -19,9 +19,10 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { er
 app.use('/api/auth', authLimiter);
 
 // Routes
-app.use('/api/auth',   require('./routes/auth'));
-app.use('/api/admin',  require('./routes/admin'));
-app.use('/api/member', require('./routes/member'));
+app.use('/api/auth',    require('./routes/auth'));
+app.use('/api/admin',   require('./routes/admin'));
+app.use('/api/member',  require('./routes/member'));
+app.use('/api/contact', require('./routes/contact'));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
