@@ -883,26 +883,155 @@
     display: block;
   }
 
-  /* PDF VIEWER */
+  /* PDF TOOLBAR (kept for download link) */
   .pdf-toolbar {
     display: flex;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     flex-wrap: wrap;
   }
 
-  .pdf-viewer-wrap {
+  /* CONSTITUTION LAYOUT */
+  .constitution-wrap {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
     border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
     background: var(--card);
-    width: 100%;
-    height: 75vh;
+    min-height: 80vh;
   }
 
-  .pdf-viewer {
-    width: 100%;
-    height: 100%;
-    border: none;
+  .constitution-toc {
+    width: 240px;
+    min-width: 240px;
+    background: #f9f3ec;
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    max-height: 85vh;
+    overflow-y: auto;
+    align-self: flex-start;
+  }
+
+  .constitution-toc h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e8d8c4;
+  }
+
+  .toc-link {
     display: block;
+    padding: 6px 10px;
+    margin-bottom: 2px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: #555;
+    text-decoration: none;
+    line-height: 1.35;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .toc-link:hover,
+  .toc-link.active {
+    background: #f0dfc8;
+    color: var(--maroon);
+    font-weight: 600;
+  }
+
+  .toc-link .toc-num {
+    font-size: 0.72rem;
+    color: #aaa;
+    margin-right: 4px;
+  }
+
+  .constitution-body {
+    flex: 1;
+    padding: 36px 40px 60px;
+    overflow-y: auto;
+    max-height: 85vh;
+    scroll-behavior: smooth;
+  }
+
+  .constitution-body h2.const-article {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--maroon);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 40px 0 4px 0;
+    padding-top: 16px;
+    border-top: 1px solid #e8d8c4;
+  }
+
+  .constitution-body h2.const-article:first-of-type {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .constitution-body h3.const-section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2d1a0e;
+    margin: 4px 0 14px 0;
+  }
+
+  .constitution-body p {
+    font-size: 0.93rem;
+    line-height: 1.75;
+    color: #333;
+    margin: 0 0 12px 0;
+  }
+
+  .constitution-body ol {
+    padding-left: 22px;
+    margin: 0 0 14px 0;
+  }
+
+  .constitution-body ol li {
+    font-size: 0.93rem;
+    line-height: 1.75;
+    color: #333;
+    margin-bottom: 6px;
+  }
+
+  .constitution-body .preamble {
+    background: #fdf6ec;
+    border-left: 4px solid var(--gold);
+    padding: 18px 22px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 32px;
+    font-style: italic;
+    color: #5a3a1a;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 768px) {
+    .constitution-wrap {
+      flex-direction: column;
+      min-height: auto;
+    }
+    .constitution-toc {
+      width: 100%;
+      min-width: unset;
+      position: static;
+      max-height: none;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .constitution-body {
+      max-height: none;
+      padding: 24px 20px 40px;
+    }
   }
 
   .nav-item-lg {
@@ -1593,16 +1722,245 @@
       </a>
       <a class="btn-secondary" href="/UCOSA%20NA%20CONSTITUTION.pdf" target="_blank">Open in New Tab</a>
     </div>
-    <div class="pdf-viewer-wrap">
-      <iframe
-        src="/UCOSA%20NA%20CONSTITUTION.pdf"
-        class="pdf-viewer"
-        title="UCOSA-NA Constitution">
-        <p>Your browser does not support embedded PDFs.
-          <a href="/UCOSA%20NA%20CONSTITUTION.pdf">Download the Constitution</a> to view it.
+
+    <div class="constitution-wrap">
+      <!-- LEFT: Table of Contents -->
+      <nav class="constitution-toc" id="const-toc">
+        <h3>Contents</h3>
+        <a class="toc-link active" href="#const-preamble">Preamble</a>
+        <a class="toc-link" href="#const-art1"><span class="toc-num">I.</span> Name &amp; Seat</a>
+        <a class="toc-link" href="#const-art2"><span class="toc-num">II.</span> Objectives</a>
+        <a class="toc-link" href="#const-art3"><span class="toc-num">III.</span> Membership</a>
+        <a class="toc-link" href="#const-art4"><span class="toc-num">IV.</span> Executive Officers</a>
+        <a class="toc-link" href="#const-art5"><span class="toc-num">V.</span> Duties of Officers</a>
+        <a class="toc-link" href="#const-art6"><span class="toc-num">VI.</span> Elections</a>
+        <a class="toc-link" href="#const-art7"><span class="toc-num">VII.</span> Meetings</a>
+        <a class="toc-link" href="#const-art8"><span class="toc-num">VIII.</span> Finances &amp; Dues</a>
+        <a class="toc-link" href="#const-art9"><span class="toc-num">IX.</span> Committees</a>
+        <a class="toc-link" href="#const-art10"><span class="toc-num">X.</span> Discipline</a>
+        <a class="toc-link" href="#const-art11"><span class="toc-num">XI.</span> Amendments</a>
+        <a class="toc-link" href="#const-art12"><span class="toc-num">XII.</span> Dissolution</a>
+      </nav>
+
+      <!-- RIGHT: Constitution Body -->
+      <div class="constitution-body" id="const-body">
+
+        <!-- PREAMBLE -->
+        <div id="const-preamble" class="preamble">
+          We, the former students of Ugbeka College, Ugbeka, Edo State, Nigeria, now resident in North America,
+          recognizing our shared heritage, our bond of fellowship forged at our alma mater, and our collective
+          responsibility to our community and to the institution that shaped us, do hereby establish the
+          Ugbeka College Old Students' Association — North America Chapter (UCOSA-NA), and adopt this
+          Constitution as the supreme governing instrument of our Association.
+        </div>
+
+        <!-- ARTICLE I -->
+        <h2 class="const-article" id="const-art1">Article I</h2>
+        <h3 class="const-section-title">Name and Seat</h3>
+        <ol>
+          <li>This organization shall be known as the <strong>Ugbeka College Old Students' Association — North America Chapter</strong>, hereinafter referred to as "UCOSA-NA" or "the Association."</li>
+          <li>The Association is the North America Chapter of the parent body, the Ugbeka College Old Students' Association (UCOSA), headquartered in Ugbeka, Edo State, Nigeria.</li>
+          <li>The principal seat of the Association shall be in North America. Administrative correspondence and official communications may be conducted electronically or at such address as the Executive Committee may determine from time to time.</li>
+        </ol>
+
+        <!-- ARTICLE II -->
+        <h2 class="const-article" id="const-art2">Article II</h2>
+        <h3 class="const-section-title">Objectives</h3>
+        <p>The objectives of UCOSA-NA shall be:</p>
+        <ol>
+          <li>To foster unity, brotherhood, and fellowship among former students of Ugbeka College resident in North America.</li>
+          <li>To promote and sustain the social, cultural, educational, and economic interests of members.</li>
+          <li>To support the development and improvement of Ugbeka College and the Ugbeka community.</li>
+          <li>To collaborate with the parent body, UCOSA, and other old students' associations in advancing the welfare of the college and its alumni.</li>
+          <li>To provide a platform for networking, mentorship, and mutual assistance among members.</li>
+          <li>To organize cultural, social, and fundraising activities that benefit the association and the broader Ugbeka community.</li>
+          <li>To promote the values of integrity, excellence, and service instilled by Ugbeka College.</li>
+        </ol>
+
+        <!-- ARTICLE III -->
+        <h2 class="const-article" id="const-art3">Article III</h2>
+        <h3 class="const-section-title">Membership</h3>
+        <ol>
+          <li><strong>Eligibility:</strong> Membership of UCOSA-NA is open to any person who attended Ugbeka College, Ugbeka, Edo State, Nigeria, and who is currently resident in, or has a significant connection to, North America (United States, Canada, or Mexico).</li>
+          <li><strong>Categories of Membership:</strong>
+            <ol type="a">
+              <li><em>Full Member:</em> Any eligible person who has completed the membership registration process and paid the applicable dues.</li>
+              <li><em>Associate Member:</em> Spouses or partners of full members who wish to participate in association activities. Associate members may attend meetings and events but shall not hold executive office or vote in elections.</li>
+              <li><em>Honorary Member:</em> Any person who has rendered exceptional service to the Association or to Ugbeka College may be conferred honorary membership by a two-thirds (2/3) vote of the General Assembly. Honorary members shall not be required to pay dues and shall not hold executive office.</li>
+            </ol>
+          </li>
+          <li><strong>Admission:</strong> Applications for membership shall be submitted to the Secretary, reviewed by the Executive Committee, and approved at a General Meeting. Membership shall be deemed active upon payment of the prescribed dues.</li>
+          <li><strong>Rights of Members:</strong> Full members in good standing shall have the right to attend all meetings, vote at General Meetings, contest and hold elective office (subject to eligibility requirements), and participate in all association activities.</li>
+          <li><strong>Good Standing:</strong> A member is in good standing if their annual dues are current and they have not been suspended or expelled under the disciplinary provisions of this Constitution.</li>
+          <li><strong>Resignation:</strong> A member wishing to resign shall notify the Secretary in writing. Resignations shall not entitle the member to any refund of dues already paid.</li>
+        </ol>
+
+        <!-- ARTICLE IV -->
+        <h2 class="const-article" id="const-art4">Article IV</h2>
+        <h3 class="const-section-title">Executive Officers</h3>
+        <ol>
+          <li>The affairs of UCOSA-NA shall be managed by an Executive Committee consisting of the following officers:
+            <ol type="a">
+              <li>President</li>
+              <li>Vice President</li>
+              <li>General Secretary</li>
+              <li>Assistant Secretary</li>
+              <li>Financial Secretary</li>
+              <li>Treasurer</li>
+              <li>Welfare Officer (USA)</li>
+              <li>Welfare Officer (Canada)</li>
+              <li>Public Relations Officer (PRO)</li>
+              <li>Provost</li>
+            </ol>
+          </li>
+          <li><strong>Term of Office:</strong> Each officer shall serve a term of four (4) years commencing from the date of inauguration. Officers may serve a maximum of two (2) consecutive terms in the same position.</li>
+          <li><strong>Eligibility for Office:</strong> A candidate for executive office must be a full member in good standing, must have been a member for at least one (1) year prior to nomination, and must be a former student of Ugbeka College.</li>
+          <li><strong>Vacancies:</strong> Should a vacancy occur in any executive position, the Executive Committee shall appoint a qualified member to fill the vacancy until the next general election. A vacancy in the office of President shall be filled by the Vice President for the remainder of the term.</li>
+        </ol>
+
+        <!-- ARTICLE V -->
+        <h2 class="const-article" id="const-art5">Article V</h2>
+        <h3 class="const-section-title">Duties of Officers</h3>
+        <ol>
+          <li><strong>President:</strong> The President shall be the chief executive of the Association; shall preside at all General Meetings and Executive Committee meetings; shall represent the Association in all official capacities; and shall co-sign all financial instruments together with the Treasurer.</li>
+          <li><strong>Vice President:</strong> The Vice President shall assist the President in all duties and shall act as President in the absence or incapacity of the President.</li>
+          <li><strong>General Secretary:</strong> The General Secretary shall be responsible for all correspondence of the Association; shall record and keep minutes of all meetings; shall maintain the register of members; and shall issue notices of meetings.</li>
+          <li><strong>Assistant Secretary:</strong> The Assistant Secretary shall assist the General Secretary and shall perform the duties of the General Secretary in their absence.</li>
+          <li><strong>Financial Secretary:</strong> The Financial Secretary shall be responsible for collecting all dues and levies; shall issue receipts for all monies received; and shall render account of all collections to the Treasurer and to the Executive Committee.</li>
+          <li><strong>Treasurer:</strong> The Treasurer shall be responsible for the custody of all funds of the Association; shall maintain proper books of account; shall disburse funds as duly authorized; and shall present financial statements at every General Meeting and whenever required by the Executive Committee.</li>
+          <li><strong>Welfare Officers (USA &amp; Canada):</strong> Each Welfare Officer shall be responsible for the welfare and well-being of members in their respective country; shall organize support for members in need; and shall keep the Executive Committee informed of the welfare needs of members.</li>
+          <li><strong>Public Relations Officer:</strong> The PRO shall be responsible for all public communications and publicity on behalf of the Association; shall manage the Association's social media presence and website content; and shall promote the image of the Association.</li>
+          <li><strong>Provost:</strong> The Provost shall be responsible for maintaining discipline and decorum at all meetings and events; shall enforce the rules of order during meetings; and shall advise the President on matters of precedent and protocol.</li>
+        </ol>
+
+        <!-- ARTICLE VI -->
+        <h2 class="const-article" id="const-art6">Article VI</h2>
+        <h3 class="const-section-title">Elections</h3>
+        <ol>
+          <li><strong>Electoral Committee:</strong> Elections shall be conducted by an Electoral Committee of three (3) members appointed by the General Assembly. No member of the Electoral Committee may stand for election during their tenure on the committee.</li>
+          <li><strong>Nominations:</strong> Nominations for executive positions shall be opened at least thirty (30) days before the election date. Nominees must signify acceptance of nomination in writing.</li>
+          <li><strong>Voting:</strong> Elections shall be by secret ballot. Each full member in good standing shall have one vote. A simple majority of votes cast shall be sufficient for election, except where only one candidate stands for a position, in which case the candidate shall be deemed elected by acclamation.</li>
+          <li><strong>Runoff:</strong> If no candidate receives a majority in a contest involving more than two candidates, a runoff election shall be held between the top two candidates.</li>
+          <li><strong>Disputes:</strong> Any dispute arising from the conduct of elections shall be referred to a three-member Electoral Appeals Panel appointed by the General Assembly, whose decision shall be final.</li>
+          <li><strong>Inauguration:</strong> Newly elected officers shall be inaugurated at the Annual General Meeting or at a special ceremony convened for that purpose.</li>
+        </ol>
+
+        <!-- ARTICLE VII -->
+        <h2 class="const-article" id="const-art7">Article VII</h2>
+        <h3 class="const-section-title">Meetings</h3>
+        <ol>
+          <li><strong>Annual General Meeting (AGM):</strong> The Association shall hold an Annual General Meeting once each year at a date, time, and place determined by the Executive Committee. At least thirty (30) days' notice shall be given to all members.</li>
+          <li><strong>General Meetings:</strong> General meetings may be held as often as the Executive Committee determines necessary, with at least fourteen (14) days' notice.</li>
+          <li><strong>Executive Committee Meetings:</strong> The Executive Committee shall meet at least once every two (2) months, or more frequently as business requires.</li>
+          <li><strong>Special Meetings:</strong> A special meeting of the General Assembly may be convened at any time by the President or upon written request to the Secretary by not fewer than one-third (1/3) of the full members in good standing.</li>
+          <li><strong>Quorum:</strong> A quorum for a General Meeting shall be one-third (1/3) of full members in good standing. A quorum for an Executive Committee meeting shall be a majority of the executive officers.</li>
+          <li><strong>Virtual Meetings:</strong> Meetings may be held in person, by video conference, or by a combination of both, provided that all participants can be identified and can communicate in real time.</li>
+          <li><strong>Minutes:</strong> Minutes of all meetings shall be recorded by the Secretary, confirmed at the subsequent meeting, and kept in the permanent records of the Association.</li>
+        </ol>
+
+        <!-- ARTICLE VIII -->
+        <h2 class="const-article" id="const-art8">Article VIII</h2>
+        <h3 class="const-section-title">Finances and Dues</h3>
+        <ol>
+          <li><strong>Annual Dues:</strong> Every full member shall pay annual dues as determined by the General Assembly from time to time. Dues shall be payable at the beginning of each calendar year or as otherwise specified by the Executive Committee.</li>
+          <li><strong>Endowment Fund:</strong> The Association shall maintain an Endowment Fund for long-term projects and development of Ugbeka College. Contributions to the Endowment Fund shall be voluntary and separate from annual dues.</li>
+          <li><strong>Special Levies:</strong> The General Assembly may, by a two-thirds (2/3) majority vote, impose special levies on members for specific projects or purposes.</li>
+          <li><strong>Bank Account:</strong> All funds of the Association shall be deposited in a bank account or accounts in the name of UCOSA-NA. Withdrawals shall require the co-signature of the Treasurer and the President, or such other arrangement as the Executive Committee may approve.</li>
+          <li><strong>Financial Year:</strong> The financial year of the Association shall be the calendar year, from January 1 to December 31.</li>
+          <li><strong>Audit:</strong> The accounts of the Association shall be audited annually by an auditor or audit committee appointed by the General Assembly. The audited accounts shall be presented to the Annual General Meeting.</li>
+          <li><strong>No Personal Benefit:</strong> No part of the income or assets of the Association shall be paid or transferred to any member, officer, or private individual, except as reasonable remuneration for services rendered or reimbursement of approved expenses.</li>
+        </ol>
+
+        <!-- ARTICLE IX -->
+        <h2 class="const-article" id="const-art9">Article IX</h2>
+        <h3 class="const-section-title">Committees</h3>
+        <ol>
+          <li>The Executive Committee may establish standing or ad hoc committees as necessary to carry out the objectives of the Association.</li>
+          <li><strong>Standing Committees</strong> may include, but are not limited to:
+            <ol type="a">
+              <li>Finance and Fundraising Committee</li>
+              <li>Welfare and Social Committee</li>
+              <li>Education and Scholarship Committee</li>
+              <li>Communications and Public Relations Committee</li>
+              <li>Events and Convention Committee</li>
+            </ol>
+          </li>
+          <li>Each committee shall be chaired by an officer or a member appointed by the President, and shall report to the Executive Committee.</li>
+          <li>Committees shall have no power to commit the Association financially or legally without prior approval of the Executive Committee.</li>
+        </ol>
+
+        <!-- ARTICLE X -->
+        <h2 class="const-article" id="const-art10">Article X</h2>
+        <h3 class="const-section-title">Discipline</h3>
+        <ol>
+          <li><strong>Grounds for Discipline:</strong> A member or officer may be subject to disciplinary action for conduct unbecoming of a member, bringing the Association into disrepute, financial misconduct, willful violation of this Constitution, or persistent non-compliance with the decisions of the Association.</li>
+          <li><strong>Procedure:</strong> Any complaint against a member shall be submitted in writing to the Secretary. The Executive Committee shall investigate the complaint and afford the accused member an opportunity to respond. No member shall be disciplined without being given a fair hearing.</li>
+          <li><strong>Sanctions:</strong> Sanctions available to the Executive Committee include a formal written warning, suspension of membership for a specified period, removal from office, and expulsion from the Association. Expulsion requires approval by a two-thirds (2/3) majority of the General Assembly.</li>
+          <li><strong>Appeal:</strong> A disciplined member may appeal to the General Assembly within thirty (30) days of notification of the disciplinary decision. The decision of the General Assembly on appeal shall be final.</li>
+          <li><strong>Removal of Officers:</strong> An officer may be removed from office by a two-thirds (2/3) majority vote of the General Assembly for persistent dereliction of duty, misconduct, or any of the grounds specified in Section 1 of this Article.</li>
+        </ol>
+
+        <!-- ARTICLE XI -->
+        <h2 class="const-article" id="const-art11">Article XI</h2>
+        <h3 class="const-section-title">Amendments</h3>
+        <ol>
+          <li>Proposals to amend this Constitution may be submitted by any full member in good standing or by the Executive Committee.</li>
+          <li>A proposed amendment must be submitted in writing to the Secretary at least thirty (30) days before the meeting at which it is to be considered.</li>
+          <li>The Secretary shall circulate the proposed amendment to all members at least twenty-one (21) days before the meeting.</li>
+          <li>An amendment shall be adopted if approved by a two-thirds (2/3) majority of full members present and voting at a General Meeting at which a quorum is present.</li>
+          <li>No amendment shall be made to this Constitution that would conflict with the constitution of the parent body, UCOSA.</li>
+          <li>Amendments shall take effect from the date of adoption unless the General Assembly specifies a later effective date.</li>
+        </ol>
+
+        <!-- ARTICLE XII -->
+        <h2 class="const-article" id="const-art12">Article XII</h2>
+        <h3 class="const-section-title">Dissolution</h3>
+        <ol>
+          <li>The Association may be dissolved only by a resolution passed by a three-quarters (3/4) majority of all full members in good standing at a Special General Meeting convened specifically for that purpose.</li>
+          <li>Notice of a meeting to consider dissolution shall be sent to all members at least sixty (60) days in advance.</li>
+          <li>In the event of dissolution, after settlement of all liabilities, any remaining assets of the Association shall not be distributed among the members but shall be transferred to the parent body, UCOSA, or to a charitable organization with similar objectives as determined by the dissolution meeting.</li>
+          <li>The Secretary shall notify the parent body and all relevant authorities of the dissolution within thirty (30) days.</li>
+        </ol>
+
+        <p style="margin-top:40px;font-size:0.82rem;color:#aaa;text-align:center;border-top:1px solid #e8d8c4;padding-top:20px;">
+          Adopted by the General Assembly of UCOSA-NA &mdash; North America Chapter<br>
+          <em>This document is also available as a <a href="/UCOSA%20NA%20CONSTITUTION.pdf" style="color:var(--gold)">downloadable PDF</a>.</em>
         </p>
-      </iframe>
-    </div>
+
+      </div><!-- end constitution-body -->
+    </div><!-- end constitution-wrap -->
+
+    <script>
+    (function(){
+      const body  = document.getElementById('const-body');
+      const links = document.querySelectorAll('#const-toc .toc-link');
+      if (!body || !links.length) return;
+
+      const targets = Array.from(links).map(l => {
+        const id = l.getAttribute('href').slice(1);
+        return { link: l, el: document.getElementById(id) };
+      }).filter(t => t.el);
+
+      body.addEventListener('scroll', function() {
+        const scrollTop = body.scrollTop;
+        let current = targets[0];
+        targets.forEach(t => {
+          if (t.el.offsetTop - body.offsetTop - 60 <= scrollTop) current = t;
+        });
+        links.forEach(l => l.classList.remove('active'));
+        if (current) current.link.classList.add('active');
+      });
+
+      links.forEach(l => {
+        l.addEventListener('click', function(e) {
+          e.preventDefault();
+          const id = this.getAttribute('href').slice(1);
+          const el = document.getElementById(id);
+          if (el) body.scrollTo({ top: el.offsetTop - body.offsetTop - 16, behavior: 'smooth' });
+        });
+      });
+    })();
+    </script>
   </section>
 
   <!-- CURRENT EXECUTIVE MEMBERS -->
