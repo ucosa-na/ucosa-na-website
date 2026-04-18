@@ -1168,18 +1168,19 @@
 
   .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
   }
 
   /* GALLERY */
   .gallery-item {
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 6px;
     background: #f4f4f4;
     cursor: default;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     position: relative;
+    aspect-ratio: 4/3;
   }
 
   .gallery-item img {
@@ -1187,7 +1188,6 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    opacity: 1;
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
@@ -1203,12 +1203,20 @@
     z-index: 1;
   }
 
+  /* Empty placeholder slot */
+  .gallery-ph {
+    aspect-ratio: 4/3;
+    border: 1px dashed #d4b896;
+    border-radius: 6px;
+    background: #fdf6ec;
+  }
+
   /* GALLERY SECTIONS */
   .gallery-section {
-    margin-bottom: 52px;
+    margin-bottom: 48px;
   }
   .gallery-section-heading {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--sidebar);
     margin-bottom: 6px;
@@ -1218,7 +1226,7 @@
   .gallery-section-sub {
     color: var(--muted);
     font-size: 0.92rem;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   .gallery-placeholder {
     aspect-ratio: 4/3;
@@ -1379,7 +1387,7 @@
     .members-grid   { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
     /* Gallery */
-    .gallery-grid   { grid-template-columns: 1fr; gap: 14px; }
+    .gallery-grid   { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .gallery-section-heading { font-size: 1.1rem; }
     .gallery-section { margin-bottom: 32px; }
 
@@ -1399,7 +1407,7 @@
     .hero-title     { font-size: 20px; }
     .stats-bar      { grid-template-columns: 1fr; }
     .exec-grid      { grid-template-columns: 1fr; }
-    .gallery-grid   { grid-template-columns: 1fr; }
+    .gallery-grid   { grid-template-columns: repeat(2, 1fr); gap: 5px; }
     .members-grid   { grid-template-columns: repeat(2, 1fr); }
     .page           { padding: 18px 12px; }
   }
@@ -2329,28 +2337,50 @@
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(8).jpg"  alt="Inaugural Convention"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(9).jpg"  alt="Inaugural Convention"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(10).jpg" alt="Inaugural Convention"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
 
-    <!-- Golden Jubilee — placeholder -->
+    <!-- Golden Jubilee -->
     <div class="gallery-section">
       <div class="gallery-section-heading">&#127881; Golden Jubilee</div>
       <p class="gallery-section-sub">Celebrating 50 years of UCOSA — photos will be posted here.</p>
       <div class="gallery-grid">
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
 
-    <!-- More Events — placeholder -->
+    <!-- More Events -->
     <div class="gallery-section">
       <div class="gallery-section-heading">&#128247; More Events</div>
       <p class="gallery-section-sub">Additional event photos will be added here.</p>
       <div class="gallery-grid">
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
   </section>
@@ -2374,12 +2404,16 @@
       <div class="gallery-section-heading">&#128247; Event Photos</div>
       <p class="gallery-section-sub">Photos will be posted here as they become available.</p>
       <div class="gallery-grid">
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
-        <div class="gallery-placeholder"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Photo coming soon</div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
   </section>
@@ -2390,7 +2424,7 @@
     <h1 class="page-heading">Ucosa-NA Inaugural Convention</h1>
     <p class="page-sub">The first UCOSA North America Chapter Convention</p>
 
-    <!-- Section 1: Welcome Dinner & Times Square -->
+    <!-- Welcome Dinner & Times Square -->
     <div class="gallery-section">
       <div class="gallery-section-heading">&#127869; Welcome Dinner &amp; Tour of Times Square, NY</div>
       <div class="gallery-grid">
@@ -2398,10 +2432,20 @@
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(1).jpg" alt="Welcome Dinner"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(2).jpg" alt="Welcome Dinner"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(3).jpg" alt="Welcome Dinner"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
 
-    <!-- Section 2: 9/11 Memorial Museum -->
+    <!-- Visit to 9/11 Memorial Museum -->
     <div class="gallery-section">
       <div class="gallery-section-heading">&#127963; Visit to 9/11 Memorial Museum</div>
       <div class="gallery-grid">
@@ -2409,16 +2453,36 @@
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(5).jpg" alt="911 Memorial"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(6).jpg" alt="911 Memorial"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(7).jpg" alt="911 Memorial"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
 
-    <!-- Section 3: Gala Night -->
+    <!-- Gala & Fundraising Night -->
     <div class="gallery-section">
       <div class="gallery-section-heading">&#127881; Gala &amp; Fundraising Night</div>
       <div class="gallery-grid">
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(8).jpg"  alt="Gala Night"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(9).jpg"  alt="Gala Night"></div>
         <div class="gallery-item"><img src="/pic1/Photo from Sonnie Avenbuan(10).jpg" alt="Gala Night"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
+        <div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div><div class="gallery-ph"></div>
       </div>
     </div>
 
