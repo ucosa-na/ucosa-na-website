@@ -91,6 +91,17 @@ jobs:
               sleep 10
             fi
 
+            # Inject secrets into .env on the server
+            mkdir -p /opt/ucosa-na
+            touch /opt/ucosa-na/.env
+            # Update or add each secret
+            grep -q "^SENDGRID_API_KEY=" /opt/ucosa-na/.env \
+              && sed -i "s|^SENDGRID_API_KEY=.*|SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}|" /opt/ucosa-na/.env \
+              || echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" >> /opt/ucosa-na/.env
+            grep -q "^EMAIL_USER=" /opt/ucosa-na/.env \
+              && sed -i "s|^EMAIL_USER=.*|EMAIL_USER=${{ secrets.EMAIL_USER }}|" /opt/ucosa-na/.env \
+              || echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> /opt/ucosa-na/.env
+
             # Deploy app
             cd /opt/ucosa-na
             docker pull ${{ env.IMAGE_NAME }}:latest
