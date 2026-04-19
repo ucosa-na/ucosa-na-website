@@ -157,7 +157,7 @@
   /* ── PAGE SECTIONS ── */
   .page { display: none; padding: 48px 40px; animation: fadeIn 0.3s ease; }
   .page.active { display: block; flex: 1; overflow-y: auto; min-height: 0; }
-  #page-gallery.active { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 12px; }
+  #page-gallery.active, #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 12px; }
   #page-gallery .gallery-section { margin-bottom: 32px; }
   #page-gallery [style*="display:grid"] { grid-template-columns: repeat(6, 1fr) !important; }
 
@@ -2439,8 +2439,7 @@
 
     <div class="gallery-section">
       <p class="gallery-section-sub">Click any photo to enlarge.</p>
-      <div tabindex="0" style="border:1px solid #e8d8c4;border-radius:10px;padding:10px;background:#fdf6ec;">
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;">
         <img src="/computer_lab/IMG-20240129-WA0011.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
         <img src="/computer_lab/IMG-20240201-WA0000.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
         <img src="/computer_lab/IMG-20240328-WA0010.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
@@ -2467,7 +2466,6 @@
         <img src="/computer_lab/IMG-20250610-WA0023.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
         <img src="/computer_lab/IMG-20250610-WA0027.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
         <img src="/computer_lab/IMG-20250610-WA0038.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-      </div>
       </div>
     </div>
 
