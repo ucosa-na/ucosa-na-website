@@ -158,7 +158,7 @@
   .page { display: none; padding: 48px 40px; animation: fadeIn 0.3s ease; }
   .page.active { display: block; flex: 1; overflow-y: auto; min-height: 0; }
   #page-gallery.active { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 12px; }
-  #page-computer-lab.active, #page-sample.active { flex: 1; min-height: 0; padding: 12px; display: flex; flex-direction: column; }
+  #page-computer-lab.active { flex: 1; min-height: 0; padding: 12px; display: flex; flex-direction: column; }
   #page-computer-lab .gallery-section { flex: 1; display: flex; flex-direction: column; margin-bottom: 0; }
   #page-computer-lab .lab-grid { flex: 1; display: grid; grid-template-columns: repeat(6,1fr); grid-template-rows: repeat(5,1fr); gap: 6px; width: 100%; }
   #page-gallery .gallery-section { margin-bottom: 32px; }
@@ -1513,7 +1513,6 @@
     </div>
     <span onclick="showPage('computer-lab', null)">Computer Lab</span>
     <span onclick="showPage('gallery',      null)">Photo Gallery</span>
-    <span onclick="showPage('sample',       null)">Sample</span>
     <span onclick="showPage('contact',      null)">Contact Us</span>
     <div class="nav-dropdown">
       <span class="nav-dropdown-trigger">Administration ▾</span>
@@ -2473,63 +2472,6 @@
       </div>
     </div>
 
-  </section>
-
-  <!-- SAMPLE -->
-  <section class="page" id="page-sample">
-    <h1 class="page-heading"><strong>Sample</strong></h1>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(10,1fr);gap:8px;flex:1;">
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-      <div class="gallery-placeholder"></div>
-    </div>
   </section>
 
   <!-- PHOTO GALLERY -->
