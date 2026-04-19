@@ -35,19 +35,22 @@ function generatePassword(length = 10) {
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', requireAdmin, async (req, res) => {
   const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
-  if (!firstName || !lastName || !email) {
-    return res.status(400).json({ error: 'First name, last name, and email are required' });
+  if (!firstName || !lastName || !phone) {
+    return res.status(400).json({ error: 'First name, last name, and phone number are required' });
   }
 
   const fullName = `${firstName.trim()} ${lastName.trim()}`;
+  const emailVal = email ? email.toLowerCase().trim() : null;
 
   try {
-    const { rows: existing } = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
-    );
-    if (existing.length > 0) {
-      return res.status(409).json({ error: 'A member with this email already exists' });
+    if (emailVal) {
+      const { rows: existing } = await pool.query(
+        'SELECT id FROM users WHERE email = $1',
+        [emailVal]
+      );
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'A member with this email already exists' });
+      }
     }
 
     const tempPassword = generatePassword();
@@ -55,7 +58,7 @@ router.post('/users', requireAdmin, async (req, res) => {
 
     const { rows: inserted } = await pool.query(
       'INSERT INTO users (full_name, email, password_hash, must_change_password, role) VALUES ($1, $2, $3, TRUE, $4) RETURNING id',
-      [fullName, email.toLowerCase().trim(), hash, 'member']
+      [fullName, emailVal, hash, 'member']
     );
     const userId = inserted[0].id;
 
@@ -76,15 +79,18 @@ router.post('/users', requireAdmin, async (req, res) => {
 
     // Respond immediately with temp password
     res.status(201).json({
-      message: `Member created. Welcome email will be sent to ${email}`,
+      message: emailVal
+        ? `Member created. Welcome email will be sent to ${emailVal}`
+        : 'Member created. No email provided — share the temporary password manually.',
       tempPassword,
     });
 
-    // Fire-and-forget email
+    // Fire-and-forget email (only if email provided)
+    if (!emailVal) return;
     const transport = makeTransport();
     transport.sendMail({
       from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
-      to: email,
+      to: emailVal,
       subject: 'Welcome to UCOSA-North America — Your Login Details',
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;background:#fdf6ec;border-radius:12px">
@@ -93,7 +99,7 @@ router.post('/users', requireAdmin, async (req, res) => {
           <p>Your member account has been created. Use the details below to log in:</p>
           <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
             <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
-            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Email:</strong> ${emailVal}</p>
             <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
           </div>
           <p style="color:#7b2152"><strong>You will be asked to change your password on first login.</strong></p>
@@ -104,7 +110,7 @@ router.post('/users', requireAdmin, async (req, res) => {
           </p>
         </div>
       `,
-    }).catch(err => console.error('Welcome email failed for', email, '— code:', err.code, '— message:', err.message));
+    }).catch(err => console.error('Welcome email failed for', emailVal, '— code:', err.code, '— message:', err.message));
 
   } catch (err) {
     console.error('Create member error:', err.message);
