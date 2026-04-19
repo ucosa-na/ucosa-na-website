@@ -328,6 +328,12 @@
     }
     .btn-primary:hover { background: #16213e; }
     .btn-primary:disabled { background: #999; cursor: not-allowed; }
+    .btn-secondary { background: #e8e8e8; color: #333; border: none; padding: 11px 20px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .btn-secondary:hover { background: #d0d0d0; }
+    .btn-sm { background: #1a1a2e; color: #fff; border: none; padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; margin-right: 4px; }
+    .btn-sm:hover { background: #16213e; }
+    .btn-sm.btn-danger { background: #e63946; }
+    .btn-sm.btn-danger:hover { background: #c1121f; }
 
     .msg {
       display: none;
@@ -537,7 +543,8 @@
       <a href="#testEmail">Test Email</a>
       <a href="#membersList">Member List</a>
       <a href="#siteMaintenance">Site Maintenance</a>
-      <a href="#financialRecords">Financial Records</a>
+      <a href="#annualDues">Annual Dues</a>
+      <a href="#endowmentFund">Endowment Fund</a>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -795,66 +802,131 @@
       </section>
 
       <!-- FINANCIAL RECORDS -->
-      <section id="financialRecords">
-        <h2>&#128181; Financial Records</h2>
-        <p style="color:#555;font-size:0.9rem;margin-bottom:20px;">
-          Enter or update annual dues and endowment fund contributions for each member.
-        </p>
+      <!-- ANNUAL DUES -->
+      <section id="annualDues">
+        <h2>&#128181; Annual Dues</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:20px;">Record and track annual dues payments for each member.</p>
 
-        <div class="form-row" style="margin-bottom:20px;">
-          <div class="form-group" style="max-width:380px;">
-            <label for="finMemberSelect">Select Member</label>
-            <select id="finMemberSelect" onchange="loadMemberFinancials()">
-              <option value="">— Choose a member —</option>
+        <div id="duesError"   class="msg error"></div>
+        <div id="duesSuccess" class="msg success"></div>
+
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <div class="form-group" style="min-width:200px;flex:2;">
+            <label for="duesMember">Member <span style="color:#e63946;">*</span></label>
+            <select id="duesMember"><option value="">— Choose member —</option></select>
+          </div>
+          <div class="form-group" style="max-width:110px;">
+            <label for="duesYear">Year <span style="color:#e63946;">*</span></label>
+            <input type="number" id="duesYear" placeholder="2025" min="2000" max="2099" value="2025" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="duesAmount">Amount ($)</label>
+            <input type="number" id="duesAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label for="duesPaidDate">Paid Date</label>
+            <input type="date" id="duesPaidDate" />
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label for="duesMethod">Payment Method</label>
+            <select id="duesMethod">
+              <option value="">— Select —</option>
+              <option>Cash</option>
+              <option>Check</option>
+              <option>Bank Transfer</option>
+              <option>Zelle</option>
+              <option>PayPal</option>
+              <option>Other</option>
             </select>
           </div>
+          <div class="form-group" style="max-width:130px;">
+            <label for="duesStatus">Status</label>
+            <select id="duesStatus">
+              <option value="paid">Paid</option>
+              <option value="partial">Partial</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="duesNotes">Notes</label>
+            <input type="text" id="duesNotes" placeholder="Optional notes" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="duesSaveBtn" onclick="saveDues()">Add Dues Record</button>
+          <button class="btn-secondary" id="duesCancelBtn" style="display:none;margin-left:10px;" onclick="cancelDuesEdit()">Cancel Edit</button>
         </div>
 
-        <div id="finMemberName" class="member-fin-name" style="display:none;"></div>
+        <div class="table-wrap">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>Member</th><th>Year</th><th>Amount</th><th>Status</th>
+                <th>Paid Date</th><th>Method</th><th>Notes</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="duesTableBody">
+              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+            </tbody>
+            <tfoot id="duesTableFoot"></tfoot>
+          </table>
+        </div>
+      </section>
 
-        <div id="finFormWrap" style="display:none;">
-          <h3 style="font-size:1.05rem;color:#1a1a2e;margin-bottom:14px;">Add / Update Record</h3>
-          <div id="finError"   class="msg error"></div>
-          <div id="finSuccess" class="msg success"></div>
-          <div class="form-row">
-            <div class="form-group" style="max-width:120px;">
-              <label for="finYear">Year</label>
-              <input type="number" id="finYear" placeholder="2024" min="2000" max="2099" />
-            </div>
-            <div class="form-group" style="max-width:180px;">
-              <label for="finDues">Annual Dues ($)</label>
-              <input type="number" id="finDues" placeholder="0.00" min="0" step="0.01" />
-            </div>
-            <div class="form-group" style="max-width:180px;">
-              <label for="finEndowment">Endowment Fund ($)</label>
-              <input type="number" id="finEndowment" placeholder="0.00" min="0" step="0.01" />
-            </div>
-            <div class="form-group" style="flex:2;min-width:200px;">
-              <label for="finNotes">Notes</label>
-              <input type="text" id="finNotes" placeholder="Optional notes" />
-            </div>
+      <!-- ENDOWMENT FUND -->
+      <section id="endowmentFund">
+        <h2>&#127775; Endowment Fund</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:20px;">Record endowment fund contributions from members.</p>
+
+        <div id="endError"   class="msg error"></div>
+        <div id="endSuccess" class="msg success"></div>
+
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <div class="form-group" style="min-width:200px;flex:2;">
+            <label for="endMember">Member <span style="color:#e63946;">*</span></label>
+            <select id="endMember"><option value="">— Choose member —</option></select>
           </div>
-          <button class="btn-primary" id="finSaveBtn" onclick="saveFinancialRecord()">Save Record</button>
+          <div class="form-group" style="max-width:150px;">
+            <label for="endAmount">Amount ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="endAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:170px;">
+            <label for="endDate">Contribution Date</label>
+            <input type="date" id="endDate" />
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label for="endMethod">Payment Method</label>
+            <select id="endMethod">
+              <option value="">— Select —</option>
+              <option>Cash</option>
+              <option>Check</option>
+              <option>Bank Transfer</option>
+              <option>Zelle</option>
+              <option>PayPal</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="endNotes">Notes / Purpose</label>
+            <input type="text" id="endNotes" placeholder="Optional notes" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" onclick="saveEndowment()">Add Endowment Record</button>
         </div>
 
-        <div id="finTableWrap" style="display:none;margin-top:24px;">
-          <h3 style="font-size:1.05rem;color:#1a1a2e;margin-bottom:10px;">Existing Records</h3>
-          <div class="table-wrap">
-            <table class="fin-table">
-              <thead>
-                <tr>
-                  <th>Year</th>
-                  <th>Annual Dues</th>
-                  <th>Endowment Fund</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody id="finTableBody">
-                <tr><td colspan="4" style="text-align:center;color:#aaa;font-style:italic;">No records yet.</td></tr>
-              </tbody>
-              <tfoot id="finTableFoot"></tfoot>
-            </table>
-          </div>
+        <div class="table-wrap">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>Member</th><th>Amount</th><th>Date</th><th>Method</th><th>Notes</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="endTableBody">
+              <tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+            </tbody>
+            <tfoot id="endTableFoot"></tfoot>
+          </table>
         </div>
       </section>
 
@@ -1189,124 +1261,180 @@
       }
     }
 
-    // ---- FINANCIAL RECORDS ----
-
-    let allMembers = [];
+    // ── MEMBER DROPDOWNS ─────────────────────────────────────────────────────
 
     function populateMemberSelect(members) {
-      allMembers = members;
-      const sel = document.getElementById('finMemberSelect');
-      sel.innerHTML = '<option value="">— Choose a member —</option>' +
-        members.map(m => `<option value="${m.id}">${escapeHtml(m.full_name)} &lt;${escapeHtml(m.email)}&gt;</option>`).join('');
+      const opts = '<option value="">— Choose member —</option>' +
+        members.map(m => `<option value="${m.id}">${escapeHtml(m.full_name)}</option>`).join('');
+      document.getElementById('duesMember').innerHTML = opts;
+      document.getElementById('endMember').innerHTML  = opts;
     }
 
-    async function loadMemberFinancials() {
-      const userId = document.getElementById('finMemberSelect').value;
-      const nameEl = document.getElementById('finMemberName');
-      const formWrap  = document.getElementById('finFormWrap');
-      const tableWrap = document.getElementById('finTableWrap');
+    // ── ANNUAL DUES ───────────────────────────────────────────────────────────
 
-      if (!userId) {
-        nameEl.style.display = 'none';
-        formWrap.style.display = 'none';
-        tableWrap.style.display = 'none';
-        return;
-      }
+    let duesEditId = null;
 
-      const member = allMembers.find(m => String(m.id) === String(userId));
-      nameEl.textContent = member ? member.full_name : '';
-      nameEl.style.display = 'block';
-      formWrap.style.display = 'block';
-      tableWrap.style.display = 'block';
-
-      // Pre-fill year to current year
-      document.getElementById('finYear').value = new Date().getFullYear();
-
-      const tbody = document.getElementById('finTableBody');
-      const tfoot = document.getElementById('finTableFoot');
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;">Loading…</td></tr>';
-      tfoot.innerHTML = '';
-
+    async function loadDues() {
+      const tbody = document.getElementById('duesTableBody');
+      const tfoot = document.getElementById('duesTableFoot');
       try {
-        const res = await fetch('/api/admin/financials/' + userId, {
-          headers: { 'Authorization': 'Bearer ' + getToken() }
-        });
-        if (!res.ok) throw new Error('Failed to load');
+        const res = await fetch('/api/admin/dues', { headers: { 'Authorization': 'Bearer ' + getToken() } });
         const rows = await res.json();
-
-        if (rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;font-style:italic;">No records yet.</td></tr>';
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No dues records yet.</td></tr>';
+          tfoot.innerHTML = '';
           return;
         }
-
+        const statusBadge = s => ({
+          paid:    '<span style="color:#1e7e34;font-weight:700;">Paid</span>',
+          partial: '<span style="color:#856404;font-weight:700;">Partial</span>',
+          unpaid:  '<span style="color:#e63946;font-weight:700;">Unpaid</span>',
+        }[s] || s);
         tbody.innerHTML = rows.map(r => `
           <tr>
-            <td><strong>${r.year}</strong></td>
-            <td>$${parseFloat(r.annual_dues || 0).toFixed(2)}</td>
-            <td>$${parseFloat(r.endowment_fund || 0).toFixed(2)}</td>
+            <td>${escapeHtml(r.full_name)}</td>
+            <td>${r.year}</td>
+            <td>$${parseFloat(r.amount).toFixed(2)}</td>
+            <td>${statusBadge(r.status)}</td>
+            <td>${r.paid_date ? r.paid_date.slice(0,10) : '—'}</td>
+            <td>${escapeHtml(r.payment_method || '—')}</td>
             <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
-          </tr>
-        `).join('');
-
-        const totalDues = rows.reduce((s, r) => s + parseFloat(r.annual_dues || 0), 0);
-        const totalEnd  = rows.reduce((s, r) => s + parseFloat(r.endowment_fund || 0), 0);
-        tfoot.innerHTML = `
-          <tr class="fin-total">
-            <td>Total</td>
-            <td>$${totalDues.toFixed(2)}</td>
-            <td>$${totalEnd.toFixed(2)}</td>
-            <td></td>
-          </tr>`;
+            <td>
+              <button class="btn-sm" onclick="editDues(${r.id},'${r.user_id}',${r.year},${r.amount},'${r.paid_date ? r.paid_date.slice(0,10) : ''}','${escapeHtml(r.payment_method||'')}','${r.status}','${escapeHtml(r.notes||'')}')">Edit</button>
+              <button class="btn-sm btn-danger" onclick="deleteDues(${r.id})">Delete</button>
+            </td>
+          </tr>`).join('');
+        const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
+        tfoot.innerHTML = `<tr class="fin-total"><td colspan="2">Total</td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#e63946;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:#e63946;">${err.message}</td></tr>`;
       }
     }
 
-    async function saveFinancialRecord() {
-      const userId    = document.getElementById('finMemberSelect').value;
-      const year      = document.getElementById('finYear').value;
-      const dues      = document.getElementById('finDues').value;
-      const endowment = document.getElementById('finEndowment').value;
-      const notes     = document.getElementById('finNotes').value.trim();
-      const errEl     = document.getElementById('finError');
-      const okEl      = document.getElementById('finSuccess');
-      const btn       = document.getElementById('finSaveBtn');
+    async function saveDues() {
+      const errEl = document.getElementById('duesError');
+      const okEl  = document.getElementById('duesSuccess');
+      const btn   = document.getElementById('duesSaveBtn');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
 
-      errEl.style.display = 'none';
-      okEl.style.display  = 'none';
-
+      const userId = document.getElementById('duesMember').value;
+      const year   = document.getElementById('duesYear').value;
       if (!userId) { errEl.textContent = 'Please select a member.'; errEl.style.display = 'block'; return; }
-      if (!year)   { errEl.textContent = 'Year is required.';       errEl.style.display = 'block'; return; }
+      if (!year)   { errEl.textContent = 'Year is required.'; errEl.style.display = 'block'; return; }
+
+      const body = {
+        userId: parseInt(userId), year: parseInt(year),
+        amount:        parseFloat(document.getElementById('duesAmount').value) || 0,
+        paidDate:      document.getElementById('duesPaidDate').value || null,
+        paymentMethod: document.getElementById('duesMethod').value || null,
+        status:        document.getElementById('duesStatus').value,
+        notes:         document.getElementById('duesNotes').value.trim() || null,
+      };
 
       btn.disabled = true; btn.textContent = 'Saving…';
       try {
-        const res = await fetch('/api/admin/financials', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + getToken()
-          },
-          body: JSON.stringify({
-            userId: parseInt(userId),
-            year: parseInt(year),
-            annualDues:    parseFloat(dues)      || 0,
-            endowmentFund: parseFloat(endowment) || 0,
-            notes: notes || null
-          })
-        });
+        const url    = duesEditId ? `/api/admin/dues/${duesEditId}` : '/api/admin/dues';
+        const method = duesEditId ? 'PUT' : 'POST';
+        const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }, body: JSON.stringify(body) });
         const data = await res.json();
-        if (!res.ok) { errEl.textContent = data.error || 'Failed to save.'; errEl.style.display = 'block'; return; }
-        okEl.textContent = 'Record saved!'; okEl.style.display = 'block';
-        // Clear inputs and reload table
-        document.getElementById('finDues').value = '';
-        document.getElementById('finEndowment').value = '';
-        document.getElementById('finNotes').value = '';
-        loadMemberFinancials();
-      } catch {
-        errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block';
-      } finally {
-        btn.disabled = false; btn.textContent = 'Save Record';
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = duesEditId ? 'Record updated!' : 'Dues record added!';
+        okEl.style.display = 'block';
+        cancelDuesEdit();
+        loadDues();
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+      finally  { btn.disabled = false; btn.textContent = duesEditId ? 'Update Record' : 'Add Dues Record'; }
+    }
+
+    function editDues(id, userId, year, amount, paidDate, method, status, notes) {
+      duesEditId = id;
+      document.getElementById('duesMember').value    = userId;
+      document.getElementById('duesYear').value      = year;
+      document.getElementById('duesAmount').value    = amount;
+      document.getElementById('duesPaidDate').value  = paidDate;
+      document.getElementById('duesMethod').value    = method;
+      document.getElementById('duesStatus').value    = status;
+      document.getElementById('duesNotes').value     = notes;
+      document.getElementById('duesSaveBtn').textContent   = 'Update Record';
+      document.getElementById('duesCancelBtn').style.display = 'inline-block';
+      document.getElementById('annualDues').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelDuesEdit() {
+      duesEditId = null;
+      ['duesMember','duesAmount','duesPaidDate','duesMethod','duesNotes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('duesYear').value   = new Date().getFullYear();
+      document.getElementById('duesStatus').value = 'paid';
+      document.getElementById('duesSaveBtn').textContent     = 'Add Dues Record';
+      document.getElementById('duesCancelBtn').style.display = 'none';
+    }
+
+    async function deleteDues(id) {
+      if (!confirm('Delete this dues record?')) return;
+      await fetch(`/api/admin/dues/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+      loadDues();
+    }
+
+    // ── ENDOWMENT FUND ────────────────────────────────────────────────────────
+
+    async function loadEndowment() {
+      const tbody = document.getElementById('endTableBody');
+      const tfoot = document.getElementById('endTableFoot');
+      try {
+        const res = await fetch('/api/admin/endowment', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const rows = await res.json();
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;">No endowment records yet.</td></tr>';
+          tfoot.innerHTML = '';
+          return;
+        }
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td>${escapeHtml(r.full_name)}</td>
+            <td>$${parseFloat(r.amount).toFixed(2)}</td>
+            <td>${r.contribution_date ? r.contribution_date.slice(0,10) : '—'}</td>
+            <td>${escapeHtml(r.payment_method || '—')}</td>
+            <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
+            <td><button class="btn-sm btn-danger" onclick="deleteEndowment(${r.id})">Delete</button></td>
+          </tr>`).join('');
+        const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
+        tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td>$${total.toFixed(2)}</td><td colspan="4"></td></tr>`;
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:#e63946;">${err.message}</td></tr>`;
       }
+    }
+
+    async function saveEndowment() {
+      const errEl = document.getElementById('endError');
+      const okEl  = document.getElementById('endSuccess');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+
+      const userId = document.getElementById('endMember').value;
+      const amount = document.getElementById('endAmount').value;
+      if (!userId) { errEl.textContent = 'Please select a member.'; errEl.style.display = 'block'; return; }
+      if (!amount) { errEl.textContent = 'Amount is required.'; errEl.style.display = 'block'; return; }
+
+      const body = {
+        userId: parseInt(userId),
+        amount: parseFloat(amount),
+        contributionDate: document.getElementById('endDate').value || null,
+        paymentMethod:    document.getElementById('endMethod').value || null,
+        notes:            document.getElementById('endNotes').value.trim() || null,
+      };
+      try {
+        const res  = await fetch('/api/admin/endowment', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = 'Endowment record added!'; okEl.style.display = 'block';
+        ['endMember','endAmount','endDate','endMethod','endNotes'].forEach(id => document.getElementById(id).value = '');
+        loadEndowment();
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+    }
+
+    async function deleteEndowment(id) {
+      if (!confirm('Delete this endowment record?')) return;
+      await fetch(`/api/admin/endowment/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+      loadEndowment();
     }
 
     // Init
@@ -1320,6 +1448,8 @@
       loadMembers();
       fetchMetrics();
       setInterval(fetchMetrics, 10000);
+      loadDues();
+      loadEndowment();
     })();
   </script>
 

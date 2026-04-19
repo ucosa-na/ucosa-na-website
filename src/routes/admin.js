@@ -253,6 +253,108 @@ router.get('/backup', requireAdmin, (req, res) => {
   });
 });
 
+// ── ANNUAL DUES ──────────────────────────────────────────────────────────────
+
+// GET /api/admin/dues — all dues records with member names
+router.get('/dues', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT d.id, d.year, d.amount, d.paid_date, d.payment_method, d.status, d.notes, d.created_at,
+             u.full_name, u.id AS user_id
+      FROM annual_dues d
+      JOIN users u ON u.id = d.user_id
+      ORDER BY d.year DESC, u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/dues — add a dues record
+router.post('/dues', requireAdmin, async (req, res) => {
+  const { userId, year, amount, paidDate, paymentMethod, status, notes } = req.body;
+  if (!userId || !year) return res.status(400).json({ error: 'Member and year are required' });
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO annual_dues (user_id, year, amount, paid_date, payment_method, status, notes, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+    `, [userId, year, amount || 0, paidDate || null, paymentMethod || null,
+        status || 'unpaid', notes || null, req.user.id]);
+    res.status(201).json({ message: 'Dues record added', id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/dues/:id — update a dues record
+router.put('/dues/:id', requireAdmin, async (req, res) => {
+  const { year, amount, paidDate, paymentMethod, status, notes } = req.body;
+  try {
+    await pool.query(`
+      UPDATE annual_dues SET year=$1, amount=$2, paid_date=$3, payment_method=$4,
+        status=$5, notes=$6, updated_at=NOW() WHERE id=$7
+    `, [year, amount || 0, paidDate || null, paymentMethod || null,
+        status || 'unpaid', notes || null, req.params.id]);
+    res.json({ message: 'Dues record updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/dues/:id
+router.delete('/dues/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM annual_dues WHERE id=$1', [req.params.id]);
+    res.json({ message: 'Dues record deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── ENDOWMENT FUND ────────────────────────────────────────────────────────────
+
+// GET /api/admin/endowment — all endowment records with member names
+router.get('/endowment', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT e.id, e.amount, e.contribution_date, e.payment_method, e.notes, e.created_at,
+             u.full_name, u.id AS user_id
+      FROM endowment_fund e
+      JOIN users u ON u.id = e.user_id
+      ORDER BY e.contribution_date DESC, u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/endowment — add an endowment record
+router.post('/endowment', requireAdmin, async (req, res) => {
+  const { userId, amount, contributionDate, paymentMethod, notes } = req.body;
+  if (!userId || !amount) return res.status(400).json({ error: 'Member and amount are required' });
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO endowment_fund (user_id, amount, contribution_date, payment_method, notes, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+    `, [userId, amount, contributionDate || null, paymentMethod || null, notes || null, req.user.id]);
+    res.status(201).json({ message: 'Endowment record added', id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/endowment/:id
+router.delete('/endowment/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM endowment_fund WHERE id=$1', [req.params.id]);
+    res.json({ message: 'Endowment record deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/financials — upsert a financial record for a member
 router.post('/financials', requireAdmin, async (req, res) => {
   const { userId, year, annualDues, endowmentFund, notes } = req.body;
