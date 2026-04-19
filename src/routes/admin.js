@@ -35,22 +35,20 @@ function generatePassword(length = 10) {
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', requireAdmin, async (req, res) => {
   const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
-  if (!firstName || !lastName || !phone) {
-    return res.status(400).json({ error: 'First name, last name, and phone number are required' });
+  if (!firstName || !lastName || !email || !phone) {
+    return res.status(400).json({ error: 'First name, last name, email, and phone number are required' });
   }
 
   const fullName = `${firstName.trim()} ${lastName.trim()}`;
-  const emailVal = email ? email.toLowerCase().trim() : null;
+  const emailVal = email.toLowerCase().trim();
 
   try {
-    if (emailVal) {
-      const { rows: existing } = await pool.query(
-        'SELECT id FROM users WHERE email = $1',
-        [emailVal]
-      );
-      if (existing.length > 0) {
-        return res.status(409).json({ error: 'A member with this email already exists' });
-      }
+    const { rows: existing } = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [emailVal]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'A member with this email already exists' });
     }
 
     const tempPassword = generatePassword();
@@ -79,14 +77,11 @@ router.post('/users', requireAdmin, async (req, res) => {
 
     // Respond immediately with temp password
     res.status(201).json({
-      message: emailVal
-        ? `Member created. Welcome email will be sent to ${emailVal}`
-        : 'Member created. No email provided — share the temporary password manually.',
+      message: `Member created. Welcome email will be sent to ${emailVal}`,
       tempPassword,
     });
 
-    // Fire-and-forget email (only if email provided)
-    if (!emailVal) return;
+    // Fire-and-forget email
     const transport = makeTransport();
     transport.sendMail({
       from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
