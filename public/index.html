@@ -157,7 +157,24 @@
   /* ── PAGE SECTIONS ── */
   .page { display: none; padding: 48px 40px; animation: fadeIn 0.3s ease; }
   .page.active { display: block; flex: 1; overflow-y: auto; min-height: 0; }
-  #page-gallery.active { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 12px; }
+  #page-gallery.active,
+  #page-event-golden-jubilee.active,
+  #page-event-staff-quarters.active,
+  #page-event-inaugural.active {
+    flex: 1; overflow-y: auto; min-height: 0; padding: 12px; width: 100%; box-sizing: border-box; align-self: stretch;
+  }
+  #page-gallery [style*="display:grid"],
+  #page-event-golden-jubilee [style*="display:grid"],
+  #page-event-staff-quarters [style*="display:grid"],
+  #page-event-inaugural [style*="display:grid"] {
+    grid-template-columns: repeat(6,1fr) !important; width: 100%;
+  }
+  #page-gallery [style*="border:1px solid #e8d8c4"],
+  #page-event-golden-jubilee [style*="border:1px solid #e8d8c4"],
+  #page-event-staff-quarters [style*="border:1px solid #e8d8c4"],
+  #page-event-inaugural [style*="border:1px solid #e8d8c4"] {
+    border: none !important; border-radius: 0 !important; padding: 0 !important; background: none !important;
+  }
   #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 12px; width: 100%; box-sizing: border-box; align-self: stretch; }
   #page-computer-lab .gallery-section { width: 100%; }
   #page-computer-lab .lab-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; width: 100%; }
