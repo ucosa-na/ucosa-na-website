@@ -157,7 +157,9 @@
   /* ── PAGE SECTIONS ── */
   .page { display: none; padding: 48px 40px; animation: fadeIn 0.3s ease; }
   .page.active { display: block; }
-  #page-gallery.active { flex: 1; overflow-y: auto; min-height: 0; }
+  #page-gallery.active { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 12px; }
+  #page-gallery .gallery-section { margin-bottom: 32px; }
+  #page-gallery [style*="display:grid"] { grid-template-columns: repeat(6, 1fr) !important; }
 
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(12px); }
