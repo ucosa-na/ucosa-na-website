@@ -2382,28 +2382,6 @@
       </div>
     </div>
 
-    <!-- Lightbox overlay -->
-    <div id="lab-lightbox" onclick="closeLabLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;">
-      <span style="position:absolute;top:18px;right:28px;color:#fff;font-size:38px;line-height:1;cursor:pointer;user-select:none;">&times;</span>
-      <img id="lab-lightbox-img" src="" alt="Computer Lab enlarged" draggable="false" oncontextmenu="return false;"
-           style="max-width:92vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);pointer-events:none;user-select:none;-webkit-user-drag:none;">
-    </div>
-    <script>
-      function openLabLightbox(src) {
-        var lb = document.getElementById('lab-lightbox');
-        document.getElementById('lab-lightbox-img').src = src;
-        lb.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      }
-      function closeLabLightbox() {
-        document.getElementById('lab-lightbox').style.display = 'none';
-        document.getElementById('lab-lightbox-img').src = '';
-        document.body.style.overflow = '';
-      }
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeLabLightbox();
-      });
-    </script>
   </section>
 
   <!-- PHOTO GALLERY -->
@@ -2780,6 +2758,29 @@
   </section>
 
 </div><!-- end .content-wrapper -->
+
+<!-- Global lightbox — works across all pages -->
+<div id="lab-lightbox" onclick="closeLabLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;">
+  <span style="position:absolute;top:18px;right:28px;color:#fff;font-size:38px;line-height:1;cursor:pointer;user-select:none;">&times;</span>
+  <img id="lab-lightbox-img" src="" alt="enlarged photo" draggable="false" oncontextmenu="return false;"
+       style="max-width:92vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);pointer-events:none;user-select:none;-webkit-user-drag:none;">
+</div>
+<script>
+  function openLabLightbox(src) {
+    var lb = document.getElementById('lab-lightbox');
+    document.getElementById('lab-lightbox-img').src = src;
+    lb.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLabLightbox() {
+    document.getElementById('lab-lightbox').style.display = 'none';
+    document.getElementById('lab-lightbox-img').src = '';
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLabLightbox();
+  });
+</script>
 
 
 <footer class="site-footer">
