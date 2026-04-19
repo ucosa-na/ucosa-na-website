@@ -158,7 +158,8 @@
   .page { display: none; padding: 48px 40px; animation: fadeIn 0.3s ease; }
   .page.active { display: block; flex: 1; overflow-y: auto; min-height: 0; }
   #page-gallery.active { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 12px; }
-  #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 12px; }
+  #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 12px; width: 100%; box-sizing: border-box; align-self: stretch; }
+  #page-computer-lab .gallery-section { width: 100%; }
   #page-computer-lab .lab-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; width: 100%; }
   #page-gallery .gallery-section { margin-bottom: 32px; }
   #page-gallery [style*="display:grid"] { grid-template-columns: repeat(6, 1fr) !important; }
