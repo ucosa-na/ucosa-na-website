@@ -50,6 +50,36 @@ pool.query(`
       UNIQUE(user_id)
     );
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS annual_dues (
+      id             SERIAL PRIMARY KEY,
+      user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year           INTEGER NOT NULL,
+      amount         NUMERIC(10,2) NOT NULL DEFAULT 0,
+      paid_date      DATE DEFAULT NULL,
+      payment_method TEXT DEFAULT NULL,
+      status         TEXT NOT NULL DEFAULT 'unpaid'
+                       CHECK (status IN ('paid','partial','unpaid')),
+      notes          TEXT DEFAULT NULL,
+      recorded_by    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at     TIMESTAMPTZ DEFAULT NOW(),
+      updated_at     TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS endowment_fund (
+      id             SERIAL PRIMARY KEY,
+      user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount         NUMERIC(10,2) NOT NULL,
+      contribution_date DATE DEFAULT CURRENT_DATE,
+      payment_method TEXT DEFAULT NULL,
+      notes          TEXT DEFAULT NULL,
+      recorded_by    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at     TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
