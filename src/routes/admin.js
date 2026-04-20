@@ -8,6 +8,22 @@ const requireAdmin = require('../middleware/requireAdmin');
 
 const router = express.Router();
 
+// ── TWILIO SMS HELPER ─────────────────────────────────────────────────────────
+function getTwilioClient() {
+  const sid   = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  if (!sid || !token) return null;
+  return require('twilio')(sid, token);
+}
+
+async function sendSMS(to, body) {
+  const client = getTwilioClient();
+  if (!client) throw new Error('Twilio not configured (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER missing)');
+  const from = process.env.TWILIO_PHONE_NUMBER;
+  if (!from) throw new Error('TWILIO_PHONE_NUMBER not set');
+  return client.messages.create({ to, from, body });
+}
+
 function makeTransport() {
   return nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
@@ -80,6 +96,17 @@ router.post('/users', requireAdmin, async (req, res) => {
       message: `Member created. Welcome email will be sent to ${emailVal}`,
       tempPassword,
     });
+
+    // Fire-and-forget SMS with credentials (if phone provided)
+    if (phone) {
+      sendSMS(phone,
+        `Welcome to UCOSA-NA, ${fullName}!\n` +
+        `Login: https://ucosa-na.org\n` +
+        `Email: ${emailVal}\n` +
+        `Temp password: ${tempPassword}\n` +
+        `Change your password on first login.`
+      ).catch(err => console.error('Welcome SMS failed:', err.message));
+    }
 
     // Fire-and-forget email
     const transport = makeTransport();
@@ -386,6 +413,68 @@ router.get('/financials/:userId', requireAdmin, async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── SMS BROADCAST ─────────────────────────────────────────────────────────────
+
+// POST /api/admin/sms/broadcast — send SMS to all members with phone numbers
+router.post('/sms/broadcast', requireAdmin, async (req, res) => {
+  const { message } = req.body;
+  if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.full_name, COALESCE(p.phone, u.phone) AS phone
+       FROM users u
+       LEFT JOIN member_profiles p ON p.user_id = u.id
+       WHERE COALESCE(p.phone, u.phone) IS NOT NULL AND u.role != 'admin'`
+    );
+
+    if (!rows.length) return res.status(400).json({ error: 'No members with phone numbers found' });
+
+    const results = await Promise.allSettled(
+      rows.map(m => sendSMS(m.phone, message.trim()))
+    );
+
+    const sent   = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    res.json({ message: `SMS sent to ${sent} member(s).${failed ? ` ${failed} failed.` : ''}`, sent, failed });
+  } catch (err) {
+    console.error('Broadcast SMS error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/sms/dues-reminder/:duesId — send dues reminder to a specific member
+router.post('/sms/dues-reminder/:duesId', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT d.year, d.amount, d.status,
+             u.full_name, COALESCE(p.phone, u.phone) AS phone
+      FROM annual_dues d
+      JOIN users u ON u.id = d.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE d.id = $1
+    `, [req.params.duesId]);
+
+    if (!rows.length) return res.status(404).json({ error: 'Dues record not found' });
+    const r = rows[0];
+    if (!r.phone) return res.status(400).json({ error: `${r.full_name} has no phone number on record` });
+
+    const body =
+      `UCOSA-NA Dues Reminder\n` +
+      `Dear ${r.full_name},\n` +
+      `Your ${r.year} annual dues of $${parseFloat(r.amount).toFixed(2)} are currently: ${r.status.toUpperCase()}.\n` +
+      `Please log in at https://ucosa-na.org or contact the treasurer.\n` +
+      `Thank you!`;
+
+    await sendSMS(r.phone, body);
+    res.json({ message: `Reminder sent to ${r.full_name} at ${r.phone}` });
+  } catch (err) {
+    console.error('Dues reminder SMS error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 

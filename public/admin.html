@@ -545,6 +545,7 @@
       <a href="#siteMaintenance">Site Maintenance</a>
       <a href="#annualDues">Annual Dues</a>
       <a href="#endowmentFund">Endowment Fund</a>
+      <a href="#smsBroadcast">SMS Broadcast</a>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -930,6 +931,22 @@
         </div>
       </section>
 
+      <!-- SMS BROADCAST -->
+      <section id="smsBroadcast">
+        <h2>&#128241; SMS Broadcast</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:20px;">
+          Send a text message to all members who have a phone number on record.
+        </p>
+        <div id="smsError"   class="msg error"></div>
+        <div id="smsSuccess" class="msg success"></div>
+        <div class="form-group" style="max-width:640px;margin-bottom:16px;">
+          <label for="smsMessage">Message <span style="color:#e63946;">*</span></label>
+          <textarea id="smsMessage" rows="5" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:0.95rem;resize:vertical;" placeholder="Type your message here… (max 160 characters recommended per SMS segment)"></textarea>
+          <div style="font-size:0.8rem;color:#888;margin-top:4px;">Characters: <span id="smsCharCount">0</span></div>
+        </div>
+        <button class="btn-primary" onclick="sendBroadcast()">&#128241; Send to All Members</button>
+      </section>
+
     </main>
   </div>
 
@@ -1301,6 +1318,7 @@
             <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
             <td>
               <button class="btn-sm" onclick="editDues(${r.id},'${r.user_id}',${r.year},${r.amount},'${r.paid_date ? r.paid_date.slice(0,10) : ''}','${escapeHtml(r.payment_method||'')}','${r.status}','${escapeHtml(r.notes||'')}')">Edit</button>
+              <button class="btn-sm" style="background:#2a9d8f;" onclick="sendDuesReminder(${r.id},'${escapeHtml(r.full_name)}')">&#128241; Remind</button>
               <button class="btn-sm btn-danger" onclick="deleteDues(${r.id})">Delete</button>
             </td>
           </tr>`).join('');
@@ -1435,6 +1453,50 @@
       if (!confirm('Delete this endowment record?')) return;
       await fetch(`/api/admin/endowment/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
       loadEndowment();
+    }
+
+    // ── SMS BROADCAST ─────────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const ta = document.getElementById('smsMessage');
+      const cc = document.getElementById('smsCharCount');
+      if (ta && cc) ta.addEventListener('input', () => cc.textContent = ta.value.length);
+    });
+
+    async function sendBroadcast() {
+      const errEl = document.getElementById('smsError');
+      const okEl  = document.getElementById('smsSuccess');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+
+      const message = document.getElementById('smsMessage').value.trim();
+      if (!message) { errEl.textContent = 'Message is required.'; errEl.style.display = 'block'; return; }
+      if (!confirm(`Send this SMS to all members with phone numbers?\n\n"${message}"`)) return;
+
+      try {
+        const res  = await fetch('/api/admin/sms/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = data.message; okEl.style.display = 'block';
+        document.getElementById('smsMessage').value = '';
+        document.getElementById('smsCharCount').textContent = '0';
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+    }
+
+    async function sendDuesReminder(duesId, memberName) {
+      if (!confirm(`Send dues reminder SMS to ${memberName}?`)) return;
+      try {
+        const res  = await fetch(`/api/admin/sms/dues-reminder/${duesId}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'Failed to send.')); return; }
+        alert(data.message);
+      } catch { alert('Network error.'); }
     }
 
     // Init
