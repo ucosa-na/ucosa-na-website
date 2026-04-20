@@ -10,6 +10,65 @@ const router = express.Router();
 
 const ALERT_TO = 'ucosa.northamerica@gmail.com';
 
+function makeTransport() {
+  return nodemailer.createTransport({
+    host: 'smtp.sendgrid.net', port: 465, secure: true,
+    auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
+  });
+}
+
+async function getLocation(ip) {
+  if (!ip || ip === '::1' || ip.startsWith('127.') || ip.startsWith('10.') || ip.startsWith('192.168.')) {
+    return 'Local / Private Network';
+  }
+  try {
+    const res  = await fetch(`http://ip-api.com/json/${ip}?fields=status,city,regionName,country`);
+    const data = await res.json();
+    if (data.status === 'success') {
+      return [data.city, data.regionName, data.country].filter(Boolean).join(', ');
+    }
+  } catch (_) {}
+  return 'Unknown location';
+}
+
+async function sendMemberFailedLoginAlert(user, ip, location) {
+  const ts = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'full', timeStyle: 'long' });
+  const phone = user.phone;
+
+  // Email alert
+  makeTransport().sendMail({
+    from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: '⚠️ Failed Login Attempt — UCOSA-NA',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;background:#f9f9f9;border-radius:12px">
+        <h2 style="color:#c62828;margin-bottom:8px">Failed Login Attempt</h2>
+        <p style="color:#333;margin-bottom:16px">Someone tried to log in to your UCOSA-NA account and failed. Details below:</p>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
+          <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">IP Address</td><td style="padding:10px 0;color:#111">${ip}</td></tr>
+          <tr><td style="padding:10px 0;color:#555;font-weight:600">Location</td><td style="padding:10px 0;color:#111">${location}</td></tr>
+          <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
+        </table>
+        <p style="margin-top:20px;color:#555">If this was you, you may have mistyped your password. If not, please <strong>change your password immediately</strong> at <a href="https://ucosa-na.org/change-password.html">ucosa-na.org</a>.</p>
+        <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+      </div>`,
+  }).catch(err => log.error(`Failed login email to ${user.email}: ${err.message}`));
+
+  // SMS alert
+  if (phone) {
+    const sid  = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const from  = process.env.TWILIO_PHONE_NUMBER;
+    if (sid && token && from) {
+      require('twilio')(sid, token).messages.create({
+        to: phone, from,
+        body: `UCOSA-NA Security Alert: A failed login was attempted on your account from ${ip} (${location}) at ${ts}. If this wasn't you, change your password immediately at ucosa-na.org`,
+      }).catch(err => log.error(`Failed login SMS to ${phone}: ${err.message}`));
+    }
+  }
+}
+
 function sendAdminLoginAlert(type, email, ip) {
   const isSuccess = type === 'success';
   const subject   = isSuccess
@@ -19,12 +78,7 @@ function sendAdminLoginAlert(type, email, ip) {
   const label  = isSuccess ? 'SUCCESSFUL LOGIN' : 'FAILED LOGIN ATTEMPT';
   const ts     = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'full', timeStyle: 'long' });
 
-  const transport = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net', port: 465, secure: true,
-    auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
-  });
-
-  transport.sendMail({
+  makeTransport().sendMail({
     from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
     to: ALERT_TO,
     subject,
@@ -63,6 +117,8 @@ router.post('/login', async (req, res) => {
     if (!valid) {
       log.warn(`Failed login — wrong password for: ${user.email} from IP ${req.ip}`);
       if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
+      // Fire-and-forget: email + SMS alert to the member
+      getLocation(req.ip).then(loc => sendMemberFailedLoginAlert(user, req.ip, loc));
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
