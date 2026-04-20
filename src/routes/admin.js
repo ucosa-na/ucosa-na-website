@@ -100,22 +100,36 @@ router.post('/users', secOrAdmin, async (req, res) => {
       );
     }
 
-    // Respond immediately with temp password
-    res.status(201).json({
-      message: `Member created. Welcome email will be sent to ${emailVal}`,
-      tempPassword,
-    });
+    log.info(`Member created: ${fullName} (${emailVal}) by user ${req.user.id}`);
 
-    // Fire-and-forget SMS with credentials (if phone provided)
+    // Send welcome SMS (awaited so we can report status in the response)
+    let smsSent = false;
     if (phone) {
-      sendSMS(phone,
-        `Welcome to UCOSA-NA, ${fullName}!\n` +
-        `Login: https://ucosa-na.org\n` +
-        `Email: ${emailVal}\n` +
-        `Temp password: ${tempPassword}\n` +
-        `Change your password on first login.`
-      ).catch(err => console.error('Welcome SMS failed:', err.message));
+      try {
+        await sendSMS(phone,
+          `Welcome to UCOSA-NA, ${fullName}!\n` +
+          `Login: https://ucosa-na.org\n` +
+          `Email: ${emailVal}\n` +
+          `Temp password: ${tempPassword}\n` +
+          `Please change your password on first login.`
+        );
+        smsSent = true;
+        log.info(`Welcome SMS sent to ${phone} for ${fullName}`);
+      } catch (err) {
+        log.error(`Welcome SMS failed for ${phone} (${fullName}): ${err.message}`);
+      }
     }
+
+    // Respond with SMS status included
+    const smsNote = phone
+      ? (smsSent ? ` Welcome SMS sent to ${phone}.` : ` SMS to ${phone} failed — check Twilio config.`)
+      : ' No phone number provided — SMS skipped.';
+
+    res.status(201).json({
+      message: `Member ${fullName} created.${smsNote}`,
+      tempPassword,
+      smsSent,
+    });
 
     // Fire-and-forget email
     const transport = makeTransport();
@@ -141,10 +155,12 @@ router.post('/users', secOrAdmin, async (req, res) => {
           </p>
         </div>
       `,
-    }).catch(err => console.error('Welcome email failed for', emailVal, '— code:', err.code, '— message:', err.message));
+    })
+      .then(() => log.info(`Welcome email sent to ${emailVal}`))
+      .catch(err => log.error(`Welcome email failed for ${emailVal}: ${err.message}`));
 
   } catch (err) {
-    console.error('Create member error:', err.message);
+    log.error(`Create member error: ${err.message}`);
     res.status(500).json({ error: 'Failed to create member. ' + err.message });
   }
 });

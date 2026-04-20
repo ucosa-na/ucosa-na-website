@@ -1439,7 +1439,8 @@
           return;
         }
 
-        successMsg.textContent = data.message || 'Member created successfully!';
+        const smsIcon = data.smsSent === true ? '📱✅' : data.smsSent === false ? '📱❌' : '';
+        successMsg.textContent = (data.message || 'Member created successfully!') + (smsIcon ? ' ' + smsIcon : '');
         successMsg.style.display = 'block';
         if (data.tempPassword) {
           document.getElementById('tempPasswordValue').textContent = data.tempPassword;
