@@ -1873,10 +1873,11 @@
     let logData = [];
     let logAutoRefreshTimer = null;
 
+    function logBox() { return document.getElementById('logConsole'); }
+
     async function loadLogs() {
-      const lines   = document.getElementById('logLines').value;
-      const console = document.getElementById('logConsole');
-      console.innerHTML = '<span style="color:#555;font-style:italic;">Loading…</span>';
+      const lines = document.getElementById('logLines').value;
+      logBox().innerHTML = '<span style="color:#555;font-style:italic;">Loading…</span>';
       try {
         const res  = await fetch(`/api/admin/logs?lines=${lines}`, {
           headers: { 'Authorization': 'Bearer ' + getToken() }
@@ -1888,25 +1889,25 @@
         document.getElementById('logMeta').textContent =
           `Showing ${Math.min(logData.length, lines)} of ${data.total || logData.length} total lines — refreshed ${new Date().toLocaleTimeString()}`;
       } catch (err) {
-        console.innerHTML = `<span class="log-line ERROR">Error loading logs: ${escapeHtml(err.message)}</span>`;
+        logBox().innerHTML = `<span class="log-line ERROR">Error loading logs: ${escapeHtml(err.message)}</span>`;
       }
     }
 
     function renderLogs() {
-      const level   = document.getElementById('logLevel').value;
-      const search  = document.getElementById('logSearch').value.toLowerCase();
-      const console = document.getElementById('logConsole');
+      const level  = document.getElementById('logLevel').value;
+      const search = document.getElementById('logSearch').value.toLowerCase();
+      const box    = logBox();
 
       let filtered = logData;
       if (level)  filtered = filtered.filter(l => l.includes(`] ${level}`));
       if (search) filtered = filtered.filter(l => l.toLowerCase().includes(search));
 
       if (!filtered.length) {
-        console.innerHTML = '<span style="color:#555;font-style:italic;">No matching log entries.</span>';
+        box.innerHTML = '<span style="color:#555;font-style:italic;">No matching log entries.</span>';
         return;
       }
 
-      console.innerHTML = filtered.map(line => {
+      box.innerHTML = filtered.map(line => {
         const lvl = line.match(/\] (INFO|WARN|ERROR)/)?.[1] || '';
         const highlighted = search
           ? escapeHtml(line).replace(new RegExp(escapeHtml(search), 'gi'), m => `<mark style="background:#ffe36b22;color:inherit;">${m}</mark>`)
@@ -1914,8 +1915,7 @@
         return `<span class="log-line ${lvl}">${highlighted}</span>`;
       }).join('');
 
-      // Scroll to bottom
-      console.scrollTop = console.scrollHeight;
+      box.scrollTop = box.scrollHeight;
     }
 
     function toggleAutoRefresh() {
