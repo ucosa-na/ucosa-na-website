@@ -230,7 +230,7 @@
 
     /* SIDEBAR */
     .sidebar {
-      width: 220px;
+      width: 230px;
       flex-shrink: 0;
       background: white;
       border-radius: 12px;
@@ -250,10 +250,10 @@
     }
     .sidebar a {
       display: block;
-      padding: 11px 20px;
+      padding: 10px 20px;
       color: #444;
       text-decoration: none;
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       transition: background 0.15s, color 0.15s;
       border-left: 3px solid transparent;
     }
@@ -263,6 +263,55 @@
       color: #1a1a2e;
       border-left-color: #1a1a2e;
       font-weight: 600;
+    }
+    /* Sub-menu group */
+    .sidebar-group-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #1a1a2e;
+      cursor: pointer;
+      user-select: none;
+      border-left: 3px solid transparent;
+      transition: background 0.15s;
+    }
+    .sidebar-group-label:hover { background: #f4f6f9; }
+    .sidebar-group-label .chevron {
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+      color: #999;
+    }
+    .sidebar-group-label.open .chevron { transform: rotate(90deg); }
+    .sidebar-group-items {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+    .sidebar-group-items.open { max-height: 300px; }
+    .sidebar-group-items a {
+      padding: 9px 20px 9px 34px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .sidebar-group-items a:hover,
+    .sidebar-group-items a.active {
+      background: #f0f4ff;
+      color: #1a1a2e;
+      border-left-color: #1a1a2e;
+    }
+    /* Role accent colours for group labels */
+    .sidebar-group-label.group-admin  { border-left-color: #e63946; }
+    .sidebar-group-label.group-fin    { border-left-color: #065f46; }
+    .sidebar-group-label.group-sec    { border-left-color: #1e40af; }
+    .sidebar-divider {
+      height: 1px;
+      background: #f0f0f0;
+      margin: 8px 0;
     }
 
     /* CONTENT */
@@ -574,15 +623,46 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <h3>Menu</h3>
-      <a href="/admin.html" class="active">Dashboard</a>
-      <a href="#createMember" class="sidebar-sec">Create Member</a>
-      <a href="#membersList"  class="sidebar-sec">Member List</a>
-      <a href="#annualDues"   class="sidebar-fin">Annual Dues</a>
-      <a href="#endowmentFund" class="sidebar-fin">Endowment Fund</a>
-      <a href="#testEmail"       class="sidebar-admin">Test Email</a>
-      <a href="#siteMaintenance" class="sidebar-admin">Site Maintenance</a>
-      <a href="#smsBroadcast"    class="sidebar-admin">SMS Broadcast</a>
+      <h3>Administration</h3>
+
+      <!-- Admin sub-menu -->
+      <div class="sidebar-admin" id="sidebarGroupAdmin">
+        <div class="sidebar-group-label group-admin open" onclick="toggleSidebarGroup('groupAdminItems', this)">
+          <span>&#9881; Admin</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupAdminItems">
+          <a href="#testEmail">Test Email</a>
+          <a href="#siteMaintenance">Site Maintenance</a>
+          <a href="#smsBroadcast">SMS Broadcast</a>
+        </div>
+      </div>
+
+      <!-- Finance sub-menu -->
+      <div class="sidebar-fin" id="sidebarGroupFin">
+        <div class="sidebar-group-label group-fin open" onclick="toggleSidebarGroup('groupFinItems', this)">
+          <span>&#128181; Finance</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupFinItems">
+          <a href="#annualDues">Annual Dues</a>
+          <a href="#endowmentFund">Endowment Fund</a>
+        </div>
+      </div>
+
+      <!-- Security sub-menu -->
+      <div class="sidebar-sec" id="sidebarGroupSec">
+        <div class="sidebar-group-label group-sec open" onclick="toggleSidebarGroup('groupSecItems', this)">
+          <span>&#128100; Security</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupSecItems">
+          <a href="#createMember">Create Member</a>
+          <a href="#membersList">Member List</a>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -1042,6 +1122,12 @@
 
   <script>
     let currentUser = null;
+
+    function toggleSidebarGroup(itemsId, label) {
+      const items = document.getElementById(itemsId);
+      const isOpen = items.classList.toggle('open');
+      label.classList.toggle('open', isOpen);
+    }
 
     function logout() {
       localStorage.removeItem('ucosa_token');
