@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
+const log = require('../logger');
 
 const router = express.Router();
 
@@ -19,13 +20,20 @@ router.post('/login', async (req, res) => {
       [email.toLowerCase().trim()]
     );
     const user = rows[0];
-    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+    if (!user) {
+      log.warn(`Failed login — unknown email: ${email.toLowerCase().trim()} from IP ${req.ip}`);
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+    if (!valid) {
+      log.warn(`Failed login — wrong password for: ${user.email} from IP ${req.ip}`);
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     // Record last login timestamp
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+    log.info(`Login successful: ${user.email} (role: ${user.role}) from IP ${req.ip}`);
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, mustChangePassword: user.must_change_password },
