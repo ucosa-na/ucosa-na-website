@@ -1,11 +1,45 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
 const log = require('../logger');
 
 const router = express.Router();
+
+const ALERT_TO = 'ucosa.northamerica@gmail.com';
+
+function sendAdminLoginAlert(type, email, ip) {
+  const isSuccess = type === 'success';
+  const subject   = isSuccess
+    ? '✅ Admin Login — UCOSA-NA'
+    : '⚠️ Failed Admin Login Attempt — UCOSA-NA';
+  const color  = isSuccess ? '#2e7d32' : '#c62828';
+  const label  = isSuccess ? 'SUCCESSFUL LOGIN' : 'FAILED LOGIN ATTEMPT';
+  const ts     = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'full', timeStyle: 'long' });
+
+  const transport = nodemailer.createTransport({
+    host: 'smtp.sendgrid.net', port: 465, secure: true,
+    auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
+  });
+
+  transport.sendMail({
+    from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
+    to: ALERT_TO,
+    subject,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;background:#f9f9f9;border-radius:12px">
+        <h2 style="color:${color};margin-bottom:8px">${label}</h2>
+        <table style="width:100%;border-collapse:collapse;margin-top:16px">
+          <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${email}</td></tr>
+          <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">IP Address</td><td style="padding:10px 0;color:#111">${ip}</td></tr>
+          <tr><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
+        </table>
+        <p style="margin-top:20px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+      </div>`,
+  }).catch(err => log.error(`Admin login alert email failed: ${err.message}`));
+}
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -28,12 +62,14 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       log.warn(`Failed login — wrong password for: ${user.email} from IP ${req.ip}`);
+      if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     // Record last login timestamp
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     log.info(`Login successful: ${user.email} (role: ${user.role}) from IP ${req.ip}`);
+    if (user.role === 'admin') sendAdminLoginAlert('success', user.email, req.ip);
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, mustChangePassword: user.must_change_password },
