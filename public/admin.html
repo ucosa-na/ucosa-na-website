@@ -1196,9 +1196,9 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections   = ['statsRow', 'createMember', 'membersList'];
+      const secSections   = ['createMember', 'membersList'];
       const finSections   = ['annualDues', 'endowmentFund'];
-      const adminSections = ['testEmail', 'siteMaintenance', 'smsBroadcast'];
+      const adminSections = ['statsRow', 'testEmail', 'siteMaintenance', 'smsBroadcast'];
 
       secSections.forEach(id => {
         const el = document.getElementById(id);
