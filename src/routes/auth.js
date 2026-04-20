@@ -174,6 +174,25 @@ router.post('/change-password', requireAuth, async (req, res) => {
       [hash, user.id]
     );
 
+    const ts = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'full', timeStyle: 'long' });
+    makeTransport().sendMail({
+      from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: '🔑 Your UCOSA-NA Password Was Changed',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;background:#f9f9f9;border-radius:12px">
+          <h2 style="color:#1a1a2e;margin-bottom:8px">Password Changed</h2>
+          <p style="color:#333;margin-bottom:16px">Your UCOSA-NA account password was successfully changed.</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
+            <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
+          </table>
+          <p style="margin-top:20px;color:#555">If you did not make this change, please contact us immediately at <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.</p>
+          <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+        </div>`,
+    }).catch(err => log.error(`Password change email to ${user.email}: ${err.message}`));
+    log.info(`Password changed for: ${user.email} (role: ${user.role})`);
+
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
     console.error('Change-password error:', err.message);
