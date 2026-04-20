@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const log = require('./logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,14 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// HTTP request logger (skip static assets)
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/api/') || req.path === '/health') {
+    log.info(`${req.method} ${req.path}`);
+  }
+  next();
+});
 
 // Rate limit auth endpoints
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { error: 'Too many attempts, try again later' } });
@@ -34,7 +43,7 @@ app.use((req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  log.info(`Server started on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
 });
 
 module.exports = { app, server };

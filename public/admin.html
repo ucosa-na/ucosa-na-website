@@ -578,6 +578,46 @@
       margin-top: 4px;
     }
 
+    /* LOG VIEWER */
+    .log-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .log-toolbar select,
+    .log-toolbar input[type="text"] {
+      width: auto;
+      padding: 7px 12px;
+      font-size: 0.85rem;
+    }
+    .log-toolbar label {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .log-console {
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      max-height: 520px;
+      overflow-y: auto;
+      color: #c9d1d9;
+    }
+    .log-line { display: block; white-space: pre-wrap; word-break: break-all; }
+    .log-line.INFO  { color: #79c0ff; }
+    .log-line.WARN  { color: #e3b341; }
+    .log-line.ERROR { color: #ff7b72; }
+    .log-line.match { background: rgba(255,229,0,0.12); border-radius: 3px; }
+    .log-meta { font-size: 0.8rem; color: #888; margin-top: 10px; text-align: right; }
+
     /* FOOTER */
     footer {
       background: #1a1a2e;
@@ -659,6 +699,7 @@
         <div class="sidebar-group-items open" id="groupSecItems">
           <a href="#createMember">Create Member</a>
           <a href="#membersList">Member List</a>
+          <a href="#logViewer">Log Viewer</a>
         </div>
       </div>
 
@@ -784,6 +825,49 @@
             </tbody>
           </table>
         </div>
+      </section>
+
+      <!-- LOG VIEWER -->
+      <section id="logViewer">
+        <h2>&#128196; Log Viewer</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:16px;">
+          Live application log. Shows server events, API requests, and errors.
+        </p>
+
+        <div class="log-toolbar">
+          <div>
+            <label for="logLines">Show last</label>
+            <select id="logLines" onchange="loadLogs()">
+              <option value="50">50 lines</option>
+              <option value="100">100 lines</option>
+              <option value="200" selected>200 lines</option>
+              <option value="500">500 lines</option>
+            </select>
+          </div>
+          <div>
+            <label for="logLevel">Level</label>
+            <select id="logLevel" onchange="renderLogs()">
+              <option value="">All</option>
+              <option value="INFO">INFO</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:160px;">
+            <input type="text" id="logSearch" placeholder="Filter…" oninput="renderLogs()" style="width:100%;" />
+          </div>
+          <label>
+            <input type="checkbox" id="logAutoRefresh" onchange="toggleAutoRefresh()" />
+            Auto-refresh (10s)
+          </label>
+          <button class="btn-primary" onclick="loadLogs()">&#8635; Refresh</button>
+          <button class="btn-secondary" onclick="downloadLog()">&#11015; Download</button>
+        </div>
+
+        <div class="log-console" id="logConsole">
+          <span style="color:#555;font-style:italic;">Click Refresh to load logs…</span>
+        </div>
+        <div class="log-meta" id="logMeta"></div>
       </section>
 
       <!-- SITE MAINTENANCE -->
@@ -1196,7 +1280,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections   = ['createMember', 'membersList'];
+      const secSections   = ['createMember', 'membersList', 'logViewer'];
       const finSections   = ['annualDues', 'endowmentFund'];
       const adminSections = ['statsRow', 'testEmail', 'siteMaintenance', 'smsBroadcast'];
 
@@ -1783,6 +1867,79 @@
       } catch { alert('Network error.'); }
     }
 
+    // ── LOG VIEWER ────────────────────────────────────────────────────────────
+
+    let logData = [];
+    let logAutoRefreshTimer = null;
+
+    async function loadLogs() {
+      const lines   = document.getElementById('logLines').value;
+      const console = document.getElementById('logConsole');
+      console.innerHTML = '<span style="color:#555;font-style:italic;">Loading…</span>';
+      try {
+        const res  = await fetch(`/api/admin/logs?lines=${lines}`, {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        logData = data.lines || [];
+        renderLogs();
+        document.getElementById('logMeta').textContent =
+          `Showing ${Math.min(logData.length, lines)} of ${data.total || logData.length} total lines — refreshed ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.innerHTML = `<span class="log-line ERROR">Error loading logs: ${escapeHtml(err.message)}</span>`;
+      }
+    }
+
+    function renderLogs() {
+      const level   = document.getElementById('logLevel').value;
+      const search  = document.getElementById('logSearch').value.toLowerCase();
+      const console = document.getElementById('logConsole');
+
+      let filtered = logData;
+      if (level)  filtered = filtered.filter(l => l.includes(`] ${level}`));
+      if (search) filtered = filtered.filter(l => l.toLowerCase().includes(search));
+
+      if (!filtered.length) {
+        console.innerHTML = '<span style="color:#555;font-style:italic;">No matching log entries.</span>';
+        return;
+      }
+
+      console.innerHTML = filtered.map(line => {
+        const lvl = line.match(/\] (INFO|WARN|ERROR)/)?.[1] || '';
+        const highlighted = search
+          ? escapeHtml(line).replace(new RegExp(escapeHtml(search), 'gi'), m => `<mark style="background:#ffe36b22;color:inherit;">${m}</mark>`)
+          : escapeHtml(line);
+        return `<span class="log-line ${lvl}">${highlighted}</span>`;
+      }).join('');
+
+      // Scroll to bottom
+      console.scrollTop = console.scrollHeight;
+    }
+
+    function toggleAutoRefresh() {
+      if (document.getElementById('logAutoRefresh').checked) {
+        loadLogs();
+        logAutoRefreshTimer = setInterval(loadLogs, 10000);
+      } else {
+        clearInterval(logAutoRefreshTimer);
+        logAutoRefreshTimer = null;
+      }
+    }
+
+    function downloadLog() {
+      if (!logData.length) return;
+      const blob = new Blob([logData.join('\n')], { type: 'text/plain' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `ucosa_app_${new Date().toISOString().slice(0,10)}.log`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
     // Close modal when clicking outside
     document.getElementById('editModal').addEventListener('click', function(e) {
       if (e.target === this) closeEditModal();
@@ -1810,6 +1967,10 @@
       if (['admin', 'fin-role'].includes(user.role)) {
         loadDues();
         loadEndowment();
+      }
+
+      if (['admin', 'security-role'].includes(user.role)) {
+        loadLogs();
       }
     })();
   </script>

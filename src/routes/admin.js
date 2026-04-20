@@ -2,9 +2,12 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const os = require('os');
+const fs = require('fs');
+const path = require('path');
 const { spawn } = require('child_process');
 const pool = require('../db');
 const requireRole = require('../middleware/requireRole');
+const log = require('../logger');
 
 // Role shorthand helpers
 const adminOnly  = requireRole('admin');
@@ -532,6 +535,23 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
   } catch (err) {
     console.error('Dues reminder SMS error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── LOG VIEWER ────────────────────────────────────────────────────────────────
+
+// GET /api/admin/logs — tail app.log (admin + security-role)
+router.get('/logs', secOrAdmin, (req, res) => {
+  const limit   = Math.min(parseInt(req.query.lines) || 200, 2000);
+  const logPath = path.join(__dirname, '../../app.log');
+  try {
+    if (!fs.existsSync(logPath)) return res.json({ lines: [] });
+    const content = fs.readFileSync(logPath, 'utf8');
+    const lines   = content.split('\n').filter(Boolean);
+    log.info(`Log viewer accessed by user ${req.user.id} (${req.user.role})`);
+    res.json({ lines: lines.slice(-limit), total: lines.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read log file' });
   }
 });
 
