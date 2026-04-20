@@ -380,10 +380,46 @@
       font-weight: 700;
       text-transform: uppercase;
     }
-    .badge.admin  { background: #fef2f2; color: #e63946; }
-    .badge.member { background: #f0f4ff; color: #1a1a2e; }
-    .badge.yes    { background: #fff8e1; color: #7c5700; }
-    .badge.no     { background: #f0fff4; color: #166534; }
+    .badge.admin          { background: #fef2f2; color: #e63946; }
+    .badge.member         { background: #f0f4ff; color: #1a1a2e; }
+    .badge.fin-role       { background: #d1fae5; color: #065f46; }
+    .badge.security-role  { background: #dbeafe; color: #1e40af; }
+    .badge.yes            { background: #fff8e1; color: #7c5700; }
+    .badge.no             { background: #f0fff4; color: #166534; }
+
+    .role-select {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 0.8rem;
+      border: 1px solid #dde3f0;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    }
+
+    /* Edit modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 14px;
+      padding: 32px 36px;
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box h3 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
 
     .btn-delete {
       background: none;
@@ -521,6 +557,7 @@
     </div>
     <div class="header-right">
       <span id="headerName" style="color:#cdd6f4;font-size:0.85rem;"></span>
+      <span id="headerRole" style="font-size:0.75rem;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,0.15);color:#fff;margin-left:4px;"></span>
       <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
   </header>
@@ -537,15 +574,15 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <h3>Admin Menu</h3>
+      <h3>Menu</h3>
       <a href="/admin.html" class="active">Dashboard</a>
-      <a href="#createMember">Create Member</a>
-      <a href="#testEmail">Test Email</a>
-      <a href="#membersList">Member List</a>
-      <a href="#siteMaintenance">Site Maintenance</a>
-      <a href="#annualDues">Annual Dues</a>
-      <a href="#endowmentFund">Endowment Fund</a>
-      <a href="#smsBroadcast">SMS Broadcast</a>
+      <a href="#createMember" class="sidebar-sec">Create Member</a>
+      <a href="#membersList"  class="sidebar-sec">Member List</a>
+      <a href="#annualDues"   class="sidebar-fin">Annual Dues</a>
+      <a href="#endowmentFund" class="sidebar-fin">Endowment Fund</a>
+      <a href="#testEmail"       class="sidebar-admin">Test Email</a>
+      <a href="#siteMaintenance" class="sidebar-admin">Site Maintenance</a>
+      <a href="#smsBroadcast"    class="sidebar-admin">SMS Broadcast</a>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -950,12 +987,62 @@
     </main>
   </div>
 
+  <!-- EDIT MEMBER MODAL -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <h3>Edit Member</h3>
+      <div id="editError"   class="msg error"></div>
+      <div id="editSuccess" class="msg success"></div>
+      <input type="hidden" id="editUserId" />
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editFirstName">First Name <span style="color:#e63946;">*</span></label>
+          <input type="text" id="editFirstName" />
+        </div>
+        <div class="form-group">
+          <label for="editLastName">Last Name <span style="color:#e63946;">*</span></label>
+          <input type="text" id="editLastName" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editEmail">Email <span style="color:#e63946;">*</span></label>
+          <input type="email" id="editEmail" />
+        </div>
+        <div class="form-group">
+          <label for="editPhone">Phone</label>
+          <input type="text" id="editPhone" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="editAddress">Address</label>
+        <input type="text" id="editAddress" />
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="max-width:160px;">
+          <label for="editYearJoined">Year Joined</label>
+          <input type="number" id="editYearJoined" min="1960" max="2099" />
+        </div>
+        <div class="form-group" style="max-width:160px;">
+          <label for="editGradYear">Year of Graduation</label>
+          <input type="number" id="editGradYear" min="1960" max="2099" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="editSaveBtn" onclick="saveEditMember()">Save Changes</button>
+        <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer>
     <p>&copy; 2026 UCOSA-North America. All rights reserved.</p>
   </footer>
 
   <script>
+    let currentUser = null;
+
     function logout() {
       localStorage.removeItem('ucosa_token');
       localStorage.removeItem('ucosa_user');
@@ -1000,35 +1087,56 @@
       return d.innerHTML;
     }
 
-    async function verifyAdmin() {
+    async function verifyAccess() {
       const token = getToken();
-      if (!token) {
-        window.location.href = '/login.html';
-        return null;
-      }
-
+      if (!token) { window.location.href = '/login.html'; return null; }
       try {
-        const res = await fetch('/api/auth/me', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-
-        if (!res.ok) {
-          window.location.href = '/login.html';
-          return null;
-        }
-
+        const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) { window.location.href = '/login.html'; return null; }
         const user = await res.json();
-
-        if (user.role !== 'admin') {
-          window.location.href = '/members.html';
-          return null;
-        }
-
+        const privilegedRoles = ['admin', 'fin-role', 'security-role'];
+        if (!privilegedRoles.includes(user.role)) { window.location.href = '/members.html'; return null; }
         return user;
-      } catch {
-        window.location.href = '/login.html';
-        return null;
-      }
+      } catch { window.location.href = '/login.html'; return null; }
+    }
+
+    function applyRoleVisibility(role) {
+      const isAdmin = role === 'admin';
+      const isFin   = role === 'fin-role';
+      const isSec   = role === 'security-role';
+
+      // Role label in header
+      const roleLabels = { admin: 'Admin', 'fin-role': 'Finance', 'security-role': 'Security' };
+      document.getElementById('headerRole').textContent = roleLabels[role] || role;
+
+      // Section visibility
+      const secSections   = ['statsRow', 'createMember', 'membersList'];
+      const finSections   = ['annualDues', 'endowmentFund'];
+      const adminSections = ['testEmail', 'siteMaintenance', 'smsBroadcast'];
+
+      secSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (isAdmin || isSec) ? '' : 'none';
+      });
+      finSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (isAdmin || isFin) ? '' : 'none';
+      });
+      adminSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isAdmin ? '' : 'none';
+      });
+
+      // Sidebar link visibility
+      document.querySelectorAll('.sidebar-sec').forEach(el => {
+        el.style.display = (isAdmin || isSec) ? '' : 'none';
+      });
+      document.querySelectorAll('.sidebar-fin').forEach(el => {
+        el.style.display = (isAdmin || isFin) ? '' : 'none';
+      });
+      document.querySelectorAll('.sidebar-admin').forEach(el => {
+        el.style.display = isAdmin ? '' : 'none';
+      });
     }
 
     async function loadMembers() {
@@ -1057,6 +1165,9 @@
           return;
         }
 
+        const canEdit = currentUser && ['admin', 'security-role'].includes(currentUser.role);
+        const isAdmin = currentUser && currentUser.role === 'admin';
+
         tbody.innerHTML = members.map((m, i) => `
           <tr>
             <td style="color:#999;">${i + 1}</td>
@@ -1067,7 +1178,16 @@
             <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(m.address || '')}">${escapeHtml(m.address || '—')}</td>
             <td>${m.year_joined || '—'}</td>
             <td>${m.graduation_year || '—'}</td>
-            <td><span class="badge ${m.role}">${m.role}</span></td>
+            <td>
+              ${isAdmin
+                ? `<select class="role-select" onchange="changeRole(${m.id}, this.value)" title="Change role">
+                     ${['admin','member','fin-role','security-role'].map(r =>
+                       `<option value="${r}"${r === m.role ? ' selected' : ''}>${r}</option>`
+                     ).join('')}
+                   </select>`
+                : `<span class="badge ${m.role}">${m.role}</span>`
+              }
+            </td>
             <td>
               ${m.last_login
                 ? `<span style="color:#1a1a2e;font-weight:600;">${formatDateTime(m.last_login)}</span>
@@ -1077,9 +1197,10 @@
             </td>
             <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
             <td>
-              <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">
-                Remove
-              </button>
+              ${canEdit ? `
+                <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
+                <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
+              ` : ''}
             </td>
           </tr>
         `).join('');
@@ -1486,6 +1607,83 @@
       } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
     }
 
+    // ── EDIT MEMBER MODAL ────────────────────────────────────────────────────
+
+    function openEditModal(id, firstName, lastName, email, phone, address, yearJoined, gradYear) {
+      document.getElementById('editUserId').value     = id;
+      document.getElementById('editFirstName').value  = firstName;
+      document.getElementById('editLastName').value   = lastName;
+      document.getElementById('editEmail').value      = email;
+      document.getElementById('editPhone').value      = phone;
+      document.getElementById('editAddress').value    = address;
+      document.getElementById('editYearJoined').value = yearJoined || '';
+      document.getElementById('editGradYear').value   = gradYear   || '';
+      document.getElementById('editError').style.display   = 'none';
+      document.getElementById('editSuccess').style.display = 'none';
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('open');
+    }
+
+    async function saveEditMember() {
+      const errEl  = document.getElementById('editError');
+      const okEl   = document.getElementById('editSuccess');
+      const btn    = document.getElementById('editSaveBtn');
+      const userId = document.getElementById('editUserId').value;
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+
+      const body = {
+        firstName:      document.getElementById('editFirstName').value.trim(),
+        lastName:       document.getElementById('editLastName').value.trim(),
+        email:          document.getElementById('editEmail').value.trim(),
+        phone:          document.getElementById('editPhone').value.trim() || null,
+        address:        document.getElementById('editAddress').value.trim() || null,
+        yearJoined:     document.getElementById('editYearJoined').value || null,
+        graduationYear: document.getElementById('editGradYear').value   || null,
+      };
+
+      if (!body.firstName || !body.lastName || !body.email) {
+        errEl.textContent = 'First name, last name, and email are required.';
+        errEl.style.display = 'block'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const res  = await fetch(`/api/admin/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = 'Member updated!'; okEl.style.display = 'block';
+        loadMembers();
+        setTimeout(closeEditModal, 1200);
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+      finally  { btn.disabled = false; btn.textContent = 'Save Changes'; }
+    }
+
+    // ── ROLE MANAGEMENT ───────────────────────────────────────────────────────
+
+    async function changeRole(userId, newRole) {
+      if (!confirm(`Change this member's role to "${newRole}"?`)) {
+        loadMembers(); // reset dropdown display
+        return;
+      }
+      try {
+        const res  = await fetch(`/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ role: newRole }),
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'Failed to update role.')); loadMembers(); return; }
+        loadMembers();
+      } catch { alert('Network error.'); loadMembers(); }
+    }
+
     async function sendDuesReminder(duesId, memberName) {
       if (!confirm(`Send dues reminder SMS to ${memberName}?`)) return;
       try {
@@ -1499,19 +1697,34 @@
       } catch { alert('Network error.'); }
     }
 
+    // Close modal when clicking outside
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
+
     // Init
     (async function () {
-      const user = await verifyAdmin();
+      const user = await verifyAccess();
       if (!user) return;
 
+      currentUser = user;
       document.getElementById('headerName').textContent = user.fullName;
       document.getElementById('mainLayout').style.display = 'flex';
 
+      applyRoleVisibility(user.role);
+
+      // Always load members (table for admin/security, dropdowns for fin-role)
       loadMembers();
-      fetchMetrics();
-      setInterval(fetchMetrics, 10000);
-      loadDues();
-      loadEndowment();
+
+      if (user.role === 'admin') {
+        fetchMetrics();
+        setInterval(fetchMetrics, 10000);
+      }
+
+      if (['admin', 'fin-role'].includes(user.role)) {
+        loadDues();
+        loadEndowment();
+      }
     })();
   </script>
 

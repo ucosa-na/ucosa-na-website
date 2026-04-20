@@ -4,7 +4,13 @@ const nodemailer = require('nodemailer');
 const os = require('os');
 const { spawn } = require('child_process');
 const pool = require('../db');
-const requireAdmin = require('../middleware/requireAdmin');
+const requireRole = require('../middleware/requireRole');
+
+// Role shorthand helpers
+const adminOnly  = requireRole('admin');
+const finOrAdmin = requireRole('admin', 'fin-role');
+const secOrAdmin = requireRole('admin', 'security-role');
+const anyPriv    = requireRole('admin', 'fin-role', 'security-role');
 
 const router = express.Router();
 
@@ -49,7 +55,7 @@ function generatePassword(length = 10) {
 }
 
 // POST /api/admin/users — create a member and send welcome email
-router.post('/users', requireAdmin, async (req, res) => {
+router.post('/users', secOrAdmin, async (req, res) => {
   const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
   if (!firstName || !lastName || !email || !phone) {
     return res.status(400).json({ error: 'First name, last name, email, and phone number are required' });
@@ -141,7 +147,7 @@ router.post('/users', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/test-email — send a test email to verify SMTP config
-router.post('/test-email', requireAdmin, async (req, res) => {
+router.post('/test-email', adminOnly, async (req, res) => {
   const { to } = req.body;
   if (!to) return res.status(400).json({ error: 'Recipient email required' });
 
@@ -169,7 +175,7 @@ router.post('/test-email', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/users — list all members with profile data
-router.get('/users', requireAdmin, async (req, res) => {
+router.get('/users', anyPriv, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.created_at, u.last_login,
@@ -185,8 +191,59 @@ router.get('/users', requireAdmin, async (req, res) => {
   }
 });
 
+// PUT /api/admin/users/:id — update member info
+router.put('/users/:id', secOrAdmin, async (req, res) => {
+  const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
+  if (!firstName || !lastName || !email) {
+    return res.status(400).json({ error: 'First name, last name, and email are required' });
+  }
+  const fullName = `${firstName.trim()} ${lastName.trim()}`;
+  const emailVal = email.toLowerCase().trim();
+  try {
+    const { rows: existing } = await pool.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [emailVal, req.params.id]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Email already in use by another member' });
+    }
+    await pool.query(
+      'UPDATE users SET full_name=$1, email=$2, address=$3, phone=$4 WHERE id=$5',
+      [fullName, emailVal, address || null, phone || null, req.params.id]
+    );
+    await pool.query(`
+      INSERT INTO member_profiles (user_id, first_name, last_name, address, phone, year_joined, graduation_year)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (user_id) DO UPDATE SET
+        first_name=$2, last_name=$3, address=$4, phone=$5,
+        year_joined=$6, graduation_year=$7, updated_at=NOW()
+    `, [req.params.id, firstName.trim(), lastName.trim(), address || null, phone || null,
+        yearJoined ? parseInt(yearJoined) : null, graduationYear ? parseInt(graduationYear) : null]);
+    res.json({ message: 'Member updated' });
+  } catch (err) {
+    console.error('Update member error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/admin/users/:id/role — change a member's role (admin only)
+router.put('/users/:id/role', adminOnly, async (req, res) => {
+  const { role } = req.body;
+  const validRoles = ['admin', 'member', 'fin-role', 'security-role'];
+  if (!role || !validRoles.includes(role)) {
+    return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role' });
+  }
+  try {
+    await pool.query('UPDATE users SET role=$1 WHERE id=$2', [role, req.params.id]);
+    res.json({ message: 'Role updated' });
+  } catch (err) {
+    console.error('Change role error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // DELETE /api/admin/users/:id
-router.delete('/users/:id', requireAdmin, async (req, res) => {
+router.delete('/users/:id', secOrAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
     res.json({ message: 'Member removed' });
@@ -197,7 +254,7 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/metrics — live server metrics
-router.get('/metrics', requireAdmin, async (req, res) => {
+router.get('/metrics', adminOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT role, COUNT(*) AS count FROM users GROUP BY role`
@@ -246,7 +303,7 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/backup — stream pg_dump as a downloadable SQL file
-router.get('/backup', requireAdmin, (req, res) => {
+router.get('/backup', adminOnly, (req, res) => {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
     return res.status(500).json({ error: 'DATABASE_URL not configured' });
@@ -283,7 +340,7 @@ router.get('/backup', requireAdmin, (req, res) => {
 // ── ANNUAL DUES ──────────────────────────────────────────────────────────────
 
 // GET /api/admin/dues — all dues records with member names
-router.get('/dues', requireAdmin, async (req, res) => {
+router.get('/dues', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT d.id, d.year, d.amount, d.paid_date, d.payment_method, d.status, d.notes, d.created_at,
@@ -299,7 +356,7 @@ router.get('/dues', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/dues — add a dues record
-router.post('/dues', requireAdmin, async (req, res) => {
+router.post('/dues', finOrAdmin, async (req, res) => {
   const { userId, year, amount, paidDate, paymentMethod, status, notes } = req.body;
   if (!userId || !year) return res.status(400).json({ error: 'Member and year are required' });
   try {
@@ -315,7 +372,7 @@ router.post('/dues', requireAdmin, async (req, res) => {
 });
 
 // PUT /api/admin/dues/:id — update a dues record
-router.put('/dues/:id', requireAdmin, async (req, res) => {
+router.put('/dues/:id', finOrAdmin, async (req, res) => {
   const { year, amount, paidDate, paymentMethod, status, notes } = req.body;
   try {
     await pool.query(`
@@ -330,7 +387,7 @@ router.put('/dues/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/dues/:id
-router.delete('/dues/:id', requireAdmin, async (req, res) => {
+router.delete('/dues/:id', finOrAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM annual_dues WHERE id=$1', [req.params.id]);
     res.json({ message: 'Dues record deleted' });
@@ -342,7 +399,7 @@ router.delete('/dues/:id', requireAdmin, async (req, res) => {
 // ── ENDOWMENT FUND ────────────────────────────────────────────────────────────
 
 // GET /api/admin/endowment — all endowment records with member names
-router.get('/endowment', requireAdmin, async (req, res) => {
+router.get('/endowment', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT e.id, e.amount, e.contribution_date, e.payment_method, e.notes, e.created_at,
@@ -358,7 +415,7 @@ router.get('/endowment', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/endowment — add an endowment record
-router.post('/endowment', requireAdmin, async (req, res) => {
+router.post('/endowment', finOrAdmin, async (req, res) => {
   const { userId, amount, contributionDate, paymentMethod, notes } = req.body;
   if (!userId || !amount) return res.status(400).json({ error: 'Member and amount are required' });
   try {
@@ -373,7 +430,7 @@ router.post('/endowment', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/endowment/:id
-router.delete('/endowment/:id', requireAdmin, async (req, res) => {
+router.delete('/endowment/:id', finOrAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM endowment_fund WHERE id=$1', [req.params.id]);
     res.json({ message: 'Endowment record deleted' });
@@ -383,7 +440,7 @@ router.delete('/endowment/:id', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/financials — upsert a financial record for a member
-router.post('/financials', requireAdmin, async (req, res) => {
+router.post('/financials', finOrAdmin, async (req, res) => {
   const { userId, year, annualDues, endowmentFund, notes } = req.body;
   if (!userId || !year) return res.status(400).json({ error: 'userId and year are required' });
   try {
@@ -404,7 +461,7 @@ router.post('/financials', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/financials/:userId — get all financial records for a member
-router.get('/financials/:userId', requireAdmin, async (req, res) => {
+router.get('/financials/:userId', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT year, annual_dues, endowment_fund, notes FROM financial_records WHERE user_id = $1 ORDER BY year DESC',
@@ -419,7 +476,7 @@ router.get('/financials/:userId', requireAdmin, async (req, res) => {
 // ── SMS BROADCAST ─────────────────────────────────────────────────────────────
 
 // POST /api/admin/sms/broadcast — send SMS to all members with phone numbers
-router.post('/sms/broadcast', requireAdmin, async (req, res) => {
+router.post('/sms/broadcast', adminOnly, async (req, res) => {
   const { message } = req.body;
   if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
 
@@ -448,7 +505,7 @@ router.post('/sms/broadcast', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/sms/dues-reminder/:duesId — send dues reminder to a specific member
-router.post('/sms/dues-reminder/:duesId', requireAdmin, async (req, res) => {
+router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT d.year, d.amount, d.status,

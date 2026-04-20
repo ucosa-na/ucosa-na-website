@@ -235,15 +235,19 @@
   </footer>
 
   <script>
+    function getRedirect(user) {
+      if (user.mustChangePassword) return '/change-password.html';
+      if (['admin', 'fin-role', 'security-role'].includes(user.role)) return '/admin.html';
+      return '/members.html';
+    }
+
     // If already logged in and token is valid, redirect away
     (function () {
       const token = localStorage.getItem('ucosa_token');
       if (token) {
         fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + token } })
           .then(r => { if (r.ok) return r.json(); throw new Error(); })
-          .then(user => {
-            window.location.href = user.mustChangePassword ? '/change-password.html' : '/members.html';
-          })
+          .then(user => { window.location.href = getRedirect(user); })
           .catch(() => { /* token invalid, stay on page */ });
       }
     })();
@@ -277,11 +281,7 @@
         localStorage.setItem('ucosa_token', data.token);
         localStorage.setItem('ucosa_user', JSON.stringify(data.user));
 
-        if (data.mustChangePassword) {
-          window.location.href = '/change-password.html';
-        } else {
-          window.location.href = '/members.html';
-        }
+        window.location.href = getRedirect({ mustChangePassword: data.mustChangePassword, role: data.user.role });
       } catch (err) {
         errorMsg.textContent = 'Network error. Please check your connection and try again.';
         errorMsg.style.display = 'block';
