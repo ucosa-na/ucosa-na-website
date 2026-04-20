@@ -191,6 +191,20 @@ router.post('/change-password', requireAuth, async (req, res) => {
           <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
         </div>`,
     }).catch(err => log.error(`Password change email to ${user.email}: ${err.message}`));
+
+    // SMS alert
+    if (user.phone) {
+      const sid  = process.env.TWILIO_ACCOUNT_SID;
+      const token = process.env.TWILIO_AUTH_TOKEN;
+      const from  = process.env.TWILIO_PHONE_NUMBER;
+      if (sid && token && from) {
+        require('twilio')(sid, token).messages.create({
+          to: user.phone, from,
+          body: `UCOSA-NA: Your password was changed on ${ts}. If you did not do this, contact us immediately at ucosa.northamerica@gmail.com`,
+        }).catch(err => log.error(`Password change SMS to ${user.phone}: ${err.message}`));
+      }
+    }
+
     log.info(`Password changed for: ${user.email} (role: ${user.role})`);
 
     res.json({ message: 'Password changed successfully' });
