@@ -80,6 +80,10 @@ pool.query(`
       created_at     TIMESTAMPTZ DEFAULT NOW()
     );
   `)
+).then(() =>
+  pool.query(`ALTER TABLE annual_dues ADD COLUMN IF NOT EXISTS due_date DATE DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE annual_dues ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

@@ -547,6 +547,7 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
       `Thank you!`;
 
     await sendSMS(r.phone, body);
+    await pool.query('UPDATE annual_dues SET reminder_sent_at = NOW() WHERE id = $1', [req.params.duesId]);
     res.json({ message: `Reminder sent to ${r.full_name} at ${r.phone}` });
   } catch (err) {
     console.error('Dues reminder SMS error:', err.message);
