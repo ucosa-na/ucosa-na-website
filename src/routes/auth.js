@@ -12,7 +12,7 @@ const ALERT_TO = 'ucosa.northamerica@gmail.com';
 
 function makeTransport() {
   return nodemailer.createTransport({
-    host: 'smtp.sendgrid.net', port: 465, secure: true,
+    host: 'smtp.sendgrid.net', port: 587, secure: false,
     auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
   });
 }

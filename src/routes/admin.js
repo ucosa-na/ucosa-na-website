@@ -36,8 +36,8 @@ async function sendSMS(to, body) {
 function makeTransport() {
   return nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
       user: 'apikey',
       pass: process.env.SENDGRID_API_KEY,
