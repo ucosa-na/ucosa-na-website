@@ -175,9 +175,42 @@
   #page-event-inaugural [style*="border:1px solid #e8d8c4"] {
     border: none !important; border-radius: 0 !important; padding: 0 !important; background: none !important;
   }
-  #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 12px; width: 100%; box-sizing: border-box; align-self: stretch; }
+  #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
   #page-computer-lab .gallery-section { width: 100%; }
-  #page-computer-lab .lab-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; width: 100%; }
+  #page-computer-lab .lab-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+  }
+  .lab-card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    transition: transform 0.18s, box-shadow 0.18s;
+    cursor: pointer;
+  }
+  .lab-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.16); }
+  .lab-card img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+    filter: contrast(1.1) saturate(1.1);
+  }
+  .lab-card-label {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #444;
+    text-align: center;
+    background: #f8f6f2;
+    border-top: 1px solid #ede8e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   #page-gallery .gallery-section { margin-bottom: 32px; }
   #page-gallery [style*="display:grid"] { grid-template-columns: repeat(6, 1fr) !important; }
 
@@ -2455,40 +2488,144 @@
 
   <!-- UGBEKA COMPUTER LAB -->
   <section class="page" id="page-computer-lab">
-    <h1 class="page-heading" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><strong>Ugbeka Computer Lab &mdash; UCOSA-NA&rsquo;s initiative to equip Ugbeka College with a modern computer laboratory.</strong></h1>
+    <h1 class="page-heading"><strong>Ugbeka Computer Lab &mdash; UCOSA-NA&rsquo;s initiative to equip Ugbeka College with a modern computer laboratory.</strong></h1>
 
     <div class="gallery-section">
       <p class="gallery-section-sub">Click any photo to enlarge.</p>
       <div class="lab-grid">
-        <img src="/computer_lab/IMG-20240129-WA0011.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240201-WA0000.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240328-WA0010.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240328-WA0022.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240328-WA0023.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240328-WA0024.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240328-WA0025.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20240328-WA0040.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250321-WA0005.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250321-WA0007.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250321-WA0010.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250321-WA0011.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250321-WA0013.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250321-WA0014.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250413-WA0001.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0003.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0004.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0005.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0006.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0007.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0010.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0018.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0019.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0023.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0027.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
-        <img src="/computer_lab/IMG-20250610-WA0038.jpg"  alt="Computer Lab" draggable="false" oncontextmenu="return false;" onclick="openLabLightbox(this.src)" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;">
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240129-WA0011.jpg')">
+          <img src="/computer_lab/IMG-20240129-WA0011.jpg" alt="Equipment Delivery" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Equipment Delivery — Jan 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240201-WA0000.jpg')">
+          <img src="/computer_lab/IMG-20240201-WA0000.jpg" alt="Installation" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Installation — Feb 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240328-WA0010.jpg')">
+          <img src="/computer_lab/IMG-20240328-WA0010.jpg" alt="Setup Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Setup Progress — Mar 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240328-WA0022.jpg')">
+          <img src="/computer_lab/IMG-20240328-WA0022.jpg" alt="Setup Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Setup Progress — Mar 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240328-WA0023.jpg')">
+          <img src="/computer_lab/IMG-20240328-WA0023.jpg" alt="Setup Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Setup Progress — Mar 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240328-WA0024.jpg')">
+          <img src="/computer_lab/IMG-20240328-WA0024.jpg" alt="Setup Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Setup Progress — Mar 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240328-WA0025.jpg')">
+          <img src="/computer_lab/IMG-20240328-WA0025.jpg" alt="Setup Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Setup Progress — Mar 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20240328-WA0040.jpg')">
+          <img src="/computer_lab/IMG-20240328-WA0040.jpg" alt="Setup Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Setup Progress — Mar 2024</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250321-WA0005.jpg')">
+          <img src="/computer_lab/IMG-20250321-WA0005.jpg" alt="Lab Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Progress — Mar 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250321-WA0007.jpg')">
+          <img src="/computer_lab/IMG-20250321-WA0007.jpg" alt="Lab Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Progress — Mar 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250321-WA0010.jpg')">
+          <img src="/computer_lab/IMG-20250321-WA0010.jpg" alt="Lab Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Progress — Mar 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250321-WA0011.jpg')">
+          <img src="/computer_lab/IMG-20250321-WA0011.jpg" alt="Lab Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Progress — Mar 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250321-WA0013.jpg')">
+          <img src="/computer_lab/IMG-20250321-WA0013.jpg" alt="Lab Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Progress — Mar 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250321-WA0014.jpg')">
+          <img src="/computer_lab/IMG-20250321-WA0014.jpg" alt="Lab Progress" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Progress — Mar 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250413-WA0001.jpg')">
+          <img src="/computer_lab/IMG-20250413-WA0001.jpg" alt="Lab Update" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Update — Apr 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0003.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0003.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0004.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0004.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0005.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0005.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0006.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0006.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0007.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0007.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0010.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0010.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0018.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0018.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0019.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0019.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0023.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0023.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0027.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0027.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
+        <div class="lab-card" onclick="openLabLightbox('/computer_lab/IMG-20250610-WA0038.jpg')">
+          <img src="/computer_lab/IMG-20250610-WA0038.jpg" alt="Lab Completion" draggable="false" oncontextmenu="return false;">
+          <div class="lab-card-label">Lab Completion — Jun 2025</div>
+        </div>
+
       </div>
     </div>
-
   </section>
 
   <!-- PHOTO GALLERY -->
