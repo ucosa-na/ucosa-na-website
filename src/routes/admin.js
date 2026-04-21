@@ -1,6 +1,5 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
@@ -8,6 +7,7 @@ const { spawn } = require('child_process');
 const pool = require('../db');
 const requireRole = require('../middleware/requireRole');
 const log = require('../logger');
+const { sendEmail } = require('../mailer');
 
 // Role shorthand helpers
 const adminOnly  = requireRole('admin');
@@ -33,17 +33,6 @@ async function sendSMS(to, body) {
   return client.messages.create({ to, from, body });
 }
 
-function makeTransport() {
-  return nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    secure: false,
-    auth: {
-      user: 'apikey',
-      pass: process.env.SENDGRID_API_KEY,
-    },
-  });
-}
 
 function checkEmailConfig() {
   const missing = [];
@@ -131,10 +120,8 @@ router.post('/users', secOrAdmin, async (req, res) => {
       smsSent,
     });
 
-    // Fire-and-forget email
-    const transport = makeTransport();
-    transport.sendMail({
-      from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
+    // Fire-and-forget welcome email
+    sendEmail({
       to: emailVal,
       subject: 'Welcome to UCOSA-North America — Your Login Details',
       html: `
@@ -178,10 +165,7 @@ router.post('/test-email', adminOnly, async (req, res) => {
   }
 
   try {
-    const transport = makeTransport();
-    await transport.verify();   // confirm SMTP connection before sending
-    await transport.sendMail({
-      from: `"UCOSA-NA" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject: 'UCOSA-NA — Email Test',
       html: '<p>This is a test email from the UCOSA-NA admin panel. If you received this, email delivery is working correctly.</p>',

@@ -1,21 +1,14 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
 const log = require('../logger');
+const { sendEmail } = require('../mailer');
 
 const router = express.Router();
 
 const ALERT_TO = 'ucosa.northamerica@gmail.com';
-
-function makeTransport() {
-  return nodemailer.createTransport({
-    host: 'smtp.sendgrid.net', port: 587, secure: false,
-    auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
-  });
-}
 
 async function getLocation(ip) {
   if (!ip || ip === '::1' || ip.startsWith('127.') || ip.startsWith('10.') || ip.startsWith('192.168.')) {
@@ -36,7 +29,7 @@ async function sendMemberFailedLoginAlert(user, ip, location) {
   const phone = user.phone;
 
   // Email alert
-  makeTransport().sendMail({
+  sendEmail({
     from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
     to: user.email,
     subject: '⚠️ Failed Login Attempt — UCOSA-NA',
@@ -78,7 +71,7 @@ function sendAdminLoginAlert(type, email, ip) {
   const label  = isSuccess ? 'SUCCESSFUL LOGIN' : 'FAILED LOGIN ATTEMPT';
   const ts     = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'full', timeStyle: 'long' });
 
-  makeTransport().sendMail({
+  sendEmail({
     from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
     to: ALERT_TO,
     subject,
@@ -175,7 +168,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
     );
 
     const ts = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'full', timeStyle: 'long' });
-    makeTransport().sendMail({
+    sendEmail({
       from: `"UCOSA-NA Security" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: '🔑 Your UCOSA-NA Password Was Changed',

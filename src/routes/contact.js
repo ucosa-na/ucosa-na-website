@@ -1,5 +1,5 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('../mailer');
 
 const router = express.Router();
 
@@ -16,18 +16,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const transport = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'apikey',
-        pass: process.env.SENDGRID_API_KEY,
-      },
-    });
-
-    await transport.sendMail({
-      from: `"UCOSA-NA Website" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to: 'ucosa.northamerica@gmail.com',
       replyTo: email,
       subject: `Contact Form: Message from ${name}`,
