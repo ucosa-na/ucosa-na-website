@@ -170,16 +170,18 @@ router.post('/test-email', adminOnly, async (req, res) => {
     });
   }
 
+  const senderEmail = process.env.EMAIL_USER;
+
   try {
     await sendEmail({
       to,
       subject: 'UCOSA-NA — Email Test',
       html: '<p>This is a test email from the UCOSA-NA admin panel. If you received this, email delivery is working correctly.</p>',
     });
-    res.json({ message: `Test email sent to ${to}` });
+    res.json({ message: `Test email sent to ${to} (from: ${senderEmail})` });
   } catch (err) {
     console.error('Test email error:', err.message);
-    res.status(500).json({ error: 'Email failed: ' + err.message });
+    res.status(500).json({ error: `Email failed (from: ${senderEmail}): ${err.message}` });
   }
 });
 
