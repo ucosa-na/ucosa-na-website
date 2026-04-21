@@ -39,7 +39,8 @@ router.post('/', async (req, res) => {
     res.json({ message: 'Message sent successfully.' });
   } catch (err) {
     console.error('Contact form email error:', err.message);
-    res.status(500).json({ error: 'Failed to send message. Please try again later.' });
+    const detail = process.env.NODE_ENV !== 'production' ? ` (${err.message})` : '';
+    res.status(500).json({ error: `Failed to send message. Please try again later.${detail}` });
   }
 });
 

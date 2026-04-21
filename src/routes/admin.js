@@ -125,21 +125,27 @@ router.post('/users', secOrAdmin, async (req, res) => {
       to: emailVal,
       subject: 'Welcome to UCOSA-North America — Your Login Details',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;background:#fdf6ec;border-radius:12px">
-          <h2 style="color:#7b2152">Welcome to UCOSA-North America!</h2>
-          <p>Dear <strong>${fullName}</strong>,</p>
-          <p>Your member account has been created. Use the details below to log in:</p>
-          <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
-            <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
-            <p><strong>Email:</strong> ${emailVal}</p>
-            <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
           </div>
-          <p style="color:#7b2152"><strong>You will be asked to change your password on first login.</strong></p>
-          <p>Welcome back to your old friends and brothers and sisters!</p>
-          <p style="color:#888;font-size:0.85em;margin-top:24px">
-            UCOSA-North America &mdash;
-            <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
-          </p>
+          <div style="background:#fdf6ec;padding:32px">
+            <h2 style="color:#7b2152;margin-top:0">Welcome to UCOSA-North America!</h2>
+            <p>Dear <strong>${fullName}</strong>,</p>
+            <p>Your member account has been created. Use the details below to log in:</p>
+            <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+              <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
+              <p><strong>Email:</strong> ${emailVal}</p>
+              <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
+            </div>
+            <p style="color:#7b2152"><strong>You will be asked to change your password on first login.</strong></p>
+            <p>Welcome back to your old friends and brothers and sisters!</p>
+            <p style="color:#888;font-size:0.85em;margin-top:24px">
+              UCOSA-North America &mdash;
+              <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
+            </p>
+          </div>
         </div>
       `,
     })

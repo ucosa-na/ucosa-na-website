@@ -34,17 +34,23 @@ async function sendMemberFailedLoginAlert(user, ip, location) {
     to: user.email,
     subject: '⚠️ Failed Login Attempt — UCOSA-NA',
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;background:#f9f9f9;border-radius:12px">
-        <h2 style="color:#c62828;margin-bottom:8px">Failed Login Attempt</h2>
-        <p style="color:#333;margin-bottom:16px">Someone tried to log in to your UCOSA-NA account and failed. Details below:</p>
-        <table style="width:100%;border-collapse:collapse">
-          <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
-          <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">IP Address</td><td style="padding:10px 0;color:#111">${ip}</td></tr>
-          <tr><td style="padding:10px 0;color:#555;font-weight:600">Location</td><td style="padding:10px 0;color:#111">${location}</td></tr>
-          <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
-        </table>
-        <p style="margin-top:20px;color:#555">If this was you, you may have mistyped your password. If not, please <strong>change your password immediately</strong> at <a href="https://ucosa-na.org/change-password.html">ucosa-na.org</a>.</p>
-        <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+        <div style="background:#7b2152;text-align:center;padding:24px 32px">
+          <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+          <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+        </div>
+        <div style="background:#f9f9f9;padding:32px">
+          <h2 style="color:#c62828;margin-top:0;margin-bottom:8px">Failed Login Attempt</h2>
+          <p style="color:#333;margin-bottom:16px">Someone tried to log in to your UCOSA-NA account and failed. Details below:</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
+            <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">IP Address</td><td style="padding:10px 0;color:#111">${ip}</td></tr>
+            <tr><td style="padding:10px 0;color:#555;font-weight:600">Location</td><td style="padding:10px 0;color:#111">${location}</td></tr>
+            <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
+          </table>
+          <p style="margin-top:20px;color:#555">If this was you, you may have mistyped your password. If not, please <strong>change your password immediately</strong> at <a href="https://ucosa-na.org/change-password.html">ucosa-na.org</a>.</p>
+          <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+        </div>
       </div>`,
   }).catch(err => log.error(`Failed login email to ${user.email}: ${err.message}`));
 
@@ -173,15 +179,21 @@ router.post('/change-password', requireAuth, async (req, res) => {
       to: user.email,
       subject: '🔑 Your UCOSA-NA Password Was Changed',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;background:#f9f9f9;border-radius:12px">
-          <h2 style="color:#1a1a2e;margin-bottom:8px">Password Changed</h2>
-          <p style="color:#333;margin-bottom:16px">Your UCOSA-NA account password was successfully changed.</p>
-          <table style="width:100%;border-collapse:collapse">
-            <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
-            <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
-          </table>
-          <p style="margin-top:20px;color:#555">If you did not make this change, please contact us immediately at <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.</p>
-          <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:24px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#f9f9f9;padding:32px">
+            <h2 style="color:#1a1a2e;margin-top:0;margin-bottom:8px">Password Changed</h2>
+            <p style="color:#333;margin-bottom:16px">Your UCOSA-NA account password was successfully changed.</p>
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
+              <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
+            </table>
+            <p style="margin-top:20px;color:#555">If you did not make this change, please contact us immediately at <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.</p>
+            <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
+          </div>
         </div>`,
     }).catch(err => log.error(`Password change email to ${user.email}: ${err.message}`));
 
