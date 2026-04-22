@@ -444,7 +444,6 @@
           <td>${r.full_name || '—'}</td>
           <td><strong>${r.year}</strong></td>
           <td>${fmt(r.annual_dues)}</td>
-          <td>${fmt(r.endowment_dues)}</td>
           <td>${fmtStatus(r.status)}</td>
           <td>${fmtDeadline(r.due_date, r.year)}</td>
           <td>${r.reminder_sent ? '📱 Yes' : '—'}</td>
@@ -457,7 +456,6 @@
               <th>Full Name</th>
               <th>Year</th>
               <th>Annual Dues</th>
-              <th>Endowment Dues</th>
               <th>Status</th>
               <th>Annual Due Deadline</th>
               <th>Reminder Sent</th>
