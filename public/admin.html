@@ -1911,33 +1911,16 @@
       return res.blob();
     }
 
-    async function openAdminNote(id, title, filename) {
-      const tab = window.open('', '_blank');
+    async function openAdminNote(id) {
+      const tab   = window.open('', '_blank');
       if (!tab) { alert('Please allow popups to open documents.'); return; }
-      tab.document.write(`
-        <!DOCTYPE html><html><head><title>${title}</title></head>
-        <body style="font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#fdf6ec;">
-          <div style="text-align:center;padding:40px;">
-            <img src="https://ucosa-na.org/logo.jpg" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 16px;">
-            <div style="color:#c8a96e;font-size:0.8em;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">UCOSA North America</div>
-            <h2 style="color:#7b2152;font-family:Georgia,serif;margin:0 0 12px;">${title}</h2>
-            <p id="msg" style="color:#555;">Loading document…</p>
-          </div>
-        </body></html>`);
-      tab.document.close();
-
-      const blob = await fetchAdminNoteBlob(id);
-      if (!blob) { tab.close(); return; }
-
-      const url = URL.createObjectURL(blob);
-      const a   = tab.document.createElement('a');
-      a.href     = url;
-      a.download = filename;
-      tab.document.body.appendChild(a);
-      a.click();
-      const msg = tab.document.getElementById('msg');
-      if (msg) msg.textContent = '✓ Your document is downloading.';
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      const token = getToken();
+      const res   = await fetch(`/api/meeting-notes/${id}/view-token`, {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) { tab.close(); alert('Could not open file.'); return; }
+      const { token: viewToken } = await res.json();
+      tab.location.href = `/api/meeting-notes/${id}/file?token=${viewToken}`;
     }
 
     async function downloadAdminNote(id, filename) {
