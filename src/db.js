@@ -84,6 +84,19 @@ pool.query(`
   pool.query(`ALTER TABLE annual_dues ADD COLUMN IF NOT EXISTS due_date DATE DEFAULT NULL;`)
 ).then(() =>
   pool.query(`ALTER TABLE annual_dues ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ DEFAULT NULL;`)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS meeting_notes (
+      id              SERIAL PRIMARY KEY,
+      title           TEXT NOT NULL,
+      meeting_date    DATE NOT NULL,
+      original_name   TEXT NOT NULL,
+      mime_type       TEXT NOT NULL,
+      file_data       BYTEA NOT NULL,
+      uploaded_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

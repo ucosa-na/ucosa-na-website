@@ -32,7 +32,8 @@ app.use('/api/auth',    require('./routes/auth'));
 app.use('/api/admin',   require('./routes/admin'));
 app.use('/api/member',  require('./routes/member'));
 app.use('/api/contact', require('./routes/contact'));
-app.use('/api/join',    require('./routes/join'));
+app.use('/api/join',          require('./routes/join'));
+app.use('/api/meeting-notes', require('./routes/meetingNotes'));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });

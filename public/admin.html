@@ -699,6 +699,7 @@
         <div class="sidebar-group-items open" id="groupSecItems">
           <a href="#createMember">Create Member</a>
           <a href="#membersList">Member List</a>
+          <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
         </div>
       </div>
@@ -825,6 +826,39 @@
             </tbody>
           </table>
         </div>
+      </section>
+
+      <!-- MEETING NOTES -->
+      <section id="meetingNotes">
+        <h2>&#128203; Meeting Notes</h2>
+        <p style="color:#555;font-size:0.9rem;margin-bottom:16px;">Upload meeting minutes as PDF or Word documents. Members can view them after logging in.</p>
+
+        <div id="mnUploadError" class="msg error"></div>
+        <div id="mnUploadSuccess" class="msg success"></div>
+
+        <div style="background:#f8f9fc;border-radius:10px;padding:20px;margin-bottom:24px;border:1px solid #e8ecf4;">
+          <h3 style="font-size:0.95rem;font-weight:700;color:#333;margin:0 0 14px;">Upload New Minutes</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:0.8rem;font-weight:600;color:#555;display:block;margin-bottom:5px;">Meeting Title *</label>
+              <input type="text" id="mnTitle" placeholder="e.g. March 2026 General Meeting"
+                style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:0.9rem;"/>
+            </div>
+            <div>
+              <label style="font-size:0.8rem;font-weight:600;color:#555;display:block;margin-bottom:5px;">Meeting Date *</label>
+              <input type="date" id="mnDate"
+                style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:0.9rem;"/>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-size:0.8rem;font-weight:600;color:#555;display:block;margin-bottom:5px;">File (PDF or Word) *</label>
+            <input type="file" id="mnFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:0.9rem;background:white;"/>
+          </div>
+          <button class="btn-primary" id="mnUploadBtn" onclick="uploadMeetingNotes()" style="font-size:0.9rem;">Upload Minutes</button>
+        </div>
+
+        <div id="mnList"><p style="color:#999;font-style:italic;">Loading…</p></div>
       </section>
 
       <!-- LOG VIEWER -->
@@ -1280,7 +1314,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections   = ['createMember', 'membersList', 'logViewer'];
+      const secSections   = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
       const finSections   = ['annualDues', 'endowmentFund'];
       const adminSections = ['statsRow', 'testEmail', 'siteMaintenance', 'smsBroadcast'];
 
@@ -1868,6 +1902,96 @@
       } catch { alert('Network error.'); }
     }
 
+    // ── MEETING NOTES ─────────────────────────────────────────────────────────
+
+    async function loadMeetingNotes() {
+      const token = getToken();
+      const el = document.getElementById('mnList');
+      if (!el) return;
+      try {
+        const res  = await fetch('/api/meeting-notes', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        if (!data.length) {
+          el.innerHTML = '<p style="color:#999;font-style:italic;">No meeting notes uploaded yet.</p>';
+          return;
+        }
+        const rows = data.map(n => {
+          const date = new Date(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          return `<tr>
+            <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;color:#444;">${date}</td>
+            <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
+              <a href="/api/meeting-notes/${n.id}/file" target="_blank"
+                style="color:#7b2152;font-weight:600;text-decoration:none;">&#128196; ${n.title}</a>
+            </td>
+            <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;text-align:right;">
+              <button onclick="deleteMeetingNote(${n.id})" style="background:#e63946;color:white;border:none;padding:5px 12px;border-radius:5px;font-size:0.8rem;cursor:pointer;">Delete</button>
+            </td>
+          </tr>`;
+        }).join('');
+        el.innerHTML = `
+          <table style="width:100%;border-collapse:collapse;font-size:0.93rem;">
+            <thead>
+              <tr style="background:#7b2152;">
+                <th style="padding:11px 14px;color:white;text-align:left;border-radius:8px 0 0 0;">Date</th>
+                <th style="padding:11px 14px;color:white;text-align:left;">Meeting Notes</th>
+                <th style="padding:11px 14px;color:white;text-align:right;border-radius:0 8px 0 0;">Action</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+      } catch {
+        el.innerHTML = '<p style="color:#e63946;">Failed to load meeting notes.</p>';
+      }
+    }
+
+    async function uploadMeetingNotes() {
+      const token  = getToken();
+      const title  = document.getElementById('mnTitle').value.trim();
+      const date   = document.getElementById('mnDate').value;
+      const file   = document.getElementById('mnFile').files[0];
+      const errEl  = document.getElementById('mnUploadError');
+      const okEl   = document.getElementById('mnUploadSuccess');
+      const btn    = document.getElementById('mnUploadBtn');
+      errEl.style.display = 'none';
+      okEl.style.display  = 'none';
+      if (!title || !date || !file) {
+        errEl.textContent = 'Please fill in all fields and choose a file.';
+        errEl.style.display = 'block';
+        return;
+      }
+      btn.disabled = true; btn.textContent = 'Uploading…';
+      const form = new FormData();
+      form.append('title', title);
+      form.append('meeting_date', date);
+      form.append('file', file);
+      try {
+        const res  = await fetch('/api/meeting-notes', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: form });
+        const data = await res.json();
+        if (res.ok) {
+          okEl.textContent = '✓ Meeting notes uploaded successfully.';
+          okEl.style.display = 'block';
+          document.getElementById('mnTitle').value = '';
+          document.getElementById('mnDate').value  = '';
+          document.getElementById('mnFile').value  = '';
+          loadMeetingNotes();
+        } else {
+          errEl.textContent = data.error || 'Upload failed.';
+          errEl.style.display = 'block';
+        }
+      } catch {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.style.display = 'block';
+      }
+      btn.disabled = false; btn.textContent = 'Upload Minutes';
+    }
+
+    async function deleteMeetingNote(id) {
+      if (!confirm('Delete this meeting note?')) return;
+      const token = getToken();
+      const res = await fetch(`/api/meeting-notes/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.ok) loadMeetingNotes();
+    }
+
     // ── LOG VIEWER ────────────────────────────────────────────────────────────
 
     let logData = [];
@@ -1972,6 +2096,7 @@
 
       if (['admin', 'security-role'].includes(user.role)) {
         loadLogs();
+        loadMeetingNotes();
       }
     })();
   </script>

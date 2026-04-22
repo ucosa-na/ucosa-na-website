@@ -282,6 +282,41 @@
     .quick-link.danger { background: #fff0f0; border-color: #fcc; color: #c1121f; }
     .quick-link.danger:hover { background: #ffe0e0; }
 
+    /* MEETING NOTES TABLE */
+    .notes-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    .notes-table th {
+      background: #7b2152;
+      color: white;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .notes-table th:first-child { border-radius: 8px 0 0 0; }
+    .notes-table th:last-child  { border-radius: 0 8px 0 0; }
+    .notes-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+      vertical-align: middle;
+    }
+    .notes-table tr:last-child td { border-bottom: none; }
+    .notes-table tr:nth-child(even) td { background: #faf8f5; }
+    .notes-table tr:hover td { background: #f5ece8; }
+    .notes-link {
+      color: #7b2152;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .notes-link:hover { text-decoration: underline; }
+
     .loading { text-align: center; padding: 60px 20px; color: #888; }
 
     footer {
@@ -325,6 +360,7 @@
     <aside class="sidebar">
       <h3>Members Menu</h3>
       <a href="/members.html" class="active">Dashboard</a>
+      <a href="#meeting-notes-section" onclick="document.getElementById('meeting-notes-section').scrollIntoView({behavior:'smooth'})">Meeting Notes</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
       <a id="adminSidebarLink" href="/admin.html" class="sidebar-admin" style="display:none;">Admin Panel</a>
@@ -430,20 +466,42 @@
         </table>`;
     }
 
+    function buildNotesTable(notes) {
+      if (!notes || !notes.length) {
+        return `<p style="color:#999;font-style:italic;padding:12px 0;">No meeting notes have been uploaded yet.</p>`;
+      }
+      const rows = notes.map(n => {
+        const date = new Date(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        return `<tr>
+          <td>${date}</td>
+          <td><a class="notes-link" href="/api/meeting-notes/${n.id}/file" target="_blank">
+            &#128196; ${n.title}
+          </a></td>
+        </tr>`;
+      }).join('');
+      return `
+        <table class="notes-table">
+          <thead><tr><th>Date</th><th>Meeting Notes</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
     async function loadProfile() {
       const token = localStorage.getItem('ucosa_token');
       if (!token) { window.location.href = '/login.html'; return; }
 
       try {
-        const [meRes, finRes] = await Promise.all([
+        const [meRes, finRes, notesRes] = await Promise.all([
           fetch('/api/auth/me',           { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch('/api/member/financials', { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/meeting-notes',     { headers: { 'Authorization': 'Bearer ' + token } }),
         ]);
 
         if (meRes.status === 401 || meRes.status === 403) { logout(); return; }
 
         const user    = await meRes.json();
         const records = finRes.ok ? await finRes.json() : [];
+        const notes   = notesRes.ok ? await notesRes.json() : [];
 
         if (user.mustChangePassword) {
           window.location.href = '/change-password.html?required=1';
@@ -494,6 +552,12 @@
           <section>
             <h2>&#128181; Financial Records</h2>
             ${buildFinancialTable(records)}
+          </section>
+
+          <!-- MEETING NOTES -->
+          <section id="meeting-notes-section">
+            <h2>&#128203; Meeting Notes</h2>
+            ${buildNotesTable(notes)}
           </section>
 
           <!-- QUICK ACTIONS -->
