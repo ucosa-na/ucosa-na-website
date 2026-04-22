@@ -486,7 +486,7 @@ router.delete('/dues/:id', finOrAdmin, async (req, res) => {
 router.get('/endowment', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT e.id, e.amount, e.contribution_date, e.payment_method, e.notes, e.created_at,
+      SELECT e.id, e.amount, e.contribution_date, e.year, e.status, e.payment_method, e.notes, e.created_at,
              u.full_name, u.id AS user_id
       FROM endowment_fund e
       JOIN users u ON u.id = e.user_id
@@ -500,13 +500,13 @@ router.get('/endowment', finOrAdmin, async (req, res) => {
 
 // POST /api/admin/endowment — add an endowment record
 router.post('/endowment', finOrAdmin, async (req, res) => {
-  const { userId, amount, contributionDate, paymentMethod, notes } = req.body;
+  const { userId, amount, contributionDate, year, status, paymentMethod, notes } = req.body;
   if (!userId || !amount) return res.status(400).json({ error: 'Member and amount are required' });
   try {
     const { rows } = await pool.query(`
-      INSERT INTO endowment_fund (user_id, amount, contribution_date, payment_method, notes, recorded_by)
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
-    `, [userId, amount, contributionDate || null, paymentMethod || null, notes || null, req.user.id]);
+      INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+    `, [userId, amount, contributionDate || null, year || null, status || 'paid', paymentMethod || null, notes || null, req.user.id]);
     res.status(201).json({ message: 'Endowment record added', id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });

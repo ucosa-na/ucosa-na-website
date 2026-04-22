@@ -467,6 +467,17 @@
         </table>`;
     }
 
+    function fmtEndowStatus(status) {
+      const s = (status || 'paid').toLowerCase();
+      const map = {
+        paid:    { bg: '#d1fae5', color: '#065f46', label: 'Paid' },
+        pending: { bg: '#fff8e1', color: '#7c5700', label: 'Pending' },
+        partial: { bg: '#dbeafe', color: '#1e40af', label: 'Partial' },
+      };
+      const st = map[s] || { bg: '#f0f0f0', color: '#555', label: status };
+      return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.82em;font-weight:700;text-transform:uppercase;background:${st.bg};color:${st.color}">${st.label}</span>`;
+    }
+
     function buildEndowmentTable(records) {
       if (!records || records.length === 0) {
         return `<p class="fin-empty">No endowment fund contributions on file yet.</p>`;
@@ -475,8 +486,10 @@
       const rows = records.map(r => {
         const date = r.contribution_date ? new Date(r.contribution_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
         return `<tr>
+          <td>${r.year || '—'}</td>
           <td>${date}</td>
           <td><strong>${fmt(r.amount)}</strong></td>
+          <td>${fmtEndowStatus(r.status)}</td>
           <td>${r.payment_method || '—'}</td>
           <td>${r.notes || '—'}</td>
         </tr>`;
@@ -485,8 +498,10 @@
         <table class="fin-table">
           <thead>
             <tr>
+              <th>Year</th>
               <th>Date</th>
               <th>Amount</th>
+              <th>Status</th>
               <th>Payment Method</th>
               <th>Notes</th>
             </tr>
@@ -494,9 +509,9 @@
           <tbody>
             ${rows}
             <tr class="fin-total">
-              <td><strong>Total</strong></td>
+              <td colspan="2"><strong>Total</strong></td>
               <td><strong>${fmt(total)}</strong></td>
-              <td colspan="2"></td>
+              <td colspan="3"></td>
             </tr>
           </tbody>
         </table>`;

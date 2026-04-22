@@ -1127,6 +1127,18 @@
             <label for="endAmount">Amount ($) <span style="color:#e63946;">*</span></label>
             <input type="number" id="endAmount" placeholder="0.00" min="0" step="0.01" />
           </div>
+          <div class="form-group" style="max-width:120px;">
+            <label for="endYear">Year</label>
+            <input type="number" id="endYear" placeholder="e.g. 2025" min="1990" max="2099" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="endStatus">Status</label>
+            <select id="endStatus">
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="partial">Partial</option>
+            </select>
+          </div>
           <div class="form-group" style="max-width:170px;">
             <label for="endDate">Contribution Date</label>
             <input type="date" id="endDate" />
@@ -1156,11 +1168,11 @@
           <table class="fin-table">
             <thead>
               <tr>
-                <th>Member</th><th>Amount</th><th>Date</th><th>Method</th><th>Notes</th><th>Actions</th>
+                <th>Member</th><th>Year</th><th>Amount</th><th>Status</th><th>Date</th><th>Method</th><th>Notes</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="endTableBody">
-              <tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
             </tbody>
             <tfoot id="endTableFoot"></tfoot>
           </table>
@@ -1750,22 +1762,29 @@
       try {
         const res = await fetch('/api/admin/endowment', { headers: { 'Authorization': 'Bearer ' + getToken() } });
         const rows = await res.json();
+        const statusBadge = s => {
+          const map = { paid: ['#d1fae5','#065f46','Paid'], pending: ['#fff8e1','#7c5700','Pending'], partial: ['#dbeafe','#1e40af','Partial'] };
+          const [bg, color, label] = map[(s||'paid').toLowerCase()] || ['#f0f0f0','#555', s||'—'];
+          return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.82em;font-weight:700;text-transform:uppercase;background:${bg};color:${color}">${label}</span>`;
+        };
         if (!rows.length) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;">No endowment records yet.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No endowment records yet.</td></tr>';
           tfoot.innerHTML = '';
           return;
         }
         tbody.innerHTML = rows.map(r => `
           <tr>
             <td>${escapeHtml(r.full_name)}</td>
+            <td>${r.year || '—'}</td>
             <td>$${parseFloat(r.amount).toFixed(2)}</td>
+            <td>${statusBadge(r.status)}</td>
             <td>${r.contribution_date ? r.contribution_date.slice(0,10) : '—'}</td>
             <td>${escapeHtml(r.payment_method || '—')}</td>
             <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
             <td><button class="btn-sm btn-danger" onclick="deleteEndowment(${r.id})">Delete</button></td>
           </tr>`).join('');
         const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
-        tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td>$${total.toFixed(2)}</td><td colspan="4"></td></tr>`;
+        tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td></td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="6" style="color:#e63946;">${err.message}</td></tr>`;
       }
@@ -1784,6 +1803,8 @@
       const body = {
         userId: parseInt(userId),
         amount: parseFloat(amount),
+        year:             parseInt(document.getElementById('endYear').value) || null,
+        status:           document.getElementById('endStatus').value || 'paid',
         contributionDate: document.getElementById('endDate').value || null,
         paymentMethod:    document.getElementById('endMethod').value || null,
         notes:            document.getElementById('endNotes').value.trim() || null,
@@ -1793,7 +1814,8 @@
         const data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
         okEl.textContent = 'Endowment record added!'; okEl.style.display = 'block';
-        ['endMember','endAmount','endDate','endMethod','endNotes'].forEach(id => document.getElementById(id).value = '');
+        ['endMember','endAmount','endYear','endDate','endMethod','endNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('endStatus').value = 'paid';
         loadEndowment();
       } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
     }
