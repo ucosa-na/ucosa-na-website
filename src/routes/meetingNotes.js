@@ -1,7 +1,9 @@
-const express = require('express');
-const crypto  = require('crypto');
-const multer  = require('multer');
-const pool    = require('../db');
+const express  = require('express');
+const crypto   = require('crypto');
+const multer   = require('multer');
+const mammoth  = require('mammoth');
+const PDFDocument = require('pdfkit');
+const pool     = require('../db');
 const requireAuth = require('../middleware/requireAuth');
 const requireRole = require('../middleware/requireRole');
 
@@ -11,6 +13,42 @@ const secOrAdmin = requireRole('admin', 'security-role');
 
 // In-memory short-lived view tokens: token -> { noteId, expires }
 const viewTokens = new Map();
+
+/** Convert a .docx buffer to a PDF buffer using mammoth + pdfkit */
+async function docxToPdf(buffer, title) {
+  const { value: rawText } = await mammoth.extractRawText({ buffer });
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 72, size: 'LETTER' });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    // Title
+    if (title) {
+      doc.fontSize(16).font('Helvetica-Bold').text(title, { align: 'center' });
+      doc.moveDown(1);
+    }
+
+    doc.fontSize(11).font('Helvetica');
+
+    const paragraphs = rawText.split(/\n{2,}/);
+    for (const para of paragraphs) {
+      const line = para.trim();
+      if (!line) continue;
+      // Simple heuristic: short all-caps or short lines are headings
+      if (line.length < 80 && line === line.toUpperCase() && line.length > 3) {
+        doc.font('Helvetica-Bold').text(line).font('Helvetica');
+      } else {
+        doc.text(line, { lineGap: 2 });
+      }
+      doc.moveDown(0.6);
+    }
+
+    doc.end();
+  });
+}
 
 // GET /api/meeting-notes — list all (auth required)
 router.get('/', requireAuth, async (req, res) => {
@@ -71,17 +109,37 @@ async function serveFile(req, res) {
 }
 
 // POST /api/meeting-notes — upload (admin/security-role)
+// Auto-converts .docx files to PDF before storing.
 router.post('/', secOrAdmin, upload.single('file'), async (req, res) => {
   const { title, meeting_date } = req.body;
   if (!title || !meeting_date || !req.file) {
     return res.status(400).json({ error: 'Title, date, and file are required.' });
   }
+
+  let fileBuffer   = req.file.buffer;
+  let mimeType     = req.file.mimetype;
+  let originalName = req.file.originalname;
+
+  // Convert .docx → PDF
+  const isDocx = mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    || originalName.toLowerCase().endsWith('.docx');
+
+  if (isDocx) {
+    try {
+      fileBuffer   = await docxToPdf(fileBuffer, title);
+      mimeType     = 'application/pdf';
+      originalName = originalName.replace(/\.docx$/i, '.pdf');
+    } catch (convErr) {
+      console.error('docx→pdf conversion error:', convErr.message);
+      return res.status(500).json({ error: 'Failed to convert document to PDF.' });
+    }
+  }
+
   try {
     const { rows } = await pool.query(
       `INSERT INTO meeting_notes (title, meeting_date, original_name, mime_type, file_data, uploaded_by)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [title, meeting_date, req.file.originalname, req.file.mimetype,
-       req.file.buffer, req.user.id]
+      [title, meeting_date, originalName, mimeType, fileBuffer, req.user.id]
     );
     res.status(201).json({ message: 'Meeting notes uploaded.', id: rows[0].id });
   } catch (err) {
