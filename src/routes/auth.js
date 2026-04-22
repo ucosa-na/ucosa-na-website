@@ -213,8 +213,15 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/change-password
 router.post('/change-password', requireAuth, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ error: 'Both current and new password required' });
+  // On a forced first-login change the member has just authenticated via JWT —
+  // skip the current-password check to avoid temp-password copy/type errors.
+  const isFirstLogin = !!req.user.mustChangePassword;
+
+  if (!isFirstLogin && !currentPassword) {
+    return res.status(400).json({ error: 'Current password is required' });
+  }
+  if (!newPassword) {
+    return res.status(400).json({ error: 'New password is required' });
   }
   if (newPassword.length < 8) {
     return res.status(400).json({ error: 'Password must be at least 8 characters' });
@@ -231,8 +238,11 @@ router.post('/change-password', requireAuth, async (req, res) => {
     const user = rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const valid = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+    // Only verify current password for voluntary (non-forced) changes
+    if (!isFirstLogin) {
+      const valid = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+    }
 
     const hash = await bcrypt.hash(newPassword, 10);
     await pool.query(
