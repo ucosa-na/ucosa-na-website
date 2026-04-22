@@ -513,12 +513,88 @@ router.post('/endowment', finOrAdmin, async (req, res) => {
   }
 });
 
+// PUT /api/admin/endowment/:id — update an endowment record
+router.put('/endowment/:id', finOrAdmin, async (req, res) => {
+  const { amount, year, status, contributionDate, paymentMethod, notes } = req.body;
+  if (!amount) return res.status(400).json({ error: 'Amount is required' });
+  try {
+    await pool.query(`
+      UPDATE endowment_fund
+      SET amount=$1, year=$2, status=$3, contribution_date=$4, payment_method=$5, notes=$6
+      WHERE id=$7
+    `, [amount, year || null, status || 'paid', contributionDate || null, paymentMethod || null, notes || null, req.params.id]);
+    res.json({ message: 'Endowment record updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE /api/admin/endowment/:id
 router.delete('/endowment/:id', finOrAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM endowment_fund WHERE id=$1', [req.params.id]);
     res.json({ message: 'Endowment record deleted' });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/endowment/:id/remind — send reminder to member via SMS + email
+router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT e.id, e.amount, e.year, e.status,
+             u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM endowment_fund e
+      JOIN users u ON u.id = e.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE e.id = $1
+    `, [req.params.id]);
+
+    if (!rows.length) return res.status(404).json({ error: 'Endowment record not found' });
+    const r = rows[0];
+    const yearLabel  = r.year ? `${r.year} ` : '';
+    const amountFmt  = `$${parseFloat(r.amount).toFixed(2)}`;
+    const statusUp   = (r.status || 'pending').toUpperCase();
+
+    // SMS
+    if (r.phone) {
+      await sendSMS(r.phone,
+        `UCOSA-NA Endowment Fund Reminder\n` +
+        `Dear ${r.full_name},\n` +
+        `Your ${yearLabel}endowment fund contribution of ${amountFmt} is currently: ${statusUp}.\n` +
+        `Please log in at https://ucosa-na.org or contact the treasurer. Thank you!`
+      );
+    }
+
+    // Email
+    sendEmail({
+      to: r.email,
+      subject: `⏰ UCOSA-NA Endowment Fund Reminder`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:32px">
+            <h2 style="color:#7b2152;margin-top:0">Endowment Fund Reminder</h2>
+            <p>Dear <strong>${r.full_name}</strong>,</p>
+            <p>This is a friendly reminder about your ${yearLabel}endowment fund contribution:</p>
+            <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+              ${r.year ? `<p><strong>Year:</strong> ${r.year}</p>` : ''}
+              <p><strong>Amount:</strong> ${amountFmt}</p>
+              <p><strong>Status:</strong> ${r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : '—'}</p>
+            </div>
+            <p>Please log in at <a href="https://ucosa-na.org">ucosa-na.org</a> to view your records, or contact the treasurer for assistance.</p>
+            <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a></p>
+          </div>
+        </div>`,
+    }).catch(err => log.error(`Endowment reminder email failed for ${r.email}: ${err.message}`));
+
+    res.json({ message: `Reminder sent to ${r.full_name}${r.phone ? ' via SMS' : ''} and email` });
+  } catch (err) {
+    console.error('Endowment reminder error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

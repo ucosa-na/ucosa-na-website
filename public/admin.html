@@ -1199,6 +1199,60 @@
   </div>
 
   <!-- EDIT MEMBER MODAL -->
+  <!-- ENDOWMENT EDIT MODAL -->
+  <div class="modal-overlay" id="endowEditModal">
+    <div class="modal-box">
+      <h3>Edit Endowment Record</h3>
+      <div id="endowEditError"   class="msg error"></div>
+      <div id="endowEditSuccess" class="msg success"></div>
+      <input type="hidden" id="endowEditId" />
+      <div class="form-row">
+        <div class="form-group" style="max-width:120px;">
+          <label for="endowEditYear">Year</label>
+          <input type="number" id="endowEditYear" placeholder="e.g. 2025" min="1990" max="2099" />
+        </div>
+        <div class="form-group" style="max-width:140px;">
+          <label for="endowEditStatus">Status</label>
+          <select id="endowEditStatus">
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="partial">Partial</option>
+          </select>
+        </div>
+        <div class="form-group" style="max-width:150px;">
+          <label for="endowEditAmount">Amount ($) *</label>
+          <input type="number" id="endowEditAmount" min="0" step="0.01" />
+        </div>
+        <div class="form-group" style="max-width:170px;">
+          <label for="endowEditDate">Contribution Date</label>
+          <input type="date" id="endowEditDate" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="max-width:180px;">
+          <label for="endowEditMethod">Payment Method</label>
+          <select id="endowEditMethod">
+            <option value="">— Select —</option>
+            <option>Cash</option>
+            <option>Check</option>
+            <option>Bank Transfer</option>
+            <option>Zelle</option>
+            <option>PayPal</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:2;">
+          <label for="endowEditNotes">Notes</label>
+          <input type="text" id="endowEditNotes" placeholder="Optional notes" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="saveEndowEdit()">Save Changes</button>
+        <button class="btn-secondary" onclick="closeEndowEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="editModal">
     <div class="modal-box">
       <h3>Edit Member</h3>
@@ -1781,7 +1835,11 @@
             <td>${r.contribution_date ? r.contribution_date.slice(0,10) : '—'}</td>
             <td>${escapeHtml(r.payment_method || '—')}</td>
             <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
-            <td><button class="btn-sm btn-danger" onclick="deleteEndowment(${r.id})">Delete</button></td>
+            <td>
+              <button class="btn-sm" onclick="openEndowEdit(${r.id},${r.year||'null'},'${escapeHtml(r.status||'paid')}',${parseFloat(r.amount).toFixed(2)},'${r.contribution_date?r.contribution_date.slice(0,10):''}','${escapeHtml(r.payment_method||'')}','${escapeHtml(r.notes||'')}')">Edit</button>
+              <button class="btn-sm" style="background:#c8a96e;color:white;" onclick="remindEndowment(${r.id},'${escapeHtml(r.full_name)}')">Remind</button>
+              <button class="btn-sm btn-danger" onclick="deleteEndowment(${r.id})">Delete</button>
+            </td>
           </tr>`).join('');
         const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
         tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td></td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
@@ -1824,6 +1882,57 @@
       if (!confirm('Delete this endowment record?')) return;
       await fetch(`/api/admin/endowment/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
       loadEndowment();
+    }
+
+    function openEndowEdit(id, year, status, amount, date, method, notes) {
+      document.getElementById('endowEditId').value     = id;
+      document.getElementById('endowEditYear').value   = year || '';
+      document.getElementById('endowEditStatus').value = status || 'paid';
+      document.getElementById('endowEditAmount').value = amount;
+      document.getElementById('endowEditDate').value   = date || '';
+      document.getElementById('endowEditMethod').value = method || '';
+      document.getElementById('endowEditNotes').value  = notes || '';
+      document.getElementById('endowEditError').style.display   = 'none';
+      document.getElementById('endowEditSuccess').style.display = 'none';
+      document.getElementById('endowEditModal').classList.add('open');
+    }
+
+    function closeEndowEdit() {
+      document.getElementById('endowEditModal').classList.remove('open');
+    }
+
+    async function saveEndowEdit() {
+      const errEl = document.getElementById('endowEditError');
+      const okEl  = document.getElementById('endowEditSuccess');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+      const id     = document.getElementById('endowEditId').value;
+      const amount = document.getElementById('endowEditAmount').value;
+      if (!amount) { errEl.textContent = 'Amount is required.'; errEl.style.display = 'block'; return; }
+      const body = {
+        amount:           parseFloat(amount),
+        year:             parseInt(document.getElementById('endowEditYear').value) || null,
+        status:           document.getElementById('endowEditStatus').value || 'paid',
+        contributionDate: document.getElementById('endowEditDate').value || null,
+        paymentMethod:    document.getElementById('endowEditMethod').value || null,
+        notes:            document.getElementById('endowEditNotes').value.trim() || null,
+      };
+      try {
+        const res  = await fetch(`/api/admin/endowment/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = 'Record updated!'; okEl.style.display = 'block';
+        setTimeout(closeEndowEdit, 900);
+        loadEndowment();
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+    }
+
+    async function remindEndowment(id, name) {
+      if (!confirm(`Send endowment fund reminder to ${name} via SMS and email?`)) return;
+      try {
+        const res  = await fetch(`/api/admin/endowment/${id}/remind`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        alert(res.ok ? `✓ ${data.message}` : `Error: ${data.error}`);
+      } catch { alert('Network error. Please try again.'); }
     }
 
     // ── SMS BROADCAST ─────────────────────────────────────────────────────────
