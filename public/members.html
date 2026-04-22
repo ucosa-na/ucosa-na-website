@@ -360,6 +360,7 @@
     <aside class="sidebar">
       <h3>Members Menu</h3>
       <a href="/members.html" class="active">Dashboard</a>
+      <a href="#endowment-section" onclick="document.getElementById('endowment-section').scrollIntoView({behavior:'smooth'})">Endowment Fund</a>
       <a href="#meeting-notes-section" onclick="document.getElementById('meeting-notes-section').scrollIntoView({behavior:'smooth'})">Meeting Notes</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
@@ -466,6 +467,41 @@
         </table>`;
     }
 
+    function buildEndowmentTable(records) {
+      if (!records || records.length === 0) {
+        return `<p class="fin-empty">No endowment fund contributions on file yet.</p>`;
+      }
+      const total = records.reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
+      const rows = records.map(r => {
+        const date = r.contribution_date ? new Date(r.contribution_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+        return `<tr>
+          <td>${date}</td>
+          <td><strong>${fmt(r.amount)}</strong></td>
+          <td>${r.payment_method || '—'}</td>
+          <td>${r.notes || '—'}</td>
+        </tr>`;
+      }).join('');
+      return `
+        <table class="fin-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Payment Method</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr class="fin-total">
+              <td><strong>Total</strong></td>
+              <td><strong>${fmt(total)}</strong></td>
+              <td colspan="2"></td>
+            </tr>
+          </tbody>
+        </table>`;
+    }
+
     async function fetchNoteBlob(id) {
       const token = localStorage.getItem('ucosa_token');
       const res   = await fetch(`/api/meeting-notes/${id}/file`, { headers: { 'Authorization': 'Bearer ' + token } });
@@ -528,17 +564,19 @@
       if (!token) { window.location.href = '/login.html'; return; }
 
       try {
-        const [meRes, finRes, notesRes] = await Promise.all([
-          fetch('/api/auth/me',           { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch('/api/member/financials', { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch('/api/meeting-notes',     { headers: { 'Authorization': 'Bearer ' + token } }),
+        const [meRes, finRes, notesRes, endowRes] = await Promise.all([
+          fetch('/api/auth/me',             { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/member/financials',   { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/meeting-notes',       { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/member/endowment',    { headers: { 'Authorization': 'Bearer ' + token } }),
         ]);
 
         if (meRes.status === 401 || meRes.status === 403) { logout(); return; }
 
-        const user    = await meRes.json();
-        const records = finRes.ok ? await finRes.json() : [];
-        const notes   = notesRes.ok ? await notesRes.json() : [];
+        const user         = await meRes.json();
+        const records      = finRes.ok   ? await finRes.json()   : [];
+        const notes        = notesRes.ok ? await notesRes.json() : [];
+        const endowRecords = endowRes.ok ? await endowRes.json() : [];
 
         if (user.mustChangePassword) {
           window.location.href = '/change-password.html?required=1';
@@ -589,6 +627,12 @@
           <section>
             <h2>&#128181; Financial Records</h2>
             ${buildFinancialTable(records)}
+          </section>
+
+          <!-- ENDOWMENT FUND -->
+          <section id="endowment-section">
+            <h2>&#127381; Endowment Fund</h2>
+            ${buildEndowmentTable(endowRecords)}
           </section>
 
           <!-- MEETING NOTES -->

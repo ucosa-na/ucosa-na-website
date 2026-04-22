@@ -35,4 +35,20 @@ router.get('/financials', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/member/endowment — own endowment fund contributions
+router.get('/endowment', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT id, amount, contribution_date, payment_method, notes, created_at
+      FROM endowment_fund
+      WHERE user_id = $1
+      ORDER BY contribution_date DESC
+    `, [req.user.id]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Endowment fetch error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
