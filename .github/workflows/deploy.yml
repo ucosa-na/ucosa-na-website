@@ -100,6 +100,15 @@ jobs:
             grep -q "^EMAIL_USER=" /opt/ucosa-na/.env \
               && sed -i "s|^EMAIL_USER=.*|EMAIL_USER=${{ secrets.EMAIL_USER }}|" /opt/ucosa-na/.env \
               || echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> /opt/ucosa-na/.env
+            grep -q "^TWILIO_ACCOUNT_SID=" /opt/ucosa-na/.env \
+              && sed -i "s|^TWILIO_ACCOUNT_SID=.*|TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}|" /opt/ucosa-na/.env \
+              || echo "TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}" >> /opt/ucosa-na/.env
+            grep -q "^TWILIO_AUTH_TOKEN=" /opt/ucosa-na/.env \
+              && sed -i "s|^TWILIO_AUTH_TOKEN=.*|TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}|" /opt/ucosa-na/.env \
+              || echo "TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}" >> /opt/ucosa-na/.env
+            grep -q "^TWILIO_PHONE_NUMBER=" /opt/ucosa-na/.env \
+              && sed -i "s|^TWILIO_PHONE_NUMBER=.*|TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}|" /opt/ucosa-na/.env \
+              || echo "TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}" >> /opt/ucosa-na/.env
 
             # Deploy app
             cd /opt/ucosa-na
