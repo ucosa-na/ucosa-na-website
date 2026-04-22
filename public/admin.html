@@ -1904,20 +1904,32 @@
 
     // ── MEETING NOTES ─────────────────────────────────────────────────────────
 
-    async function openAdminNote(id, filename) {
+    async function fetchAdminNoteBlob(id) {
       const token = getToken();
       const res   = await fetch(`/api/meeting-notes/${id}/file`, { headers: { 'Authorization': 'Bearer ' + token } });
-      if (!res.ok) { alert('Could not open file.'); return; }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
+      if (!res.ok) { alert('Could not load file.'); return null; }
+      return res.blob();
+    }
+
+    async function openAdminNote(id) {
+      const blob = await fetchAdminNoteBlob(id);
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+
+    async function downloadAdminNote(id, filename) {
+      const blob = await fetchAdminNoteBlob(id);
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
       a.href     = url;
-      a.target   = '_blank';
       a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 
     async function loadMeetingNotes() {
@@ -1933,13 +1945,15 @@
         }
         const rows = data.map(n => {
           const date = new Date(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          const fn   = n.original_name.replace(/'/g, "\\'");
           return `<tr>
             <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;color:#444;">${date}</td>
             <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
-              <a href="#" onclick="openAdminNote(${n.id}, '${n.original_name.replace(/'/g,"\\'")}'); return false;"
+              <a href="#" onclick="openAdminNote(${n.id}); return false;"
                 style="color:#7b2152;font-weight:600;text-decoration:none;">&#128196; ${n.title}</a>
             </td>
-            <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;text-align:right;">
+            <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;text-align:center;">
+              <button onclick="downloadAdminNote(${n.id}, '${fn}')" style="background:#c8a96e;color:white;border:none;padding:5px 12px;border-radius:5px;font-size:0.8rem;font-weight:700;cursor:pointer;margin-right:6px;">&#11015; Download</button>
               <button onclick="deleteMeetingNote(${n.id})" style="background:#e63946;color:white;border:none;padding:5px 12px;border-radius:5px;font-size:0.8rem;cursor:pointer;">Delete</button>
             </td>
           </tr>`;
@@ -1950,7 +1964,7 @@
               <tr style="background:#7b2152;">
                 <th style="padding:11px 14px;color:white;text-align:left;border-radius:8px 0 0 0;">Date</th>
                 <th style="padding:11px 14px;color:white;text-align:left;">Meeting Notes</th>
-                <th style="padding:11px 14px;color:white;text-align:right;border-radius:0 8px 0 0;">Action</th>
+                <th style="padding:11px 14px;color:white;text-align:center;border-radius:0 8px 0 0;">Actions</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>

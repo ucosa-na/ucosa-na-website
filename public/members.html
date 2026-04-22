@@ -466,20 +466,32 @@
         </table>`;
     }
 
-    async function openNote(id, filename) {
+    async function fetchNoteBlob(id) {
       const token = localStorage.getItem('ucosa_token');
       const res   = await fetch(`/api/meeting-notes/${id}/file`, { headers: { 'Authorization': 'Bearer ' + token } });
-      if (!res.ok) { alert('Could not open file. Please try again.'); return; }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
+      if (!res.ok) { alert('Could not load file. Please try again.'); return null; }
+      return res.blob();
+    }
+
+    async function openNote(id) {
+      const blob = await fetchNoteBlob(id);
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+
+    async function downloadNote(id, filename) {
+      const blob = await fetchNoteBlob(id);
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
       a.href     = url;
-      a.target   = '_blank';
       a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 
     function buildNotesTable(notes) {
@@ -488,16 +500,21 @@
       }
       const rows = notes.map(n => {
         const date = new Date(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const fn   = n.original_name.replace(/'/g, "\\'");
         return `<tr>
           <td>${date}</td>
-          <td><a class="notes-link" href="#" onclick="openNote(${n.id}, '${n.original_name.replace(/'/g,"\\'")}'); return false;">
+          <td><a class="notes-link" href="#" onclick="openNote(${n.id}); return false;">
             &#128196; ${n.title}
           </a></td>
+          <td><button onclick="downloadNote(${n.id}, '${fn}')"
+            style="background:#c8a96e;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">
+            &#11015; Download
+          </button></td>
         </tr>`;
       }).join('');
       return `
         <table class="notes-table">
-          <thead><tr><th>Date</th><th>Meeting Notes</th></tr></thead>
+          <thead><tr><th>Date</th><th>Meeting Notes</th><th>Download</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>`;
     }
