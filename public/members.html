@@ -472,16 +472,13 @@
       if (!res.ok) { alert('Could not open file. Please try again.'); return; }
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
-      const tab  = window.open('', '_blank');
-      if (tab) {
-        tab.location.href = url;
-      } else {
-        // Fallback if popup blocked
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = filename;
-        a.click();
-      }
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.target   = '_blank';
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }
 
