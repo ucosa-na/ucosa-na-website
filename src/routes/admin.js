@@ -274,6 +274,69 @@ router.delete('/users/:id', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/users/:id/reset-password — generate new temp password and email it
+router.post('/users/:id/reset-password', secOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id, full_name, email, phone FROM users WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    const { full_name, email, phone } = rows[0];
+
+    const tempPassword = generatePassword();
+    const hash = await bcrypt.hash(tempPassword, 10);
+    await pool.query(
+      'UPDATE users SET password_hash=$1, must_change_password=TRUE WHERE id=$2',
+      [hash, req.params.id]
+    );
+
+    sendEmail({
+      to: email,
+      subject: '🔑 Your UCOSA-NA Password Has Been Reset',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:32px">
+            <h2 style="color:#7b2152;margin-top:0">Password Reset</h2>
+            <p>Dear <strong>${full_name}</strong>,</p>
+            <p>Your UCOSA-NA account password has been reset by an administrator. Use the temporary password below to log in:</p>
+            <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+              <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.2em;letter-spacing:1px">${tempPassword}</code></p>
+            </div>
+            <p style="color:#7b2152"><strong>You will be asked to change this password after logging in.</strong></p>
+            <p style="color:#888;font-size:0.85em;margin-top:24px">
+              If you did not request this reset, contact us at
+              <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.
+            </p>
+          </div>
+        </div>
+      `,
+    })
+      .then(() => log.info(`Password reset email sent to ${email}`))
+      .catch(err => log.error(`Password reset email failed for ${email}: ${err.message}`));
+
+    if (phone) {
+      const sid  = process.env.TWILIO_ACCOUNT_SID;
+      const tok  = process.env.TWILIO_AUTH_TOKEN;
+      const from = process.env.TWILIO_PHONE_NUMBER;
+      if (sid && tok && from) {
+        require('twilio')(sid, tok).messages.create({
+          to: phone, from,
+          body: `UCOSA-NA: Your password has been reset. Temp password: ${tempPassword}. Log in at ucosa-na.org and change it immediately.`,
+        }).catch(err => log.error(`Password reset SMS failed for ${phone}: ${err.message}`));
+      }
+    }
+
+    res.json({ message: `Password reset. New temp password emailed to ${email}.`, tempPassword });
+  } catch (err) {
+    console.error('Reset password error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/admin/metrics — live server metrics
 router.get('/metrics', adminOnly, async (req, res) => {
   try {

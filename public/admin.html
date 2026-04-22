@@ -1403,6 +1403,7 @@
             <td>
               ${canEdit ? `
                 <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
+                <button class="btn-sm" style="background:#e67e22;color:white;" onclick="resetPassword(${m.id},'${escapeHtml(m.full_name).replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}')">Reset PW</button>
                 <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
               ` : ''}
             </td>
@@ -1429,6 +1430,27 @@
         } else {
           const data = await res.json();
           alert('Error: ' + (data.error || 'Failed to remove member'));
+        }
+      } catch {
+        alert('Network error. Please try again.');
+      }
+    }
+
+    async function resetPassword(id, name, email) {
+      if (!confirm(`Reset password for ${name} (${email})?\n\nA new temporary password will be generated and emailed to them.`)) return;
+
+      const token = getToken();
+      try {
+        const res = await fetch(`/api/admin/users/${id}/reset-password`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(`Password reset for ${name}.\n\nNew temp password: ${data.tempPassword}\n\nA reset email has been sent to ${email}.`);
+          loadMembers();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to reset password'));
         }
       } catch {
         alert('Network error. Please try again.');
