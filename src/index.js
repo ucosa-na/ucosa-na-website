@@ -23,8 +23,8 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Rate limit auth endpoints
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { error: 'Too many attempts, try again later' } });
+// IP-level rate limit on auth (backstop against brute-force from one IP)
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, message: { error: 'Too many requests from this IP, please try again later.' } });
 app.use('/api/auth', authLimiter);
 
 // Routes

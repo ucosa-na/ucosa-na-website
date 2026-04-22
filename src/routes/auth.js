@@ -10,6 +10,38 @@ const router = express.Router();
 
 const ALERT_TO = 'ucosa.northamerica@gmail.com';
 
+// Per-email login attempt tracking: email → { count, lockedUntil }
+const loginAttempts = new Map();
+const MAX_ATTEMPTS  = 3;
+const LOCK_MS       = 10 * 60 * 1000; // 10 minutes
+
+function checkLock(email) {
+  const entry = loginAttempts.get(email);
+  if (!entry) return null;
+  if (entry.lockedUntil && entry.lockedUntil > Date.now()) {
+    const remaining = Math.ceil((entry.lockedUntil - Date.now()) / 60000);
+    return `Too many failed attempts. Please wait ${remaining} minute${remaining !== 1 ? 's' : ''} and try again.`;
+  }
+  // Lock expired — reset
+  if (entry.lockedUntil && entry.lockedUntil <= Date.now()) {
+    loginAttempts.delete(email);
+  }
+  return null;
+}
+
+function recordFailure(email) {
+  const entry = loginAttempts.get(email) || { count: 0, lockedUntil: null };
+  entry.count += 1;
+  if (entry.count >= MAX_ATTEMPTS) {
+    entry.lockedUntil = Date.now() + LOCK_MS;
+  }
+  loginAttempts.set(email, entry);
+}
+
+function clearAttempts(email) {
+  loginAttempts.delete(email);
+}
+
 async function getLocation(ip) {
   if (!ip || ip === '::1' || ip.startsWith('127.') || ip.startsWith('10.') || ip.startsWith('192.168.')) {
     return 'Local / Private Network';
@@ -107,27 +139,56 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Email and password required' });
   }
 
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check lockout before hitting the DB
+  const lockMsg = checkLock(normalizedEmail);
+  if (lockMsg) {
+    log.warn(`Locked account login attempt: ${normalizedEmail} from IP ${req.ip}`);
+    return res.status(429).json({ error: lockMsg });
+  }
+
   try {
     const { rows } = await pool.query(
       'SELECT * FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
+      [normalizedEmail]
     );
     const user = rows[0];
     if (!user) {
-      log.warn(`Failed login — unknown email: ${email.toLowerCase().trim()} from IP ${req.ip}`);
+      log.warn(`Failed login — unknown email: ${normalizedEmail} from IP ${req.ip}`);
+      // Still record against the email to prevent enumeration timing attacks
+      recordFailure(normalizedEmail);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
-      log.warn(`Failed login — wrong password for: ${user.email} from IP ${req.ip}`);
+      recordFailure(normalizedEmail);
+      const entry = loginAttempts.get(normalizedEmail);
+      const attemptsLeft = MAX_ATTEMPTS - (entry ? entry.count : 0);
+
+      log.warn(`Failed login — wrong password for: ${user.email} from IP ${req.ip} (attempt ${entry ? entry.count : 1}/${MAX_ATTEMPTS})`);
+
+      if (entry && entry.lockedUntil) {
+        // Just got locked on this attempt
+        if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
+        getLocation(req.ip).then(loc => sendMemberFailedLoginAlert(user, req.ip, loc));
+        return res.status(429).json({ error: 'After 3 failed attempts, please wait 10 minutes and try again.' });
+      }
+
       if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
-      // Fire-and-forget: email + SMS alert to the member
       getLocation(req.ip).then(loc => sendMemberFailedLoginAlert(user, req.ip, loc));
-      return res.status(401).json({ error: 'Invalid email or password' });
+
+      return res.status(401).json({
+        error: attemptsLeft > 0
+          ? `Invalid email or password. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining before account is locked.`
+          : 'Invalid email or password.',
+      });
     }
 
-    // Record last login timestamp
+    // Successful login — clear any failed attempt counter
+    clearAttempts(normalizedEmail);
+
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     log.info(`Login successful: ${user.email} (role: ${user.role}) from IP ${req.ip}`);
     if (user.role === 'admin') sendAdminLoginAlert('success', user.email, req.ip);
