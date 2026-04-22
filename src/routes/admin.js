@@ -176,7 +176,17 @@ router.post('/test-email', adminOnly, async (req, res) => {
     await sendEmail({
       to,
       subject: 'UCOSA-NA — Email Test',
-      html: '<p>This is a test email from the UCOSA-NA admin panel. If you received this, email delivery is working correctly.</p>',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:32px">
+            <p style="color:#333;margin:0">This is a test email from the UCOSA-NA admin panel. If you received this, email delivery is working correctly.</p>
+          </div>
+        </div>
+      `,
     });
     res.json({ message: `Test email sent to ${to} (from: ${senderEmail})` });
   } catch (err) {
