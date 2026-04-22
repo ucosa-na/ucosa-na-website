@@ -466,6 +466,20 @@
         </table>`;
     }
 
+    async function openNote(id, filename) {
+      const token = localStorage.getItem('ucosa_token');
+      const res   = await fetch(`/api/meeting-notes/${id}/file`, { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) { alert('Could not open file. Please try again.'); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.target   = '_blank';
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
     function buildNotesTable(notes) {
       if (!notes || !notes.length) {
         return `<p style="color:#999;font-style:italic;padding:12px 0;">No meeting notes have been uploaded yet.</p>`;
@@ -474,7 +488,7 @@
         const date = new Date(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         return `<tr>
           <td>${date}</td>
-          <td><a class="notes-link" href="/api/meeting-notes/${n.id}/file" target="_blank">
+          <td><a class="notes-link" href="#" onclick="openNote(${n.id}, '${n.original_name.replace(/'/g,"\\'")}'); return false;">
             &#128196; ${n.title}
           </a></td>
         </tr>`;

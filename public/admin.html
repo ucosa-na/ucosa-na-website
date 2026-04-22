@@ -1904,6 +1904,20 @@
 
     // ── MEETING NOTES ─────────────────────────────────────────────────────────
 
+    async function openAdminNote(id, filename) {
+      const token = getToken();
+      const res   = await fetch(`/api/meeting-notes/${id}/file`, { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) { alert('Could not open file.'); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.target   = '_blank';
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
     async function loadMeetingNotes() {
       const token = getToken();
       const el = document.getElementById('mnList');
@@ -1920,7 +1934,7 @@
           return `<tr>
             <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;color:#444;">${date}</td>
             <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
-              <a href="/api/meeting-notes/${n.id}/file" target="_blank"
+              <a href="#" onclick="openAdminNote(${n.id}, '${n.original_name.replace(/'/g,"\\'")}'); return false;"
                 style="color:#7b2152;font-weight:600;text-decoration:none;">&#128196; ${n.title}</a>
             </td>
             <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;text-align:right;">
