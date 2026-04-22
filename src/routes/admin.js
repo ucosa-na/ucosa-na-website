@@ -664,6 +664,50 @@ router.post('/sms/broadcast', adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/admin/email/broadcast — send email to all members
+router.post('/email/broadcast', adminOnly, async (req, res) => {
+  const { subject, message } = req.body;
+  if (!subject || !subject.trim()) return res.status(400).json({ error: 'Subject is required' });
+  if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT full_name, email FROM users WHERE role != 'admin' ORDER BY full_name ASC`
+    );
+    if (!rows.length) return res.status(400).json({ error: 'No members found' });
+
+    const results = await Promise.allSettled(
+      rows.map(m => sendEmail({
+        to: m.email,
+        subject: subject.trim(),
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+            <div style="background:#7b2152;text-align:center;padding:28px 32px">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            </div>
+            <div style="background:#fdf6ec;padding:32px">
+              <p>Dear <strong>${m.full_name}</strong>,</p>
+              <div style="white-space:pre-wrap;font-size:1em;color:#333;line-height:1.7;">${message.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+              <p style="color:#888;font-size:0.85em;margin-top:32px">
+                UCOSA-North America &mdash;
+                <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
+              </p>
+            </div>
+          </div>`,
+      }))
+    );
+
+    const sent   = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    log.info(`Email broadcast "${subject}" sent to ${sent} member(s), ${failed} failed`);
+    res.json({ message: `Email sent to ${sent} member(s).${failed ? ` ${failed} failed.` : ''}`, sent, failed });
+  } catch (err) {
+    console.error('Broadcast email error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/sms/dues-reminder/:duesId — send dues reminder to a specific member
 router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
   try {

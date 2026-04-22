@@ -676,6 +676,7 @@
           <a href="#testEmail">Test Email</a>
           <a href="#siteMaintenance">Site Maintenance</a>
           <a href="#smsBroadcast">SMS Broadcast</a>
+          <a href="#emailBroadcast">Email Broadcast</a>
         </div>
       </div>
 
@@ -1195,6 +1196,25 @@
         <button class="btn-primary" onclick="sendBroadcast()">&#128241; Send to All Members</button>
       </section>
 
+      <!-- EMAIL BROADCAST -->
+      <section id="emailBroadcast">
+        <h2>&#9993; Email Broadcast</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">
+          Send an email to all members. Each member receives a personalised greeting with the UCOSA-NA branded template.
+        </p>
+        <div id="emailBcastError"   class="msg error"></div>
+        <div id="emailBcastSuccess" class="msg success"></div>
+        <div class="form-group" style="max-width:640px;margin-bottom:16px;">
+          <label for="emailBcastSubject">Subject <span style="color:#e63946;">*</span></label>
+          <input type="text" id="emailBcastSubject" placeholder="e.g. Important Update from UCOSA-NA" />
+        </div>
+        <div class="form-group" style="max-width:640px;margin-bottom:16px;">
+          <label for="emailBcastMessage">Message <span style="color:#e63946;">*</span></label>
+          <textarea id="emailBcastMessage" rows="8" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:20px;resize:vertical;" placeholder="Type your message here…"></textarea>
+        </div>
+        <button class="btn-primary" onclick="sendEmailBroadcast()">&#9993; Send to All Members</button>
+      </section>
+
     </main>
   </div>
 
@@ -1383,7 +1403,7 @@
       // Section visibility
       const secSections   = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
       const finSections   = ['annualDues', 'endowmentFund'];
-      const adminSections = ['statsRow', 'testEmail', 'siteMaintenance', 'smsBroadcast'];
+      const adminSections = ['statsRow', 'testEmail', 'siteMaintenance', 'smsBroadcast', 'emailBroadcast'];
 
       secSections.forEach(id => {
         const el = document.getElementById(id);
@@ -1964,6 +1984,34 @@
         document.getElementById('smsMessage').value = '';
         document.getElementById('smsCharCount').textContent = '0';
       } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+    }
+
+    async function sendEmailBroadcast() {
+      const errEl = document.getElementById('emailBcastError');
+      const okEl  = document.getElementById('emailBcastSuccess');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+
+      const subject = document.getElementById('emailBcastSubject').value.trim();
+      const message = document.getElementById('emailBcastMessage').value.trim();
+      if (!subject) { errEl.textContent = 'Subject is required.'; errEl.style.display = 'block'; return; }
+      if (!message) { errEl.textContent = 'Message is required.'; errEl.style.display = 'block'; return; }
+      if (!confirm(`Send email to ALL members?\n\nSubject: ${subject}`)) return;
+
+      const btn = event.target;
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/email/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ subject, message })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = data.message; okEl.style.display = 'block';
+        document.getElementById('emailBcastSubject').value = '';
+        document.getElementById('emailBcastMessage').value = '';
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+      finally { btn.disabled = false; btn.textContent = '✉ Send to All Members'; }
     }
 
     // ── EDIT MEMBER MODAL ────────────────────────────────────────────────────
