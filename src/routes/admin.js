@@ -13,7 +13,8 @@ const { sendEmail } = require('../mailer');
 const adminOnly  = requireRole('admin');
 const finOrAdmin = requireRole('admin', 'fin-role');
 const secOrAdmin = requireRole('admin', 'security-role');
-const anyPriv    = requireRole('admin', 'fin-role', 'security-role');
+const anyPriv    = requireRole('admin', 'fin-role', 'security-role', 'pro-role');
+const proOrAdmin = requireRole('admin', 'pro-role');
 
 const router = express.Router();
 
@@ -250,9 +251,9 @@ router.put('/users/:id', secOrAdmin, async (req, res) => {
 // PUT /api/admin/users/:id/role — change a member's role (admin only)
 router.put('/users/:id/role', adminOnly, async (req, res) => {
   const { role } = req.body;
-  const validRoles = ['admin', 'member', 'fin-role', 'security-role'];
+  const validRoles = ['admin', 'member', 'fin-role', 'security-role', 'pro-role'];
   if (!role || !validRoles.includes(role)) {
-    return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role' });
+    return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role, pro-role' });
   }
   try {
     await pool.query('UPDATE users SET role=$1 WHERE id=$2', [role, req.params.id]);

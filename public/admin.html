@@ -434,6 +434,7 @@
     .badge.member         { background: #f0f4ff; color: #1a1a2e; }
     .badge.fin-role       { background: #d1fae5; color: #065f46; }
     .badge.security-role  { background: #dbeafe; color: #1e40af; }
+    .badge.pro-role       { background: #fde8ff; color: #7c3aed; }
     .badge.yes            { background: #fff8e1; color: #7c5700; }
     .badge.no             { background: #f0fff4; color: #166534; }
 
@@ -675,6 +676,16 @@
         <div class="sidebar-group-items open" id="groupAdminItems">
           <a href="#testEmail">Test Email</a>
           <a href="#siteMaintenance">Site Maintenance</a>
+        </div>
+      </div>
+
+      <!-- Broadcast sub-menu (admin + fin-role + security-role + pro-role) -->
+      <div class="sidebar-pro" id="sidebarGroupBroadcast">
+        <div class="sidebar-group-label group-admin open" onclick="toggleSidebarGroup('groupBroadcastItems', this)">
+          <span>&#128226; Broadcast</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupBroadcastItems">
           <a href="#smsBroadcast">SMS Broadcast</a>
           <a href="#emailBroadcast">Email Broadcast</a>
         </div>
@@ -1385,7 +1396,7 @@
         const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
         if (!res.ok) { window.location.href = '/login.html'; return null; }
         const user = await res.json();
-        const privilegedRoles = ['admin', 'fin-role', 'security-role'];
+        const privilegedRoles = ['admin', 'fin-role', 'security-role', 'pro-role'];
         if (!privilegedRoles.includes(user.role)) { window.location.href = '/members.html'; return null; }
         return user;
       } catch { window.location.href = '/login.html'; return null; }
@@ -1395,9 +1406,10 @@
       const isAdmin = role === 'admin';
       const isFin   = role === 'fin-role';
       const isSec   = role === 'security-role';
+      const isPro   = role === 'pro-role';
 
       // Role label in header
-      const roleLabels = { admin: 'Admin', 'fin-role': 'Finance', 'security-role': 'Security' };
+      const roleLabels = { admin: 'Admin', 'fin-role': 'Finance', 'security-role': 'Security', 'pro-role': 'PRO' };
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
@@ -1420,7 +1432,7 @@
       });
       allPrivSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isFin || isSec) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isFin || isSec || isPro) ? '' : 'none';
       });
 
       // Sidebar link visibility
@@ -1432,6 +1444,9 @@
       });
       document.querySelectorAll('.sidebar-admin').forEach(el => {
         el.style.display = isAdmin ? '' : 'none';
+      });
+      document.querySelectorAll('.sidebar-pro').forEach(el => {
+        el.style.display = (isAdmin || isFin || isSec || isPro) ? '' : 'none';
       });
     }
 
@@ -1477,7 +1492,7 @@
             <td>
               ${isAdmin
                 ? `<select class="role-select" onchange="changeRole(${m.id}, this.value)" title="Change role">
-                     ${['admin','member','fin-role','security-role'].map(r =>
+                     ${['admin','member','fin-role','security-role','pro-role'].map(r =>
                        `<option value="${r}"${r === m.role ? ' selected' : ''}>${r}</option>`
                      ).join('')}
                    </select>`
