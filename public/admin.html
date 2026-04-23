@@ -1401,9 +1401,10 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections   = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
-      const finSections   = ['annualDues', 'endowmentFund'];
-      const adminSections = ['statsRow', 'testEmail', 'siteMaintenance', 'smsBroadcast', 'emailBroadcast'];
+      const secSections      = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
+      const finSections      = ['annualDues', 'endowmentFund'];
+      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance'];
+      const allPrivSections  = ['smsBroadcast', 'emailBroadcast'];
 
       secSections.forEach(id => {
         const el = document.getElementById(id);
@@ -1416,6 +1417,10 @@
       adminSections.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isAdmin ? '' : 'none';
+      });
+      allPrivSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (isAdmin || isFin || isSec) ? '' : 'none';
       });
 
       // Sidebar link visibility

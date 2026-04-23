@@ -636,7 +636,7 @@ router.get('/financials/:userId', finOrAdmin, async (req, res) => {
 // ── SMS BROADCAST ─────────────────────────────────────────────────────────────
 
 // POST /api/admin/sms/broadcast — send SMS to all members with phone numbers
-router.post('/sms/broadcast', adminOnly, async (req, res) => {
+router.post('/sms/broadcast', anyPriv, async (req, res) => {
   const { message } = req.body;
   if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
 
@@ -665,7 +665,7 @@ router.post('/sms/broadcast', adminOnly, async (req, res) => {
 });
 
 // POST /api/admin/email/broadcast — send email to all members
-router.post('/email/broadcast', adminOnly, async (req, res) => {
+router.post('/email/broadcast', anyPriv, async (req, res) => {
   const { subject, message } = req.body;
   if (!subject || !subject.trim()) return res.status(400).json({ error: 'Subject is required' });
   if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
