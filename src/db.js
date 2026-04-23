@@ -101,6 +101,8 @@ pool.query(`
   pool.query(`ALTER TABLE endowment_fund ADD COLUMN IF NOT EXISTS year INTEGER DEFAULT NULL;`)
 ).then(() =>
   pool.query(`ALTER TABLE endowment_fund ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'paid';`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_expires_at TIMESTAMPTZ DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

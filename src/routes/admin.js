@@ -69,9 +69,10 @@ router.post('/users', secOrAdmin, async (req, res) => {
     const tempPassword = generatePassword();
     const hash = await bcrypt.hash(tempPassword, 10);
 
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     const { rows: inserted } = await pool.query(
-      'INSERT INTO users (full_name, email, password_hash, must_change_password, role) VALUES ($1, $2, $3, TRUE, $4) RETURNING id',
-      [fullName, emailVal, hash, 'member']
+      'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role) VALUES ($1, $2, $3, TRUE, $4, $5) RETURNING id',
+      [fullName, emailVal, hash, expiresAt, 'member']
     );
     const userId = inserted[0].id;
 
@@ -101,7 +102,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
           `Login: https://ucosa-na.org\n` +
           `Email: ${emailVal}\n` +
           `Temp password: ${tempPassword}\n` +
-          `Please change your password on first login.`
+          `This password expires in 48 hours. Please change it on first login.`
         );
         smsSent = true;
         log.info(`Welcome SMS sent to ${phone} for ${fullName}`);
@@ -139,6 +140,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
               <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
               <p><strong>Email:</strong> ${emailVal}</p>
               <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
+              <p style="color:#c0392b;font-size:0.9em">⚠️ This password expires in <strong>48 hours</strong>. Please log in and change it before it expires.</p>
             </div>
             <p style="color:#7b2152"><strong>You will be asked to change your password on first login.</strong></p>
             <p>Welcome back to your old friends and brothers and sisters!</p>
@@ -284,9 +286,10 @@ router.post('/users/:id/reset-password', secOrAdmin, async (req, res) => {
 
     const tempPassword = generatePassword();
     const hash = await bcrypt.hash(tempPassword, 10);
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     await pool.query(
-      'UPDATE users SET password_hash=$1, must_change_password=TRUE WHERE id=$2',
-      [hash, req.params.id]
+      'UPDATE users SET password_hash=$1, must_change_password=TRUE, password_expires_at=$2 WHERE id=$3',
+      [hash, expiresAt, req.params.id]
     );
 
     sendEmail({
@@ -306,6 +309,7 @@ router.post('/users/:id/reset-password', secOrAdmin, async (req, res) => {
               <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
               <p><strong>Email:</strong> ${email}</p>
               <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.2em;letter-spacing:1px">${tempPassword}</code></p>
+              <p style="color:#c0392b;font-size:0.9em">⚠️ This password expires in <strong>48 hours</strong>. Please log in and change it before it expires.</p>
             </div>
             <p style="color:#7b2152"><strong>You will be asked to change this password after logging in.</strong></p>
             <p style="color:#888;font-size:0.85em;margin-top:24px">
@@ -326,7 +330,7 @@ router.post('/users/:id/reset-password', secOrAdmin, async (req, res) => {
       if (sid && tok && from) {
         require('twilio')(sid, tok).messages.create({
           to: phone, from,
-          body: `UCOSA-NA: Your password has been reset. Temp password: ${tempPassword}. Log in at ucosa-na.org and change it immediately.`,
+          body: `UCOSA-NA: Your password has been reset. Temp password: ${tempPassword}. This password expires in 48 hours. Log in at ucosa-na.org and change it immediately.`,
         }).catch(err => log.error(`Password reset SMS failed for ${phone}: ${err.message}`));
       }
     }

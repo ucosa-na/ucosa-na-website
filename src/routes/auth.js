@@ -189,6 +189,12 @@ router.post('/login', async (req, res) => {
     // Successful login — clear any failed attempt counter
     clearAttempts(normalizedEmail);
 
+    // Check if temporary password has expired
+    if (user.must_change_password && user.password_expires_at && new Date(user.password_expires_at) < new Date()) {
+      log.warn(`Expired temp password login attempt: ${user.email}`);
+      return res.status(401).json({ error: 'Your temporary password has expired. Please contact an administrator to reset your password.' });
+    }
+
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     log.info(`Login successful: ${user.email} (role: ${user.role}) from IP ${req.ip}`);
     if (user.role === 'admin') sendAdminLoginAlert('success', user.email, req.ip);
@@ -246,7 +252,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
 
     const hash = await bcrypt.hash(newPassword, 10);
     await pool.query(
-      'UPDATE users SET password_hash = $1, must_change_password = FALSE WHERE id = $2',
+      'UPDATE users SET password_hash = $1, must_change_password = FALSE, password_expires_at = NULL WHERE id = $2',
       [hash, user.id]
     );
 
