@@ -237,7 +237,7 @@
   <script>
     function getRedirect(user) {
       if (user.mustChangePassword) return '/change-password.html';
-      if (['admin', 'fin-role', 'security-role'].includes(user.role)) return '/admin.html';
+      if (['admin', 'fin-role', 'security-role', 'pro-role'].includes(user.role)) return '/admin.html';
       return '/members.html';
     }
 

@@ -598,7 +598,7 @@
 
         localStorage.setItem('ucosa_user', JSON.stringify(user));
         document.getElementById('headerName').textContent = user.fullName;
-        if (['admin', 'fin-role', 'security-role'].includes(user.role)) {
+        if (['admin', 'fin-role', 'security-role', 'pro-role'].includes(user.role)) {
           document.getElementById('adminSidebarLink').style.display = 'block';
         }
 
@@ -660,7 +660,7 @@
             <div class="quick-links">
               <a href="/change-password.html" class="quick-link">&#128274; Change Password</a>
               <a href="/" class="quick-link">&#127968; Back to Home</a>
-              ${['admin','fin-role','security-role'].includes(user.role) ? '<a href="/admin.html" class="quick-link" style="background:#fef2f2;border-color:#fcc;color:#c1121f;">&#9881; Admin Panel</a>' : ''}
+              ${['admin','fin-role','security-role','pro-role'].includes(user.role) ? '<a href="/admin.html" class="quick-link" style="background:#fef2f2;border-color:#fcc;color:#c1121f;">&#9881; Admin Panel</a>' : ''}
               <a href="#" class="quick-link danger" onclick="logout(); return false;">&#x2192; Logout</a>
             </div>
           </section>
