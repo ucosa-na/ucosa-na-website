@@ -1432,7 +1432,7 @@
       });
       allPrivSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isFin || isSec || isPro) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
 
       // Sidebar link visibility
@@ -1446,7 +1446,7 @@
         el.style.display = isAdmin ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-pro').forEach(el => {
-        el.style.display = (isAdmin || isFin || isSec || isPro) ? '' : 'none';
+        el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
     }
 
