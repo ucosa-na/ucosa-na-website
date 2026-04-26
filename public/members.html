@@ -439,30 +439,66 @@
       if (!records || records.length === 0) {
         return `<p class="fin-empty">No financial records on file yet.</p>`;
       }
-      let rows = records.map(r => {
-        return `<tr>
-          <td>${r.full_name || '—'}</td>
-          <td><strong>${r.year}</strong></td>
-          <td>${fmt(r.annual_dues)}</td>
-          <td>${fmtStatus(r.status)}</td>
-          <td>${fmtDeadline(r.due_date, r.year)}</td>
-          <td>${r.reminder_sent ? '📱 Yes' : '—'}</td>
-        </tr>`;
-      }).join('');
+
+      window._finRecords = records;
+
       return `
-        <table class="fin-table">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <button onclick="filterDues('all')"     id="duesFilterAll"     style="padding:6px 16px;border-radius:20px;border:1.5px solid #1a1a2e;background:#1a1a2e;color:white;font-size:14px;cursor:pointer;font-weight:600;">All</button>
+          <button onclick="filterDues('unpaid')"  id="duesFilterUnpaid"  style="padding:6px 16px;border-radius:20px;border:1.5px solid #e63946;background:white;color:#e63946;font-size:14px;cursor:pointer;font-weight:600;">Unpaid</button>
+          <button onclick="filterDues('partial')" id="duesFilterPartial" style="padding:6px 16px;border-radius:20px;border:1.5px solid #f59e0b;background:white;color:#b45309;font-size:14px;cursor:pointer;font-weight:600;">Partial</button>
+          <button onclick="filterDues('paid')"    id="duesFilterPaid"    style="padding:6px 16px;border-radius:20px;border:1.5px solid #22c55e;background:white;color:#166534;font-size:14px;cursor:pointer;font-weight:600;">Paid</button>
+          <span id="duesFilterCount" style="font-size:13px;color:#888;"></span>
+        </div>
+        <table class="fin-table" id="finTable">
           <thead>
             <tr>
-              <th>Full Name</th>
               <th>Year</th>
               <th>Annual Dues</th>
               <th>Status</th>
-              <th>Annual Due Deadline</th>
+              <th>Due Deadline</th>
               <th>Reminder Sent</th>
             </tr>
           </thead>
-          <tbody>${rows}</tbody>
+          <tbody id="finTableBody"></tbody>
         </table>`;
+    }
+
+    function filterDues(status) {
+      const records = window._finRecords || [];
+      const filtered = status === 'all' ? records : records.filter(r => (r.status || '').toLowerCase() === status);
+
+      // Update button styles
+      ['all','unpaid','partial','paid'].forEach(s => {
+        const btn = document.getElementById('duesFilter' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (!btn) return;
+        const colors = { all: '#1a1a2e', unpaid: '#e63946', partial: '#f59e0b', paid: '#22c55e' };
+        const textColors = { all: 'white', unpaid: 'white', partial: 'white', paid: 'white' };
+        if (s === status) {
+          btn.style.background = colors[s];
+          btn.style.color = textColors[s];
+        } else {
+          btn.style.background = 'white';
+          btn.style.color = colors[s];
+        }
+      });
+
+      const label = document.getElementById('duesFilterCount');
+      if (label) label.textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('finTableBody');
+      if (!tbody) return;
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#aaa;font-style:italic;">No ${status === 'all' ? '' : status} records found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = filtered.map(r => `<tr>
+        <td><strong>${r.year}</strong></td>
+        <td>${fmt(r.annual_dues)}</td>
+        <td>${fmtStatus(r.status)}</td>
+        <td>${fmtDeadline(r.due_date, r.year)}</td>
+        <td>${r.reminder_sent ? '📱 Yes' : '—'}</td>
+      </tr>`).join('');
     }
 
     function fmtEndowStatus(status) {
@@ -640,6 +676,7 @@
           <section>
             <h2>&#128181; Financial Records</h2>
             ${buildFinancialTable(records)}
+            <script>filterDues('all');</script>
           </section>
 
           <!-- ENDOWMENT FUND -->
