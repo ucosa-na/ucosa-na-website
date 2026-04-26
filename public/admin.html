@@ -1106,6 +1106,14 @@
           <button class="btn-secondary" id="duesCancelBtn" style="display:none;margin-left:10px;" onclick="cancelDuesEdit()">Cancel Edit</button>
         </div>
 
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:15px;font-weight:600;color:#444;">Filter by Year:</label>
+          <select id="duesYearFilter" onchange="applyDuesYearFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
+            <option value="latest2">Latest 2 Years</option>
+            <option value="all">All Years</option>
+          </select>
+          <span id="duesCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
         <div class="table-wrap">
           <table class="fin-table">
             <thead>
@@ -1752,36 +1760,61 @@
       try {
         const res = await fetch('/api/admin/dues', { headers: { 'Authorization': 'Bearer ' + getToken() } });
         const rows = await res.json();
-        if (!rows.length) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No dues records yet.</td></tr>';
-          tfoot.innerHTML = '';
-          return;
-        }
-        const statusBadge = s => ({
-          paid:    '<span style="color:#1e7e34;font-weight:700;">Paid</span>',
-          partial: '<span style="color:#856404;font-weight:700;">Partial</span>',
-          unpaid:  '<span style="color:#e63946;font-weight:700;">Unpaid</span>',
-        }[s] || s);
-        tbody.innerHTML = rows.map(r => `
-          <tr>
-            <td>${escapeHtml(r.full_name)}</td>
-            <td>${r.year}</td>
-            <td>$${parseFloat(r.amount).toFixed(2)}</td>
-            <td>${statusBadge(r.status)}</td>
-            <td>${r.paid_date ? r.paid_date.slice(0,10) : '—'}</td>
-            <td>${escapeHtml(r.payment_method || '—')}</td>
-            <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
-            <td>
-              <button class="btn-sm" onclick="editDues(${r.id},'${r.user_id}',${r.year},${r.amount},'${r.paid_date ? r.paid_date.slice(0,10) : ''}','${escapeHtml(r.payment_method||'')}','${r.status}','${escapeHtml(r.notes||'')}')">Edit</button>
-              <button class="btn-sm" style="background:#2a9d8f;" onclick="sendDuesReminder(${r.id},'${escapeHtml(r.full_name)}')">&#128241; Remind</button>
-              <button class="btn-sm btn-danger" onclick="deleteDues(${r.id})">Delete</button>
-            </td>
-          </tr>`).join('');
-        const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
-        tfoot.innerHTML = `<tr class="fin-total"><td colspan="2">Total</td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
+        // Sort by year descending
+        rows.sort((a, b) => (b.year || 0) - (a.year || 0));
+        window._allDues = rows;
+        applyDuesYearFilter();
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="8" style="color:#e63946;">${err.message}</td></tr>`;
       }
+    }
+
+    function applyDuesYearFilter() {
+      const rows  = window._allDues || [];
+      const tbody = document.getElementById('duesTableBody');
+      const tfoot = document.getElementById('duesTableFoot');
+      const filterVal = document.getElementById('duesYearFilter')?.value || 'latest2';
+
+      let filtered = rows;
+      if (filterVal === 'latest2') {
+        const years = [...new Set(rows.map(r => r.year).filter(Boolean))].sort((a,b) => b - a);
+        const topTwo = years.slice(0, 2);
+        filtered = rows.filter(r => topTwo.includes(r.year));
+      }
+
+      const label = document.getElementById('duesCountLabel');
+      if (label) label.textContent = `Showing ${filtered.length} of ${rows.length} records`;
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No dues records found.</td></tr>';
+        tfoot.innerHTML = '';
+        return;
+      }
+
+      const statusBadge = s => ({
+        paid:    '<span style="color:#1e7e34;font-weight:700;">Paid</span>',
+        partial: '<span style="color:#856404;font-weight:700;">Partial</span>',
+        unpaid:  '<span style="color:#e63946;font-weight:700;">Unpaid</span>',
+      }[s] || s);
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td>${escapeHtml(r.full_name)}</td>
+          <td>${r.year}</td>
+          <td>$${parseFloat(r.amount).toFixed(2)}</td>
+          <td>${statusBadge(r.status)}</td>
+          <td>${r.paid_date ? r.paid_date.slice(0,10) : '—'}</td>
+          <td>${escapeHtml(r.payment_method || '—')}</td>
+          <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
+          <td>
+            <button class="btn-sm" onclick="editDues(${r.id},'${r.user_id}',${r.year},${r.amount},'${r.paid_date ? r.paid_date.slice(0,10) : ''}','${escapeHtml(r.payment_method||'')}','${r.status}','${escapeHtml(r.notes||'')}')">Edit</button>
+            <button class="btn-sm" style="background:#2a9d8f;" onclick="sendDuesReminder(${r.id},'${escapeHtml(r.full_name)}')">&#128241; Remind</button>
+            <button class="btn-sm btn-danger" onclick="deleteDues(${r.id})">Delete</button>
+          </td>
+        </tr>`).join('');
+
+      const total = filtered.reduce((s, r) => s + parseFloat(r.amount), 0);
+      tfoot.innerHTML = `<tr class="fin-total"><td colspan="2">Total</td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
     }
 
     async function saveDues() {
