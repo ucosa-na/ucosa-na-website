@@ -676,7 +676,6 @@
           <section>
             <h2>&#128181; Financial Records</h2>
             ${buildFinancialTable(records)}
-            <script>filterDues('all');</script>
           </section>
 
           <!-- ENDOWMENT FUND -->
@@ -704,6 +703,7 @@
         `;
 
         document.getElementById('mainLayout').style.display = 'flex';
+        filterDues('all');
 
       } catch (err) {
         document.getElementById('mainContent').innerHTML = `
