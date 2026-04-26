@@ -694,7 +694,7 @@
       <!-- Finance sub-menu -->
       <div class="sidebar-fin" id="sidebarGroupFin">
         <div class="sidebar-group-label group-fin open" onclick="toggleSidebarGroup('groupFinItems', this)">
-          <span>&#128181; Finance</span>
+          <span>&#128181; Fin-Sec</span>
           <span class="chevron">&#9654;</span>
         </div>
         <div class="sidebar-group-items open" id="groupFinItems">
@@ -706,7 +706,7 @@
       <!-- Security sub-menu -->
       <div class="sidebar-sec" id="sidebarGroupSec">
         <div class="sidebar-group-label group-sec open" onclick="toggleSidebarGroup('groupSecItems', this)">
-          <span>&#128100; Security</span>
+          <span>&#128100; Secretary</span>
           <span class="chevron">&#9654;</span>
         </div>
         <div class="sidebar-group-items open" id="groupSecItems">
@@ -1430,7 +1430,7 @@
       const isPro   = role === 'pro-role';
 
       // Role label in header
-      const roleLabels = { admin: 'Admin', 'fin-role': 'Finance', 'security-role': 'Security', 'pro-role': 'PRO' };
+      const roleLabels = { admin: 'Admin', 'fin-role': 'Fin-Sec', 'security-role': 'Secretary', 'pro-role': 'PRO' };
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
@@ -1542,8 +1542,8 @@
           <td>
             ${isAdmin
               ? `<select class="role-select" onchange="changeRole(${m.id}, this.value)" title="Change role">
-                   ${['admin','member','fin-role','security-role','pro-role'].map(r =>
-                     `<option value="${r}"${r === m.role ? ' selected' : ''}>${r}</option>`
+                   ${[['admin','Admin'],['member','Member'],['fin-role','Fin-Sec'],['security-role','Secretary'],['pro-role','PRO']].map(([val,label]) =>
+                     `<option value="${val}"${val === m.role ? ' selected' : ''}>${label}</option>`
                    ).join('')}
                  </select>`
               : `<span class="badge ${m.role}">${m.role}</span>`
