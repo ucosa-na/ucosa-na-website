@@ -49,9 +49,17 @@ function generatePassword(length = 10) {
 
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', secOrAdmin, async (req, res) => {
-  const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
+  const { firstName, lastName, email, address, phone, yearJoined, graduationYear, role } = req.body;
   if (!firstName || !lastName || !email || !phone) {
     return res.status(400).json({ error: 'First name, last name, email, and phone number are required' });
+  }
+
+  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'admin'];
+  const assignedRole = role && validRoles.includes(role) ? role : 'member';
+
+  // Only admins can create admin accounts
+  if (assignedRole === 'admin' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Only admins can assign the admin role' });
   }
 
   const fullName = `${firstName.trim()} ${lastName.trim()}`;
@@ -72,7 +80,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     const { rows: inserted } = await pool.query(
       'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role) VALUES ($1, $2, $3, TRUE, $4, $5) RETURNING id',
-      [fullName, emailVal, hash, expiresAt, 'member']
+      [fullName, emailVal, hash, expiresAt, assignedRole]
     );
     const userId = inserted[0].id;
 
