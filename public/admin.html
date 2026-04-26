@@ -816,6 +816,14 @@
       <!-- MEMBERS LIST -->
       <section id="membersList">
         <h2>All Members</h2>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:15px;font-weight:600;color:#444;">Filter by Year Joined:</label>
+          <select id="yearFilter" onchange="applyYearFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
+            <option value="latest2">Latest 2 Years</option>
+            <option value="all">All Years</option>
+          </select>
+          <span id="memberCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1463,7 +1471,18 @@
 
         const members = await res.json();
 
-        // Update stats
+        // Sort by year_joined descending (nulls last)
+        members.sort((a, b) => {
+          if (!a.year_joined && !b.year_joined) return 0;
+          if (!a.year_joined) return 1;
+          if (!b.year_joined) return -1;
+          return b.year_joined - a.year_joined;
+        });
+
+        // Store all members globally for filtering
+        window._allMembers = members;
+
+        // Update stats (always based on all members)
         document.getElementById('statTotal').textContent = members.length;
         document.getElementById('statAdmins').textContent = members.filter(m => m.role === 'admin').length;
         document.getElementById('statPending').textContent = members.filter(m => m.must_change_password).length;
@@ -1471,15 +1490,37 @@
         // Populate financial records member dropdown
         populateMemberSelect(members);
 
-        if (members.length === 0) {
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No members yet.</td></tr>';
-          return;
-        }
+        applyYearFilter();
+      } catch (err) {
+        document.getElementById('membersTableBody').innerHTML = '<tr class="empty-row"><td colspan="12">Failed to load members.</td></tr>';
+        console.error(err);
+      }
+    }
 
-        const canEdit = currentUser && ['admin', 'security-role'].includes(currentUser.role);
-        const isAdmin = currentUser && currentUser.role === 'admin';
+    function applyYearFilter() {
+      const members = window._allMembers || [];
+      const tbody = document.getElementById('membersTableBody');
+      const filterVal = document.getElementById('yearFilter')?.value || 'latest2';
 
-        tbody.innerHTML = members.map((m, i) => `
+      let filtered = members;
+      if (filterVal === 'latest2') {
+        const years = [...new Set(members.map(m => m.year_joined).filter(Boolean))].sort((a,b) => b - a);
+        const topTwo = years.slice(0, 2);
+        filtered = members.filter(m => !m.year_joined || topTwo.includes(m.year_joined));
+      }
+
+      const label = document.getElementById('memberCountLabel');
+      if (label) label.textContent = `Showing ${filtered.length} of ${members.length} members`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No members found.</td></tr>';
+        return;
+      }
+
+      const canEdit = currentUser && ['admin', 'security-role'].includes(currentUser.role);
+      const isAdmin = currentUser && currentUser.role === 'admin';
+
+      tbody.innerHTML = filtered.map((m, i) => `
           <tr>
             <td style="color:#999;">${i + 1}</td>
             <td><strong>${escapeHtml(m.first_name || '')}</strong></td>
@@ -1516,10 +1557,6 @@
             </td>
           </tr>
         `).join('');
-
-      } catch (err) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="12">Error loading members: ${err.message}</td></tr>`;
-      }
     }
 
     async function deleteMember(id, name) {
