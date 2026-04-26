@@ -1112,6 +1112,14 @@
             <option value="latest2">Latest 2 Years</option>
             <option value="all">All Years</option>
           </select>
+          <label style="font-size:15px;font-weight:600;color:#444;">Status:</label>
+          <select id="duesStatusFilter" onchange="applyDuesYearFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
+            <option value="all">All</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="partial">Partial</option>
+            <option value="paid">Paid</option>
+          </select>
+          <input type="text" id="duesMemberSearch" oninput="applyDuesYearFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
           <span id="duesCountLabel" style="font-size:14px;color:#888;"></span>
         </div>
         <div class="table-wrap">
@@ -1770,16 +1778,30 @@
     }
 
     function applyDuesYearFilter() {
-      const rows  = window._allDues || [];
-      const tbody = document.getElementById('duesTableBody');
-      const tfoot = document.getElementById('duesTableFoot');
-      const filterVal = document.getElementById('duesYearFilter')?.value || 'latest2';
+      const rows        = window._allDues || [];
+      const tbody       = document.getElementById('duesTableBody');
+      const tfoot       = document.getElementById('duesTableFoot');
+      const filterVal   = document.getElementById('duesYearFilter')?.value || 'latest2';
+      const statusVal   = document.getElementById('duesStatusFilter')?.value || 'all';
+      const searchVal   = (document.getElementById('duesMemberSearch')?.value || '').toLowerCase().trim();
 
       let filtered = rows;
+
+      // Year filter
       if (filterVal === 'latest2') {
         const years = [...new Set(rows.map(r => r.year).filter(Boolean))].sort((a,b) => b - a);
         const topTwo = years.slice(0, 2);
-        filtered = rows.filter(r => topTwo.includes(r.year));
+        filtered = filtered.filter(r => topTwo.includes(r.year));
+      }
+
+      // Status filter
+      if (statusVal !== 'all') {
+        filtered = filtered.filter(r => r.status === statusVal);
+      }
+
+      // Member search
+      if (searchVal) {
+        filtered = filtered.filter(r => (r.full_name || '').toLowerCase().includes(searchVal));
       }
 
       const label = document.getElementById('duesCountLabel');
