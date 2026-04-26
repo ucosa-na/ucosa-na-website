@@ -816,6 +816,11 @@
       <!-- MEMBERS LIST -->
       <section id="membersList">
         <h2>All Members</h2>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="text" id="memberSearch" oninput="renderMembers()" placeholder="Search by name, email or phone…" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:260px;" />
+          <button onclick="document.getElementById('memberSearch').value='';renderMembers();" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;background:white;cursor:pointer;">Clear</button>
+          <span id="memberCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1487,55 +1492,77 @@
         // Populate financial records member dropdown
         populateMemberSelect(members);
 
-        if (members.length === 0) {
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No members yet.</td></tr>';
-          return;
-        }
-
-        const canEdit = currentUser && ['admin', 'security-role'].includes(currentUser.role);
-        const isAdmin = currentUser && currentUser.role === 'admin';
-
-        tbody.innerHTML = members.map((m, i) => `
-          <tr>
-            <td style="color:#999;">${i + 1}</td>
-            <td><strong>${escapeHtml(m.first_name || '')}</strong></td>
-            <td><strong>${escapeHtml(m.last_name || m.full_name || '')}</strong></td>
-            <td>${escapeHtml(m.email)}</td>
-            <td>${escapeHtml(m.phone || '—')}</td>
-            <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(m.address || '')}">${escapeHtml(m.address || '—')}</td>
-            <td>${m.year_joined || '—'}</td>
-            <td>${m.graduation_year || '—'}</td>
-            <td>
-              ${isAdmin
-                ? `<select class="role-select" onchange="changeRole(${m.id}, this.value)" title="Change role">
-                     ${['admin','member','fin-role','security-role','pro-role'].map(r =>
-                       `<option value="${r}"${r === m.role ? ' selected' : ''}>${r}</option>`
-                     ).join('')}
-                   </select>`
-                : `<span class="badge ${m.role}">${m.role}</span>`
-              }
-            </td>
-            <td>
-              ${m.last_login
-                ? `<span style="color:#1a1a2e;font-weight:600;">${formatDateTime(m.last_login)}</span>
-                   <br><span style="color:#888;font-size:12px;">${timeAgo(m.last_login)}</span>`
-                : `<span style="color:#aaa;font-style:italic;">Never logged in</span>`
-              }
-            </td>
-            <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
-            <td>
-              ${canEdit ? `
-                <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
-                <button class="btn-sm" style="background:#e67e22;color:white;" onclick="resetPassword(${m.id},'${escapeHtml(m.full_name).replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}')">Reset PW</button>
-                <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
-              ` : ''}
-            </td>
-          </tr>
-        `).join('');
+        window._allMembersList = members;
+        renderMembers();
 
       } catch (err) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="12">Error loading members: ${err.message}</td></tr>`;
+        document.getElementById('membersTableBody').innerHTML = `<tr class="empty-row"><td colspan="12">Error loading members: ${err.message}</td></tr>`;
       }
+    }
+
+    function renderMembers() {
+      const members = window._allMembersList || [];
+      const tbody   = document.getElementById('membersTableBody');
+      const search  = (document.getElementById('memberSearch')?.value || '').toLowerCase().trim();
+
+      const filtered = search
+        ? members.filter(m =>
+            (m.first_name  || '').toLowerCase().includes(search) ||
+            (m.last_name   || '').toLowerCase().includes(search) ||
+            (m.full_name   || '').toLowerCase().includes(search) ||
+            (m.email       || '').toLowerCase().includes(search) ||
+            (m.phone       || '').toLowerCase().includes(search)
+          )
+        : members;
+
+      const label = document.getElementById('memberCountLabel');
+      if (label) label.textContent = search ? `Showing ${filtered.length} of ${members.length} members` : `${members.length} members`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No members found.</td></tr>';
+        return;
+      }
+
+      const canEdit = currentUser && ['admin', 'security-role'].includes(currentUser.role);
+      const isAdmin = currentUser && currentUser.role === 'admin';
+
+      tbody.innerHTML = filtered.map((m, i) => `
+        <tr>
+          <td style="color:#999;">${i + 1}</td>
+          <td><strong>${escapeHtml(m.first_name || '')}</strong></td>
+          <td><strong>${escapeHtml(m.last_name || m.full_name || '')}</strong></td>
+          <td>${escapeHtml(m.email)}</td>
+          <td>${escapeHtml(m.phone || '—')}</td>
+          <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(m.address || '')}">${escapeHtml(m.address || '—')}</td>
+          <td>${m.year_joined || '—'}</td>
+          <td>${m.graduation_year || '—'}</td>
+          <td>
+            ${isAdmin
+              ? `<select class="role-select" onchange="changeRole(${m.id}, this.value)" title="Change role">
+                   ${['admin','member','fin-role','security-role','pro-role'].map(r =>
+                     `<option value="${r}"${r === m.role ? ' selected' : ''}>${r}</option>`
+                   ).join('')}
+                 </select>`
+              : `<span class="badge ${m.role}">${m.role}</span>`
+            }
+          </td>
+          <td>
+            ${m.last_login
+              ? `<span style="color:#1a1a2e;font-weight:600;">${formatDateTime(m.last_login)}</span>
+                 <br><span style="color:#888;font-size:12px;">${timeAgo(m.last_login)}</span>`
+              : `<span style="color:#aaa;font-style:italic;">Never logged in</span>`
+            }
+          </td>
+          <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
+          <td>
+            ${canEdit ? `
+              <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
+              <button class="btn-sm" style="background:#e67e22;color:white;" onclick="resetPassword(${m.id},'${escapeHtml(m.full_name).replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}')">Reset PW</button>
+              <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
+            ` : ''}
+          </td>
+        </tr>
+      `).join('');
     }
 
     async function deleteMember(id, name) {
