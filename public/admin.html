@@ -1484,13 +1484,16 @@
 
         const members = await res.json();
 
-        // Update stats
-        document.getElementById('statTotal').textContent = members.length;
-        document.getElementById('statAdmins').textContent = members.filter(m => m.role === 'admin').length;
-        document.getElementById('statPending').textContent = members.filter(m => m.must_change_password).length;
-
-        // Populate financial records member dropdown
+        // Populate financial records member dropdown first (critical for fin-role)
         populateMemberSelect(members);
+
+        // Update stats (admin-only elements — safe with null checks)
+        const elTotal   = document.getElementById('statTotal');
+        const elAdmins  = document.getElementById('statAdmins');
+        const elPending = document.getElementById('statPending');
+        if (elTotal)   elTotal.textContent   = members.length;
+        if (elAdmins)  elAdmins.textContent  = members.filter(m => m.role === 'admin').length;
+        if (elPending) elPending.textContent = members.filter(m => m.must_change_password).length;
 
         window._allMembersList = members;
         renderMembers();
