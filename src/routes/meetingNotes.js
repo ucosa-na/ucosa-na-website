@@ -11,6 +11,18 @@ const router    = express.Router();
 const upload    = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 const secOrAdmin = requireRole('admin', 'security-role');
 
+async function logAudit(performedById, performedByName, action, entityType, entityId, entityName, details) {
+  try {
+    await pool.query(
+      `INSERT INTO audit_log (action, entity_type, entity_id, entity_name, performed_by, performed_by_name, details)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [action, entityType, entityId || null, entityName || null,
+       performedById || null, performedByName || null,
+       details ? JSON.stringify(details) : null]
+    );
+  } catch (_) {}
+}
+
 // In-memory short-lived view tokens: token -> { noteId, expires }
 const viewTokens = new Map();
 
@@ -141,6 +153,7 @@ router.post('/', secOrAdmin, upload.single('file'), async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [title, meeting_date, originalName, mimeType, fileBuffer, req.user.id]
     );
+    await logAudit(req.user.id, req.user.email, 'MEETING_NOTE_UPLOADED', 'MEETING_NOTE', rows[0].id, title, { meeting_date, file: originalName });
     res.status(201).json({ message: 'Meeting notes uploaded.', id: rows[0].id });
   } catch (err) {
     console.error('Upload meeting notes error:', err.message);
@@ -151,7 +164,11 @@ router.post('/', secOrAdmin, upload.single('file'), async (req, res) => {
 // DELETE /api/meeting-notes/:id (admin/security-role)
 router.delete('/:id', secOrAdmin, async (req, res) => {
   try {
+    const { rows } = await pool.query('SELECT title, meeting_date FROM meeting_notes WHERE id = $1', [req.params.id]);
     await pool.query('DELETE FROM meeting_notes WHERE id = $1', [req.params.id]);
+    if (rows.length) {
+      await logAudit(req.user.id, req.user.email, 'MEETING_NOTE_DELETED', 'MEETING_NOTE', parseInt(req.params.id), rows[0].title, { meeting_date: rows[0].meeting_date });
+    }
     res.json({ message: 'Deleted.' });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });

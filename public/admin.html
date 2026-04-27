@@ -680,6 +680,7 @@
         <div class="sidebar-group-items open" id="groupAdminItems">
           <a href="#testEmail">Test Email</a>
           <a href="#siteMaintenance">Site Maintenance</a>
+          <a href="#auditLog">Audit Log</a>
         </div>
       </div>
 
@@ -1080,6 +1081,47 @@
           </div><!-- /metrics-panel -->
 
         </div><!-- /maint-layout -->
+      </section>
+
+      <!-- AUDIT LOG -->
+      <section id="auditLog">
+        <h2>&#128196; Audit Log</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:16px;">
+          Full history of all record creations, modifications, suspensions, locks, and deletions.
+        </p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <input type="text" id="auditSearch" oninput="renderAuditLog()"
+            placeholder="Search by member, action, or performed by…"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:17px;min-width:280px;" />
+          <select id="auditEntityFilter" onchange="renderAuditLog()"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:17px;background:white;">
+            <option value="">All Types</option>
+            <option value="MEMBER">Members</option>
+            <option value="DUES">Annual Dues</option>
+            <option value="ENDOWMENT">Endowment Fund</option>
+            <option value="MEETING_NOTE">Meeting Notes</option>
+          </select>
+          <button onclick="loadAuditLog()"
+            style="padding:8px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:17px;font-weight:600;cursor:pointer;">&#8635; Refresh</button>
+          <span id="auditCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Type</th>
+                <th>Member / Record</th>
+                <th>Performed By</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr class="empty-row"><td colspan="6">Loading audit log…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- WELFARE MEMBER DIRECTORY -->
@@ -1497,7 +1539,7 @@
       // Section visibility
       const secSections      = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund'];
-      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance'];
+      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast'];
 
       secSections.forEach(id => {
@@ -1539,6 +1581,89 @@
       document.querySelectorAll('.sidebar-welfare').forEach(el => {
         el.style.display = (isAdmin || isWelfare) ? '' : 'none';
       });
+    }
+
+    // ── AUDIT LOG ─────────────────────────────────────────────────────────────
+    const auditActionLabels = {
+      MEMBER_CREATED: '👤 Member Created',    MEMBER_UPDATED: '✏️ Member Updated',
+      MEMBER_DELETED: '🗑️ Member Deleted',    ROLE_CHANGED: '🔄 Role Changed',
+      MEMBER_SUSPENDED: '🚫 Suspended',        MEMBER_REINSTATED: '✅ Reinstated',
+      MEMBER_LOCKED: '🔒 Locked',              MEMBER_UNLOCKED: '🔓 Unlocked',
+      PASSWORD_RESET: '🔑 Password Reset',
+      DUES_CREATED: '💰 Dues Created',         DUES_UPDATED: '💰 Dues Updated',
+      DUES_DELETED: '💰 Dues Deleted',
+      ENDOWMENT_CREATED: '🎁 Endowment Created', ENDOWMENT_UPDATED: '🎁 Endowment Updated',
+      ENDOWMENT_DELETED: '🎁 Endowment Deleted',
+      MEETING_NOTE_UPLOADED: '📄 Note Uploaded', MEETING_NOTE_DELETED: '📄 Note Deleted',
+    };
+
+    const auditActionColors = {
+      MEMBER_CREATED: '#065f46', MEMBER_UPDATED: '#1e40af', MEMBER_DELETED: '#991b1b',
+      ROLE_CHANGED: '#6b21a8',   MEMBER_SUSPENDED: '#c2410c', MEMBER_REINSTATED: '#15803d',
+      MEMBER_LOCKED: '#92400e',  MEMBER_UNLOCKED: '#15803d', PASSWORD_RESET: '#b45309',
+      DUES_CREATED: '#065f46',   DUES_UPDATED: '#1e40af',    DUES_DELETED: '#991b1b',
+      ENDOWMENT_CREATED: '#065f46', ENDOWMENT_UPDATED: '#1e40af', ENDOWMENT_DELETED: '#991b1b',
+      MEETING_NOTE_UPLOADED: '#065f46', MEETING_NOTE_DELETED: '#991b1b',
+    };
+
+    async function loadAuditLog() {
+      const tbody = document.getElementById('auditTableBody');
+      if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Loading…</td></tr>`;
+      try {
+        const res = await fetch('/api/admin/audit?limit=500', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (!res.ok) { if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="6" style="color:#e63946;">Error loading audit log (${res.status})</td></tr>`; return; }
+        window._auditLog = await res.json();
+        renderAuditLog();
+      } catch (err) {
+        if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="6" style="color:#e63946;">Network error: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderAuditLog() {
+      const entries = window._auditLog || [];
+      const q       = (document.getElementById('auditSearch')?.value || '').toLowerCase();
+      const ef      = (document.getElementById('auditEntityFilter')?.value || '');
+      const filtered = entries.filter(e => {
+        if (ef && e.entity_type !== ef) return false;
+        if (!q) return true;
+        return (e.entity_name || '').toLowerCase().includes(q)
+            || (e.action || '').toLowerCase().includes(q)
+            || (e.performed_by_name || '').toLowerCase().includes(q)
+            || (e.details || '').toLowerCase().includes(q);
+      });
+
+      const label = document.getElementById('auditCountLabel');
+      if (label) label.textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('auditTableBody');
+      if (!tbody) return;
+      if (!filtered.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No audit records found.</td></tr>`; return; }
+
+      tbody.innerHTML = filtered.map(e => {
+        const ts = new Date(e.created_at);
+        const dateStr = ts.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+        const timeStr = ts.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+        const label   = auditActionLabels[e.action] || e.action;
+        const color   = auditActionColors[e.action] || '#333';
+        let details = '';
+        if (e.details) {
+          try {
+            const d = JSON.parse(e.details);
+            details = Object.entries(d).map(([k, v]) => `<span style="color:#555;">${k}:</span> <strong>${v ?? '—'}</strong>`).join(' &nbsp;|&nbsp; ');
+          } catch { details = escapeHtml(e.details); }
+        }
+        return `<tr>
+          <td style="white-space:nowrap;font-size:14px;">
+            <strong>${dateStr}</strong><br>
+            <span style="color:#888;font-size:12px;">${timeStr}</span>
+          </td>
+          <td><span style="font-weight:700;color:${color};font-size:15px;">${label}</span></td>
+          <td><span class="badge member" style="font-size:13px;">${e.entity_type}</span></td>
+          <td><strong>${escapeHtml(e.entity_name || '—')}</strong></td>
+          <td style="font-size:14px;color:#555;">${escapeHtml(e.performed_by_name || '—')}</td>
+          <td style="font-size:13px;color:#555;max-width:260px;">${details || '—'}</td>
+        </tr>`;
+      }).join('');
     }
 
     // ── WELFARE MEMBER DIRECTORY ──────────────────────────────────────────────
@@ -2627,6 +2752,7 @@
       if (user.role === 'admin') {
         fetchMetrics();
         setInterval(fetchMetrics, 10000);
+        loadAuditLog();
       }
 
       if (['admin', 'fin-role'].includes(user.role)) {

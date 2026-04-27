@@ -107,6 +107,32 @@ pool.query(`
   pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;`)
 ).then(() =>
   pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE annual_dues ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE endowment_fund ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE endowment_fund ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id                SERIAL PRIMARY KEY,
+      action            TEXT NOT NULL,
+      entity_type       TEXT NOT NULL,
+      entity_id         INTEGER,
+      entity_name       TEXT,
+      performed_by      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      performed_by_name TEXT,
+      details           TEXT,
+      created_at        TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

@@ -19,6 +19,21 @@ const welfareOrAdmin  = requireRole('admin', 'welfare');
 
 const router = express.Router();
 
+// ── AUDIT HELPER ──────────────────────────────────────────────────────────────
+async function logAudit(performedById, performedByName, action, entityType, entityId, entityName, details) {
+  try {
+    await pool.query(
+      `INSERT INTO audit_log (action, entity_type, entity_id, entity_name, performed_by, performed_by_name, details)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [action, entityType, entityId || null, entityName || null,
+       performedById || null, performedByName || null,
+       details ? JSON.stringify(details) : null]
+    );
+  } catch (err) {
+    log.error(`Audit log insert failed: ${err.message}`);
+  }
+}
+
 // ── TWILIO SMS HELPER ─────────────────────────────────────────────────────────
 function getTwilioClient() {
   const sid   = process.env.TWILIO_ACCOUNT_SID;
@@ -80,8 +95,8 @@ router.post('/users', secOrAdmin, async (req, res) => {
 
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     const { rows: inserted } = await pool.query(
-      'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role) VALUES ($1, $2, $3, TRUE, $4, $5) RETURNING id',
-      [fullName, emailVal, hash, expiresAt, assignedRole]
+      'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role, created_by) VALUES ($1, $2, $3, TRUE, $4, $5, $6) RETURNING id',
+      [fullName, emailVal, hash, expiresAt, assignedRole, req.user.id]
     );
     const userId = inserted[0].id;
 
@@ -101,6 +116,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
     }
 
     log.info(`Member created: ${fullName} (${emailVal}) by user ${req.user.id}`);
+    await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email: emailVal, role: assignedRole });
 
     // Send welcome SMS (awaited so we can report status in the response)
     let smsSent = false;
@@ -258,8 +274,8 @@ router.put('/users/:id', secOrAdmin, async (req, res) => {
       return res.status(409).json({ error: 'Email already in use by another member' });
     }
     await pool.query(
-      'UPDATE users SET full_name=$1, email=$2, address=$3, phone=$4 WHERE id=$5',
-      [fullName, emailVal, address || null, phone || null, req.params.id]
+      'UPDATE users SET full_name=$1, email=$2, address=$3, phone=$4, updated_by=$5, updated_at=NOW() WHERE id=$6',
+      [fullName, emailVal, address || null, phone || null, req.user.id, req.params.id]
     );
     await pool.query(`
       INSERT INTO member_profiles (user_id, first_name, last_name, address, phone, year_joined, graduation_year)
@@ -269,6 +285,7 @@ router.put('/users/:id', secOrAdmin, async (req, res) => {
         year_joined=$6, graduation_year=$7, updated_at=NOW()
     `, [req.params.id, firstName.trim(), lastName.trim(), address || null, phone || null,
         yearJoined ? parseInt(yearJoined) : null, graduationYear ? parseInt(graduationYear) : null]);
+    await logAudit(req.user.id, req.user.email, 'MEMBER_UPDATED', 'MEMBER', parseInt(req.params.id), fullName, { email: emailVal, address, phone, yearJoined, graduationYear });
     res.json({ message: 'Member updated' });
   } catch (err) {
     console.error('Update member error:', err.message);
@@ -284,7 +301,11 @@ router.put('/users/:id/role', adminOnly, async (req, res) => {
     return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role, pro-role' });
   }
   try {
-    await pool.query('UPDATE users SET role=$1 WHERE id=$2', [role, req.params.id]);
+    const { rows: before } = await pool.query('SELECT full_name, role FROM users WHERE id = $1', [req.params.id]);
+    if (!before.length) return res.status(404).json({ error: 'User not found' });
+    const oldRole = before[0].role;
+    await pool.query('UPDATE users SET role=$1, updated_by=$2, updated_at=NOW() WHERE id=$3', [role, req.user.id, req.params.id]);
+    await logAudit(req.user.id, req.user.email, 'ROLE_CHANGED', 'MEMBER', parseInt(req.params.id), before[0].full_name, { from: oldRole, to: role });
     res.json({ message: 'Role updated' });
   } catch (err) {
     console.error('Change role error:', err.message);
@@ -308,8 +329,10 @@ router.put('/users/:id/status', secOrAdmin, async (req, res) => {
       return res.status(403).json({ error: 'Only admins can suspend admin accounts' });
     }
 
-    await pool.query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, req.params.id]);
+    await pool.query('UPDATE users SET is_active = $1, updated_by = $2, updated_at = NOW() WHERE id = $3', [isActive, req.user.id, req.params.id]);
+    const action = isActive ? 'MEMBER_REINSTATED' : 'MEMBER_SUSPENDED';
     log.info(`Account ${isActive ? 'reinstated' : 'suspended'}: ${member.full_name} (id:${req.params.id}) by user ${req.user.id}`);
+    await logAudit(req.user.id, req.user.email, action, 'MEMBER', parseInt(req.params.id), member.full_name, { isActive });
 
     // Send suspension email
     if (!isActive) {
@@ -366,8 +389,9 @@ router.put('/users/:id/lock', secOrAdmin, async (req, res) => {
     if (rows[0].role === 'admin' && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Only admins can lock admin accounts' });
     }
-    await pool.query('UPDATE users SET is_locked = $1 WHERE id = $2', [isLocked, req.params.id]);
+    await pool.query('UPDATE users SET is_locked = $1, updated_by = $2, updated_at = NOW() WHERE id = $3', [isLocked, req.user.id, req.params.id]);
     log.info(`Account ${isLocked ? 'locked' : 'unlocked'}: ${rows[0].full_name} (id:${req.params.id}) by user ${req.user.id}`);
+    await logAudit(req.user.id, req.user.email, isLocked ? 'MEMBER_LOCKED' : 'MEMBER_UNLOCKED', 'MEMBER', parseInt(req.params.id), rows[0].full_name, { isLocked });
     res.json({ message: `Account ${isLocked ? 'locked' : 'unlocked'} successfully` });
   } catch (err) {
     console.error('Lock account error:', err.message);
@@ -378,7 +402,11 @@ router.put('/users/:id/lock', secOrAdmin, async (req, res) => {
 // DELETE /api/admin/users/:id
 router.delete('/users/:id', secOrAdmin, async (req, res) => {
   try {
+    const { rows } = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [req.params.id]);
+    const memberName = rows[0]?.full_name || 'Unknown';
+    const memberEmail = rows[0]?.email || '';
     await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    await logAudit(req.user.id, req.user.email, 'MEMBER_DELETED', 'MEMBER', parseInt(req.params.id), memberName, { email: memberEmail });
     res.json({ message: 'Member removed' });
   } catch (err) {
     console.error('Delete user error:', err.message);
@@ -444,6 +472,7 @@ router.post('/users/:id/reset-password', secOrAdmin, async (req, res) => {
       }
     }
 
+    await logAudit(req.user.id, req.user.email, 'PASSWORD_RESET', 'MEMBER', parseInt(req.params.id), full_name, { email });
     res.json({ message: `Password reset. New temp password emailed to ${email}.`, tempPassword });
   } catch (err) {
     console.error('Reset password error:', err.message);
@@ -563,6 +592,8 @@ router.post('/dues', finOrAdmin, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `, [userId, year, amount || 0, paidDate || null, paymentMethod || null,
         status || 'unpaid', notes || null, req.user.id]);
+    const { rows: member } = await pool.query('SELECT full_name FROM users WHERE id = $1', [userId]);
+    await logAudit(req.user.id, req.user.email, 'DUES_CREATED', 'DUES', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'unpaid' });
     res.status(201).json({ message: 'Dues record added', id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -573,11 +604,18 @@ router.post('/dues', finOrAdmin, async (req, res) => {
 router.put('/dues/:id', finOrAdmin, async (req, res) => {
   const { year, amount, paidDate, paymentMethod, status, notes } = req.body;
   try {
+    const { rows: before } = await pool.query(`
+      SELECT d.year, d.amount, d.status, u.full_name FROM annual_dues d
+      JOIN users u ON u.id = d.user_id WHERE d.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE annual_dues SET year=$1, amount=$2, paid_date=$3, payment_method=$4,
-        status=$5, notes=$6, updated_at=NOW() WHERE id=$7
+        status=$5, notes=$6, updated_at=NOW(), updated_by=$7 WHERE id=$8
     `, [year, amount || 0, paidDate || null, paymentMethod || null,
-        status || 'unpaid', notes || null, req.params.id]);
+        status || 'unpaid', notes || null, req.user.id, req.params.id]);
+    if (before.length) {
+      await logAudit(req.user.id, req.user.email, 'DUES_UPDATED', 'DUES', parseInt(req.params.id), before[0].full_name,
+        { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
+    }
     res.json({ message: 'Dues record updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -587,7 +625,13 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
 // DELETE /api/admin/dues/:id
 router.delete('/dues/:id', finOrAdmin, async (req, res) => {
   try {
+    const { rows } = await pool.query(`
+      SELECT d.year, d.amount, d.status, u.full_name FROM annual_dues d
+      JOIN users u ON u.id = d.user_id WHERE d.id = $1`, [req.params.id]);
     await pool.query('DELETE FROM annual_dues WHERE id=$1', [req.params.id]);
+    if (rows.length) {
+      await logAudit(req.user.id, req.user.email, 'DUES_DELETED', 'DUES', parseInt(req.params.id), rows[0].full_name, { year: rows[0].year, amount: rows[0].amount, status: rows[0].status });
+    }
     res.json({ message: 'Dues record deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -621,6 +665,8 @@ router.post('/endowment', finOrAdmin, async (req, res) => {
       INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes, recorded_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `, [userId, amount, contributionDate || null, year || null, status || 'paid', paymentMethod || null, notes || null, req.user.id]);
+    const { rows: member } = await pool.query('SELECT full_name FROM users WHERE id = $1', [userId]);
+    await logAudit(req.user.id, req.user.email, 'ENDOWMENT_CREATED', 'ENDOWMENT', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'paid' });
     res.status(201).json({ message: 'Endowment record added', id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -632,11 +678,19 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
   const { amount, year, status, contributionDate, paymentMethod, notes } = req.body;
   if (!amount) return res.status(400).json({ error: 'Amount is required' });
   try {
+    const { rows: before } = await pool.query(`
+      SELECT e.amount, e.status, u.full_name FROM endowment_fund e
+      JOIN users u ON u.id = e.user_id WHERE e.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE endowment_fund
-      SET amount=$1, year=$2, status=$3, contribution_date=$4, payment_method=$5, notes=$6
-      WHERE id=$7
-    `, [amount, year || null, status || 'paid', contributionDate || null, paymentMethod || null, notes || null, req.params.id]);
+      SET amount=$1, year=$2, status=$3, contribution_date=$4, payment_method=$5, notes=$6,
+          updated_at=NOW(), updated_by=$7
+      WHERE id=$8
+    `, [amount, year || null, status || 'paid', contributionDate || null, paymentMethod || null, notes || null, req.user.id, req.params.id]);
+    if (before.length) {
+      await logAudit(req.user.id, req.user.email, 'ENDOWMENT_UPDATED', 'ENDOWMENT', parseInt(req.params.id), before[0].full_name,
+        { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
+    }
     res.json({ message: 'Endowment record updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -646,7 +700,13 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
 // DELETE /api/admin/endowment/:id
 router.delete('/endowment/:id', finOrAdmin, async (req, res) => {
   try {
+    const { rows } = await pool.query(`
+      SELECT e.amount, e.year, e.status, u.full_name FROM endowment_fund e
+      JOIN users u ON u.id = e.user_id WHERE e.id = $1`, [req.params.id]);
     await pool.query('DELETE FROM endowment_fund WHERE id=$1', [req.params.id]);
+    if (rows.length) {
+      await logAudit(req.user.id, req.user.email, 'ENDOWMENT_DELETED', 'ENDOWMENT', parseInt(req.params.id), rows[0].full_name, { year: rows[0].year, amount: rows[0].amount, status: rows[0].status });
+    }
     res.json({ message: 'Endowment record deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -851,6 +911,35 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
   } catch (err) {
     console.error('Dues reminder SMS error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+// GET /api/admin/audit — view audit log (admin only)
+router.get('/audit', adminOnly, async (req, res) => {
+  const limit  = Math.min(parseInt(req.query.limit) || 500, 2000);
+  const entity = req.query.entity || null;
+  const action = req.query.action || null;
+  try {
+    const conditions = [];
+    const params = [];
+    if (entity) { params.push(entity.toUpperCase()); conditions.push(`entity_type = $${params.length}`); }
+    if (action) { params.push(`%${action.toUpperCase()}%`); conditions.push(`action ILIKE $${params.length}`); }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    params.push(limit);
+    const { rows } = await pool.query(`
+      SELECT id, action, entity_type, entity_id, entity_name,
+             performed_by_name, details, created_at
+      FROM audit_log
+      ${where}
+      ORDER BY created_at DESC
+      LIMIT $${params.length}
+    `, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Audit log error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
