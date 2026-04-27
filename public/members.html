@@ -360,6 +360,7 @@
     <aside class="sidebar">
       <h3>Members Menu</h3>
       <a href="/members.html" class="active">Dashboard</a>
+      <a href="#annual-dues-section" onclick="document.getElementById('annual-dues-section').scrollIntoView({behavior:'smooth'})">Annual Dues</a>
       <a href="#endowment-section" onclick="document.getElementById('endowment-section').scrollIntoView({behavior:'smooth'})">Endowment Fund</a>
       <a href="#meeting-notes-section" onclick="document.getElementById('meeting-notes-section').scrollIntoView({behavior:'smooth'})">Meeting Notes</a>
       <a href="/change-password.html">Change Password</a>
@@ -672,9 +673,9 @@
             </div>
           </div>
 
-          <!-- FINANCIAL RECORDS -->
-          <section>
-            <h2>&#128181; Financial Records</h2>
+          <!-- ANNUAL DUES -->
+          <section id="annual-dues-section">
+            <h2>&#128181; Annual Dues</h2>
             ${buildFinancialTable(records)}
           </section>
 
