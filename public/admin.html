@@ -1694,15 +1694,15 @@
               : `<span style="color:#aaa;font-style:italic;">Never logged in</span>`
             }
           </td>
-          <td><span class="badge ${m.is_active !== false ? 'active' : 'locked'}">${m.is_active !== false ? '✅ Active' : '🔒 Locked'}</span></td>
+          <td><span class="badge ${m.is_active !== false ? 'active' : 'locked'}">${m.is_active !== false ? '✅ Active' : '🚫 Suspended'}</span></td>
           <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
           <td>
             ${canEdit ? `
               <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
               <button class="btn-sm" style="background:#e67e22;color:white;" onclick="resetPassword(${m.id},'${escapeHtml(m.full_name).replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}')">Reset PW</button>
-              <button class="btn-sm" style="background:${m.is_active !== false ? '#6b7280' : '#16a34a'};color:white;"
+              <button class="btn-sm" style="background:${m.is_active !== false ? '#dc2626' : '#16a34a'};color:white;"
                 onclick="toggleStatus(${m.id}, ${m.is_active !== false}, '${escapeHtml(m.full_name).replace(/'/g,"\\'")}')">
-                ${m.is_active !== false ? '🔒 Lock' : '🔓 Unlock'}
+                ${m.is_active !== false ? '🚫 Suspend' : '✅ Reinstate'}
               </button>
               <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
             ` : ''}
@@ -1712,8 +1712,11 @@
     }
 
     async function toggleStatus(id, currentlyActive, name) {
-      const action = currentlyActive ? 'lock' : 'unlock';
-      if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} account for ${name}?`)) return;
+      const action = currentlyActive ? 'suspend' : 'reinstate';
+      const msg = currentlyActive
+        ? `Suspend ${name}'s account?\n\nThey will be unable to log in and will receive an email notification.`
+        : `Reinstate ${name}'s account?\n\nThey will be able to log in again.`;
+      if (!confirm(msg)) return;
       try {
         const res = await fetch(`/api/admin/users/${id}/status`, {
           method: 'PUT',

@@ -292,22 +292,62 @@ router.put('/users/:id/role', adminOnly, async (req, res) => {
   }
 });
 
-// PUT /api/admin/users/:id/status — lock or unlock an account (admin + security-role)
+// PUT /api/admin/users/:id/status — suspend or reinstate an account (admin + security-role)
 router.put('/users/:id/status', secOrAdmin, async (req, res) => {
   const { isActive } = req.body;
   if (typeof isActive !== 'boolean') {
     return res.status(400).json({ error: 'isActive (boolean) is required' });
   }
   try {
-    const { rows } = await pool.query('SELECT id, full_name, role FROM users WHERE id = $1', [req.params.id]);
+    const { rows } = await pool.query('SELECT id, full_name, email, role FROM users WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
-    // Prevent locking admin accounts unless requester is also admin
-    if (rows[0].role === 'admin' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can lock admin accounts' });
+    const member = rows[0];
+
+    // Prevent suspending admin accounts unless requester is also admin
+    if (member.role === 'admin' && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can suspend admin accounts' });
     }
+
     await pool.query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, req.params.id]);
-    log.info(`Account ${isActive ? 'unlocked' : 'locked'}: ${rows[0].full_name} (id:${req.params.id}) by user ${req.user.id}`);
-    res.json({ message: `Account ${isActive ? 'unlocked' : 'locked'} successfully` });
+    log.info(`Account ${isActive ? 'reinstated' : 'suspended'}: ${member.full_name} (id:${req.params.id}) by user ${req.user.id}`);
+
+    // Send suspension email
+    if (!isActive) {
+      sendEmail({
+        to: member.email,
+        subject: '⚠️ Your UCOSA-NA Account Has Been Suspended',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+            <div style="background:#7b2152;text-align:center;padding:28px 32px">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            </div>
+            <div style="background:#fdf6ec;padding:32px">
+              <h2 style="color:#c62828;margin-top:0;margin-bottom:8px">Account Suspended</h2>
+              <p>Dear <strong>${member.full_name}</strong>,</p>
+              <p style="color:#333;line-height:1.7;">
+                Your UCOSA-NA member account has been <strong>suspended</strong> by an administrator.
+                You will not be able to log in until your account is reinstated.
+              </p>
+              <div style="background:#fff3f3;border-left:4px solid #c62828;border-radius:6px;padding:16px 20px;margin:20px 0;">
+                <p style="margin:0;color:#c62828;font-weight:600;">What to do next</p>
+                <p style="margin:8px 0 0;color:#555;">
+                  Please contact the UCOSA-NA administration to resolve this matter and have your account reinstated.
+                </p>
+              </div>
+              <p style="margin-top:20px;color:#555;">
+                You can reach us at:
+                <a href="mailto:ucosa.northamerica@gmail.com" style="color:#7b2152;font-weight:600;">ucosa.northamerica@gmail.com</a>
+              </p>
+              <p style="margin-top:24px;font-size:0.85rem;color:#888;">
+                UCOSA-North America &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a>
+              </p>
+            </div>
+          </div>`,
+      }).catch(err => log.error(`Suspension email failed for ${member.email}: ${err.message}`));
+    }
+
+    res.json({ message: `Account ${isActive ? 'reinstated' : 'suspended'} successfully` });
   } catch (err) {
     console.error('Toggle status error:', err.message);
     res.status(500).json({ error: 'Internal server error' });

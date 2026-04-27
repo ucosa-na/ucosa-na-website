@@ -164,7 +164,7 @@ router.post('/login', async (req, res) => {
     // Check if account is locked
     if (user.is_active === false) {
       log.warn(`Login attempt on locked account: ${user.email} from IP ${req.ip}`);
-      return res.status(403).json({ error: 'Your account has been locked. Please contact an administrator.' });
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact the administrator at ucosa.northamerica@gmail.com.' });
     }
 
     const valid = await bcrypt.compare(password.trim(), user.password_hash);
