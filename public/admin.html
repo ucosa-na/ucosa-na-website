@@ -436,6 +436,8 @@
     .badge.security-role  { background: #dbeafe; color: #1e40af; }
     .badge.pro-role       { background: #fde8ff; color: #7c3aed; }
     .badge.welfare        { background: #ffe4e6; color: #9f1239; }
+    .badge.active         { background: #d1fae5; color: #065f46; }
+    .badge.locked         { background: #fee2e2; color: #991b1b; }
     .badge.yes            { background: #fff8e1; color: #7c5700; }
     .badge.no             { background: #f0fff4; color: #166534; }
 
@@ -857,13 +859,14 @@
                 <th>Yr Joined</th>
                 <th>Yr Grad</th>
                 <th>Role</th>
+                <th>Status</th>
                 <th>Last Login &#128336;</th>
                 <th>Must Change PW</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="membersTableBody">
-              <tr class="empty-row"><td colspan="12">Loading members…</td></tr>
+              <tr class="empty-row"><td colspan="13">Loading members…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1647,7 +1650,7 @@
       if (label) label.textContent = search ? `Showing ${filtered.length} of ${members.length} members` : `${members.length} members`;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No members found.</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="13">No members found.</td></tr>';
         return;
       }
 
@@ -1681,16 +1684,38 @@
               : `<span style="color:#aaa;font-style:italic;">Never logged in</span>`
             }
           </td>
+          <td><span class="badge ${m.is_active !== false ? 'active' : 'locked'}">${m.is_active !== false ? '✅ Active' : '🔒 Locked'}</span></td>
           <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
           <td>
             ${canEdit ? `
               <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
               <button class="btn-sm" style="background:#e67e22;color:white;" onclick="resetPassword(${m.id},'${escapeHtml(m.full_name).replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}')">Reset PW</button>
+              <button class="btn-sm" style="background:${m.is_active !== false ? '#6b7280' : '#16a34a'};color:white;"
+                onclick="toggleStatus(${m.id}, ${m.is_active !== false}, '${escapeHtml(m.full_name).replace(/'/g,"\\'")}')">
+                ${m.is_active !== false ? '🔒 Lock' : '🔓 Unlock'}
+              </button>
               <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
             ` : ''}
           </td>
         </tr>
       `).join('');
+    }
+
+    async function toggleStatus(id, currentlyActive, name) {
+      const action = currentlyActive ? 'lock' : 'unlock';
+      if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} account for ${name}?`)) return;
+      try {
+        const res = await fetch(`/api/admin/users/${id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ isActive: !currentlyActive }),
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'Failed to update status')); return; }
+        loadMembers();
+      } catch {
+        alert('Network error. Please try again.');
+      }
     }
 
     async function deleteMember(id, name) {

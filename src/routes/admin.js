@@ -211,7 +211,7 @@ router.post('/test-email', adminOnly, async (req, res) => {
 router.get('/users', anyPriv, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.created_at, u.last_login,
+      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.is_active, u.created_at, u.last_login,
              p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
@@ -288,6 +288,28 @@ router.put('/users/:id/role', adminOnly, async (req, res) => {
     res.json({ message: 'Role updated' });
   } catch (err) {
     console.error('Change role error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/admin/users/:id/status — lock or unlock an account (admin + security-role)
+router.put('/users/:id/status', secOrAdmin, async (req, res) => {
+  const { isActive } = req.body;
+  if (typeof isActive !== 'boolean') {
+    return res.status(400).json({ error: 'isActive (boolean) is required' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT id, full_name, role FROM users WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    // Prevent locking admin accounts unless requester is also admin
+    if (rows[0].role === 'admin' && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can lock admin accounts' });
+    }
+    await pool.query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, req.params.id]);
+    log.info(`Account ${isActive ? 'unlocked' : 'locked'}: ${rows[0].full_name} (id:${req.params.id}) by user ${req.user.id}`);
+    res.json({ message: `Account ${isActive ? 'unlocked' : 'locked'} successfully` });
+  } catch (err) {
+    console.error('Toggle status error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

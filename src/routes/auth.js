@@ -161,6 +161,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Check if account is locked
+    if (user.is_active === false) {
+      log.warn(`Login attempt on locked account: ${user.email} from IP ${req.ip}`);
+      return res.status(403).json({ error: 'Your account has been locked. Please contact an administrator.' });
+    }
+
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       recordFailure(normalizedEmail);
