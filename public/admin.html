@@ -437,7 +437,8 @@
     .badge.pro-role       { background: #fde8ff; color: #7c3aed; }
     .badge.welfare        { background: #ffe4e6; color: #9f1239; }
     .badge.active         { background: #d1fae5; color: #065f46; }
-    .badge.locked         { background: #fee2e2; color: #991b1b; }
+    .badge.locked         { background: #fef3c7; color: #92400e; }
+    .badge.suspended      { background: #fee2e2; color: #991b1b; }
     .badge.yes            { background: #fff8e1; color: #7c5700; }
     .badge.no             { background: #f0fff4; color: #166534; }
 
@@ -1694,7 +1695,14 @@
               : `<span style="color:#aaa;font-style:italic;">Never logged in</span>`
             }
           </td>
-          <td><span class="badge ${m.is_active !== false ? 'active' : 'locked'}">${m.is_active !== false ? '✅ Active' : '🚫 Suspended'}</span></td>
+          <td>
+            ${m.is_locked
+              ? `<span class="badge locked">🔒 Locked</span>`
+              : m.is_active !== false
+                ? `<span class="badge active">✅ Active</span>`
+                : `<span class="badge suspended">🚫 Suspended</span>`
+            }
+          </td>
           <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
           <td>
             ${canEdit ? `
@@ -1703,6 +1711,10 @@
               <button class="btn-sm" style="background:${m.is_active !== false ? '#dc2626' : '#16a34a'};color:white;"
                 onclick="toggleStatus(${m.id}, ${m.is_active !== false}, '${escapeHtml(m.full_name).replace(/'/g,"\\'")}')">
                 ${m.is_active !== false ? '🚫 Suspend' : '✅ Reinstate'}
+              </button>
+              <button class="btn-sm" style="background:${m.is_locked ? '#16a34a' : '#92400e'};color:white;"
+                onclick="toggleLock(${m.id}, ${!!m.is_locked}, '${escapeHtml(m.full_name).replace(/'/g,"\\'")}')">
+                ${m.is_locked ? '🔓 Unlock' : '🔒 Lock'}
               </button>
               <button class="btn-delete" onclick="deleteMember(${m.id}, '${escapeHtml(m.full_name).replace(/'/g, "\\'")}')">Remove</button>
             ` : ''}
@@ -1725,6 +1737,25 @@
         });
         const data = await res.json();
         if (!res.ok) { alert('Error: ' + (data.error || 'Failed to update status')); return; }
+        loadMembers();
+      } catch {
+        alert('Network error. Please try again.');
+      }
+    }
+
+    async function toggleLock(id, currentlyLocked, name) {
+      const msg = currentlyLocked
+        ? `Unlock ${name}'s account?\n\nThey will be able to log in again.`
+        : `Lock ${name}'s account?\n\nThey will be unable to log in immediately.`;
+      if (!confirm(msg)) return;
+      try {
+        const res = await fetch(`/api/admin/users/${id}/lock`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ isLocked: !currentlyLocked }),
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'Failed to update lock status')); return; }
         loadMembers();
       } catch {
         alert('Network error. Please try again.');

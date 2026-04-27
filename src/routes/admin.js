@@ -211,7 +211,7 @@ router.post('/test-email', adminOnly, async (req, res) => {
 router.get('/users', anyPriv, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.is_active, u.created_at, u.last_login,
+      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.is_active, u.is_locked, u.created_at, u.last_login,
              p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
@@ -350,6 +350,27 @@ router.put('/users/:id/status', secOrAdmin, async (req, res) => {
     res.json({ message: `Account ${isActive ? 'reinstated' : 'suspended'} successfully` });
   } catch (err) {
     console.error('Toggle status error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/admin/users/:id/lock — lock or unlock an account (admin + security-role, no email)
+router.put('/users/:id/lock', secOrAdmin, async (req, res) => {
+  const { isLocked } = req.body;
+  if (typeof isLocked !== 'boolean') {
+    return res.status(400).json({ error: 'isLocked (boolean) is required' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT id, full_name, role FROM users WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    if (rows[0].role === 'admin' && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can lock admin accounts' });
+    }
+    await pool.query('UPDATE users SET is_locked = $1 WHERE id = $2', [isLocked, req.params.id]);
+    log.info(`Account ${isLocked ? 'locked' : 'unlocked'}: ${rows[0].full_name} (id:${req.params.id}) by user ${req.user.id}`);
+    res.json({ message: `Account ${isLocked ? 'locked' : 'unlocked'} successfully` });
+  } catch (err) {
+    console.error('Lock account error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

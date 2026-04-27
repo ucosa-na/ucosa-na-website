@@ -105,6 +105,8 @@ pool.query(`
   pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_expires_at TIMESTAMPTZ DEFAULT NULL;`)
 ).then(() =>
   pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

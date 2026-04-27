@@ -161,10 +161,16 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Check if account is locked
+    // Check if account is suspended
     if (user.is_active === false) {
-      log.warn(`Login attempt on locked account: ${user.email} from IP ${req.ip}`);
+      log.warn(`Login attempt on suspended account: ${user.email} from IP ${req.ip}`);
       return res.status(403).json({ error: 'Your account has been suspended. Please contact the administrator at ucosa.northamerica@gmail.com.' });
+    }
+
+    // Check if account is locked
+    if (user.is_locked === true) {
+      log.warn(`Login attempt on locked account: ${user.email} from IP ${req.ip}`);
+      return res.status(403).json({ error: 'Your account has been locked by an administrator. Please contact ucosa.northamerica@gmail.com.' });
     }
 
     const valid = await bcrypt.compare(password.trim(), user.password_hash);
