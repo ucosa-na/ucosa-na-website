@@ -859,8 +859,8 @@
                 <th>Yr Joined</th>
                 <th>Yr Grad</th>
                 <th>Role</th>
-                <th>Status</th>
                 <th>Last Login &#128336;</th>
+                <th>Status</th>
                 <th>Must Change PW</th>
                 <th>Action</th>
               </tr>
@@ -1542,12 +1542,22 @@
 
     // ── WELFARE MEMBER DIRECTORY ──────────────────────────────────────────────
     async function loadWelfareMembers() {
-      const res = await fetch('/api/admin/welfare/members', {
-        headers: { 'Authorization': 'Bearer ' + getToken() }
-      });
-      if (!res.ok) return;
-      window._welfareMembers = await res.json();
-      renderWelfareMembers();
+      const tbody = document.getElementById('welfareTableBody');
+      try {
+        const res = await fetch('/api/admin/welfare/members', {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!res.ok) {
+          if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="4" style="color:#e63946;">
+            Unable to load member directory (${res.status}). Please log out and log back in, then try again.
+          </td></tr>`;
+          return;
+        }
+        window._welfareMembers = await res.json();
+        renderWelfareMembers();
+      } catch (err) {
+        if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="4" style="color:#e63946;">Network error: ${err.message}</td></tr>`;
+      }
     }
 
     function renderWelfareMembers() {

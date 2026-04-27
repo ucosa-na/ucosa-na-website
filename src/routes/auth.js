@@ -12,7 +12,7 @@ const ALERT_TO = 'ucosa.northamerica@gmail.com';
 
 // Per-email login attempt tracking: email → { count, lockedUntil }
 const loginAttempts = new Map();
-const MAX_ATTEMPTS  = 3;
+const MAX_ATTEMPTS  = 5;
 const LOCK_MS       = 10 * 60 * 1000; // 10 minutes
 
 function checkLock(email) {
@@ -167,7 +167,7 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ error: 'Your account has been locked. Please contact an administrator.' });
     }
 
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = await bcrypt.compare(password.trim(), user.password_hash);
     if (!valid) {
       recordFailure(normalizedEmail);
       const entry = loginAttempts.get(normalizedEmail);
@@ -179,7 +179,7 @@ router.post('/login', async (req, res) => {
         // Just got locked on this attempt
         if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
         getLocation(req.ip).then(loc => sendMemberFailedLoginAlert(user, req.ip, loc));
-        return res.status(429).json({ error: 'After 3 failed attempts, please wait 10 minutes and try again.' });
+        return res.status(429).json({ error: `After ${MAX_ATTEMPTS} failed attempts, please wait 10 minutes and try again.` });
       }
 
       if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
