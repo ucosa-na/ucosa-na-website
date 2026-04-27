@@ -693,6 +693,7 @@
         <div class="sidebar-group-items open" id="groupBroadcastItems">
           <a href="#smsBroadcast">SMS Broadcast</a>
           <a href="#emailBroadcast">Email Broadcast</a>
+          <a href="#inviteBroadcast">Broadcast Email (Invitational)</a>
         </div>
       </div>
 
@@ -1349,6 +1350,35 @@
         <button class="btn-primary" onclick="sendEmailBroadcast()">&#9993; Send to All Members</button>
       </section>
 
+      <!-- INVITE BROADCAST -->
+      <section id="inviteBroadcast">
+        <h2>&#128140; Broadcast Email (Invitational)</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">
+          Enter the list of former members to invite back to UCOSA-NA. Each entry must be
+          <strong>Full Name:email@example.com</strong>, separated by commas. Each person will
+          receive a personalised invitation using their full name.
+        </p>
+        <div id="inviteError"   class="msg error"></div>
+        <div id="inviteSuccess" class="msg success"></div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label for="inviteList">Recipient List <span style="color:#e63946;">*</span></label>
+          <textarea id="inviteList" rows="6"
+            style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:18px;resize:vertical;font-family:monospace;"
+            placeholder="Samson Imaria:sonnie_avens@gmail.com, Jane Doe:jane@example.com, John Okoro:john@example.com"></textarea>
+          <div style="font-size:15px;color:#888;margin-top:4px;">
+            Recipients detected: <span id="inviteCount">0</span>
+          </div>
+        </div>
+
+        <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:16px;color:#7c5700;">
+          <strong>Preview of email subject:</strong> We Miss You — Come Back Home to UCOSA-NA<br/>
+          Each recipient will be greeted: <em>Dear [Full Name],</em> and invited to visit ucosa-na.org and click <strong>Request To Join</strong>.
+        </div>
+
+        <button class="btn-primary" onclick="sendInviteBroadcast()">&#128140; Send Invitations</button>
+      </section>
+
     </main>
   </div>
 
@@ -1540,7 +1570,7 @@
       const secSections      = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
-      const allPrivSections  = ['smsBroadcast', 'emailBroadcast'];
+      const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
         const el = document.getElementById(id);
@@ -2437,6 +2467,46 @@
         document.getElementById('emailBcastMessage').value = '';
       } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
       finally { btn.disabled = false; btn.textContent = '✉ Send to All Members'; }
+    }
+
+    // ── INVITE BROADCAST ─────────────────────────────────────────────────────
+
+    document.addEventListener('input', function(e) {
+      if (e.target.id !== 'inviteList') return;
+      const entries = e.target.value.split(',').map(s => s.trim()).filter(s => s.includes(':'));
+      document.getElementById('inviteCount').textContent = entries.length;
+    });
+
+    async function sendInviteBroadcast() {
+      const errEl = document.getElementById('inviteError');
+      const okEl  = document.getElementById('inviteSuccess');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+
+      const list = document.getElementById('inviteList').value.trim();
+      if (!list) { errEl.textContent = 'Please enter at least one recipient.'; errEl.style.display = 'block'; return; }
+
+      const entries = list.split(',').map(s => s.trim()).filter(Boolean);
+      const valid   = entries.filter(s => s.includes(':'));
+      if (!valid.length) { errEl.textContent = 'No valid entries found. Use format: Full Name:email@example.com'; errEl.style.display = 'block'; return; }
+
+      if (!confirm(`Send invitational email to ${valid.length} recipient(s)?`)) return;
+
+      const btn = event.target;
+      btn.disabled = true; btn.textContent = 'Sending…';
+
+      try {
+        const res  = await fetch('/api/admin/email/invite-broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ list })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
+        okEl.textContent = data.message; okEl.style.display = 'block';
+        document.getElementById('inviteList').value = '';
+        document.getElementById('inviteCount').textContent = '0';
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+      finally { btn.disabled = false; btn.textContent = '📬 Send Invitations'; }
     }
 
     // ── EDIT MEMBER MODAL ────────────────────────────────────────────────────
