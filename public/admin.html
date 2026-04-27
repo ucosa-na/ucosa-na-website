@@ -435,6 +435,7 @@
     .badge.fin-role       { background: #d1fae5; color: #065f46; }
     .badge.security-role  { background: #dbeafe; color: #1e40af; }
     .badge.pro-role       { background: #fde8ff; color: #7c3aed; }
+    .badge.welfare        { background: #ffe4e6; color: #9f1239; }
     .badge.yes            { background: #fff8e1; color: #7c5700; }
     .badge.no             { background: #f0fff4; color: #166534; }
 
@@ -717,6 +718,17 @@
         </div>
       </div>
 
+      <!-- Welfare sub-menu -->
+      <div class="sidebar-welfare" id="sidebarGroupWelfare">
+        <div class="sidebar-group-label group-sec open" onclick="toggleSidebarGroup('groupWelfareItems', this)">
+          <span>&#10084; Welfare</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupWelfareItems">
+          <a href="#welfareMemberDirectory">Member Directory</a>
+        </div>
+      </div>
+
       <div class="sidebar-divider"></div>
       <a href="/members.html">My Profile</a>
       <a href="/change-password.html">Change Password</a>
@@ -798,6 +810,7 @@
                 <option value="fin-role">Fin-Sec</option>
                 <option value="security-role">Secretary</option>
                 <option value="pro-role">PRO</option>
+                <option value="welfare">Welfare</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
@@ -1063,6 +1076,39 @@
           </div><!-- /metrics-panel -->
 
         </div><!-- /maint-layout -->
+      </section>
+
+      <!-- WELFARE MEMBER DIRECTORY -->
+      <section id="welfareMemberDirectory">
+        <h2>&#10084; Member Directory</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">
+          Contact list of all members — names, phone numbers, and email addresses.
+        </p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+          <input type="text" id="welfareSearch" oninput="renderWelfareMembers()"
+            placeholder="Search by name, email or phone…"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:18px;min-width:260px;" />
+          <button onclick="document.getElementById('welfareSearch').value='';renderWelfareMembers();"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:17px;background:white;cursor:pointer;">Clear</button>
+          <button onclick="downloadWelfareCSV()"
+            style="padding:8px 18px;background:#7b2152;color:white;border:none;border-radius:8px;font-size:17px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
+          <span id="welfareCountLabel" style="font-size:15px;color:#888;"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Full Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody id="welfareTableBody">
+              <tr class="empty-row"><td colspan="4">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- FINANCIAL RECORDS -->
@@ -1427,20 +1473,21 @@
         const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
         if (!res.ok) { window.location.href = '/login.html'; return null; }
         const user = await res.json();
-        const privilegedRoles = ['admin', 'fin-role', 'security-role', 'pro-role'];
+        const privilegedRoles = ['admin', 'fin-role', 'security-role', 'pro-role', 'welfare'];
         if (!privilegedRoles.includes(user.role)) { window.location.href = '/members.html'; return null; }
         return user;
       } catch { window.location.href = '/login.html'; return null; }
     }
 
     function applyRoleVisibility(role) {
-      const isAdmin = role === 'admin';
-      const isFin   = role === 'fin-role';
-      const isSec   = role === 'security-role';
-      const isPro   = role === 'pro-role';
+      const isAdmin    = role === 'admin';
+      const isFin      = role === 'fin-role';
+      const isSec      = role === 'security-role';
+      const isPro      = role === 'pro-role';
+      const isWelfare  = role === 'welfare';
 
       // Role label in header
-      const roleLabels = { admin: 'Admin', 'fin-role': 'Fin-Sec', 'security-role': 'Secretary', 'pro-role': 'PRO' };
+      const roleLabels = { admin: 'Admin', 'fin-role': 'Fin-Sec', 'security-role': 'Secretary', 'pro-role': 'PRO', welfare: 'Welfare' };
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
@@ -1466,6 +1513,12 @@
         if (el) el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
 
+      const welfareSections = ['welfareMemberDirectory'];
+      welfareSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (isAdmin || isWelfare) ? '' : 'none';
+      });
+
       // Sidebar link visibility
       document.querySelectorAll('.sidebar-sec').forEach(el => {
         el.style.display = (isAdmin || isSec) ? '' : 'none';
@@ -1479,6 +1532,68 @@
       document.querySelectorAll('.sidebar-pro').forEach(el => {
         el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
+      document.querySelectorAll('.sidebar-welfare').forEach(el => {
+        el.style.display = (isAdmin || isWelfare) ? '' : 'none';
+      });
+    }
+
+    // ── WELFARE MEMBER DIRECTORY ──────────────────────────────────────────────
+    async function loadWelfareMembers() {
+      const res = await fetch('/api/admin/welfare/members', {
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      if (!res.ok) return;
+      window._welfareMembers = await res.json();
+      renderWelfareMembers();
+    }
+
+    function renderWelfareMembers() {
+      const members = window._welfareMembers || [];
+      const q = (document.getElementById('welfareSearch')?.value || '').toLowerCase();
+      const filtered = q
+        ? members.filter(m =>
+            (m.full_name || '').toLowerCase().includes(q) ||
+            (m.email     || '').toLowerCase().includes(q) ||
+            (m.phone     || '').toLowerCase().includes(q))
+        : members;
+
+      const label = document.getElementById('welfareCountLabel');
+      if (label) label.textContent = `${filtered.length} member${filtered.length !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('welfareTableBody');
+      if (!tbody) return;
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="4">No members found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = filtered.map((m, i) => `<tr>
+        <td>${i + 1}</td>
+        <td><strong>${m.full_name || '—'}</strong></td>
+        <td>${m.phone || '—'}</td>
+        <td>${m.email || '—'}</td>
+      </tr>`).join('');
+    }
+
+    function downloadWelfareCSV() {
+      const members = window._welfareMembers || [];
+      if (!members.length) { alert('No member data to download.'); return; }
+      const header = ['#', 'Full Name', 'Phone', 'Email'];
+      const rows = members.map((m, i) => [
+        i + 1,
+        `"${(m.full_name || '').replace(/"/g, '""')}"`,
+        `"${(m.phone    || '').replace(/"/g, '""')}"`,
+        `"${(m.email    || '').replace(/"/g, '""')}"`,
+      ].join(','));
+      const csv = [header.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `ucosa-na-members-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 
     async function loadMembers() {
@@ -1552,7 +1667,7 @@
           <td>
             ${isAdmin
               ? `<select class="role-select" onchange="changeRole(${m.id}, this.value)" title="Change role">
-                   ${[['admin','Admin'],['member','Member'],['fin-role','Fin-Sec'],['security-role','Secretary'],['pro-role','PRO']].map(([val,label]) =>
+                   ${[['admin','Admin'],['member','Member'],['fin-role','Fin-Sec'],['security-role','Secretary'],['pro-role','PRO'],['welfare','Welfare']].map(([val,label]) =>
                      `<option value="${val}"${val === m.role ? ' selected' : ''}>${label}</option>`
                    ).join('')}
                  </select>`
@@ -2435,6 +2550,10 @@
 
       // Always load members (table for admin/security, dropdowns for fin-role)
       loadMembers();
+
+      if (['admin', 'welfare'].includes(user.role)) {
+        loadWelfareMembers();
+      }
 
       if (user.role === 'admin') {
         fetchMetrics();

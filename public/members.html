@@ -634,7 +634,7 @@
 
         localStorage.setItem('ucosa_user', JSON.stringify(user));
         document.getElementById('headerName').textContent = user.fullName;
-        if (['admin', 'fin-role', 'security-role', 'pro-role'].includes(user.role)) {
+        if (['admin', 'fin-role', 'security-role', 'pro-role', 'welfare'].includes(user.role)) {
           document.getElementById('adminSidebarLink').style.display = 'block';
         }
 

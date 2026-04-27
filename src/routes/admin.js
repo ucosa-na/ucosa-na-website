@@ -10,11 +10,12 @@ const log = require('../logger');
 const { sendEmail } = require('../mailer');
 
 // Role shorthand helpers
-const adminOnly  = requireRole('admin');
-const finOrAdmin = requireRole('admin', 'fin-role');
-const secOrAdmin = requireRole('admin', 'security-role');
-const anyPriv    = requireRole('admin', 'fin-role', 'security-role', 'pro-role');
-const proOrAdmin = requireRole('admin', 'pro-role');
+const adminOnly       = requireRole('admin');
+const finOrAdmin      = requireRole('admin', 'fin-role');
+const secOrAdmin      = requireRole('admin', 'security-role');
+const anyPriv         = requireRole('admin', 'fin-role', 'security-role', 'pro-role', 'welfare');
+const proOrAdmin      = requireRole('admin', 'pro-role');
+const welfareOrAdmin  = requireRole('admin', 'welfare');
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
     return res.status(400).json({ error: 'First name, last name, email, and phone number are required' });
   }
 
-  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'admin'];
+  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'welfare', 'admin'];
   const assignedRole = role && validRoles.includes(role) ? role : 'member';
 
   // Only admins can create admin accounts
@@ -223,6 +224,23 @@ router.get('/users', anyPriv, async (req, res) => {
   }
 });
 
+// GET /api/admin/welfare/members — member directory for welfare role (name, phone, email only)
+router.get('/welfare/members', welfareOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT u.id, u.full_name, u.email,
+             COALESCE(p.phone, u.phone) AS phone
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      ORDER BY u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Welfare members error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // PUT /api/admin/users/:id — update member info
 router.put('/users/:id', secOrAdmin, async (req, res) => {
   const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
@@ -261,7 +279,7 @@ router.put('/users/:id', secOrAdmin, async (req, res) => {
 // PUT /api/admin/users/:id/role — change a member's role (admin only)
 router.put('/users/:id/role', adminOnly, async (req, res) => {
   const { role } = req.body;
-  const validRoles = ['admin', 'member', 'fin-role', 'security-role', 'pro-role'];
+  const validRoles = ['admin', 'member', 'fin-role', 'security-role', 'pro-role', 'welfare'];
   if (!role || !validRoles.includes(role)) {
     return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role, pro-role' });
   }
