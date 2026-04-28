@@ -717,6 +717,7 @@
         </div>
         <div class="sidebar-group-items open" id="groupSecItems">
           <a href="#createMember">Create Member</a>
+          <a href="#bulkImport">Bulk Import</a>
           <a href="#membersList">Member List</a>
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
@@ -842,6 +843,50 @@
       </section>
 
       <!-- MEMBERS LIST -->
+      <!-- BULK IMPORT -->
+      <section id="bulkImport">
+        <h2>&#128190; Bulk Member Import</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:16px;">
+          Upload a <strong>CSV or TXT file</strong> to create multiple members at once.
+          Each member will receive a welcome email and SMS with their temporary password.
+        </p>
+
+        <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:16px;color:#7c5700;">
+          <strong>Required columns:</strong> first_name, last_name, email<br/>
+          <strong>Optional columns:</strong> phone, address, year_joined, graduation_year, role<br/>
+          <strong>Tip:</strong> Use the <em>Download CSV</em> button from Member List as a column template.
+        </div>
+
+        <div id="bulkError"   class="msg error"></div>
+        <div id="bulkSuccess" class="msg success"></div>
+
+        <div class="form-group" style="max-width:480px;margin-bottom:16px;">
+          <label for="bulkFile">Select CSV or TXT File <span style="color:#e63946;">*</span></label>
+          <input type="file" id="bulkFile" accept=".csv,.txt" onchange="previewBulkFile()"
+            style="width:100%;padding:10px;border:1.5px solid #dde3f0;border-radius:8px;font-size:16px;background:white;cursor:pointer;" />
+        </div>
+
+        <div id="bulkPreview" style="display:none;margin-bottom:16px;">
+          <div style="font-size:16px;color:#555;margin-bottom:8px;">
+            Preview: <strong><span id="bulkRowCount">0</span> row(s)</strong> detected
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:15px;" id="bulkPreviewTable">
+              <thead id="bulkPreviewHead" style="background:#7b2152;color:white;"></thead>
+              <tbody id="bulkPreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="runBulkImport()" id="bulkImportBtn">&#128190; Import Members</button>
+
+        <div id="bulkResults" style="display:none;margin-top:24px;">
+          <h3 style="font-size:18px;margin-bottom:12px;">Import Results</h3>
+          <div id="bulkResultsSummary" style="font-size:16px;margin-bottom:12px;"></div>
+          <div id="bulkResultsDetail"></div>
+        </div>
+      </section>
+
       <section id="membersList">
         <h2>All Members</h2>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
@@ -1568,7 +1613,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections      = ['createMember', 'membersList', 'meetingNotes', 'logViewer'];
+      const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
@@ -1796,6 +1841,101 @@
       } catch (err) {
         document.getElementById('membersTableBody').innerHTML = `<tr class="empty-row"><td colspan="12">Error loading members: ${err.message}</td></tr>`;
       }
+    }
+
+    // ── BULK IMPORT ───────────────────────────────────────────────────────────
+
+    let _bulkParsed = null;
+
+    function parseCSVLine(line) {
+      const result = []; let cur = '', inQuote = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { inQuote = !inQuote; continue; }
+        if (ch === ',' && !inQuote) { result.push(cur.trim()); cur = ''; continue; }
+        cur += ch;
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
+    function previewBulkFile() {
+      const file = document.getElementById('bulkFile').files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) { alert('File must have a header row and at least one data row.'); return; }
+        const headers = parseCSVLine(lines[0]);
+        const rows    = lines.slice(1).map(l => parseCSVLine(l));
+        _bulkParsed   = { headers, rows };
+
+        document.getElementById('bulkRowCount').textContent = rows.length;
+        document.getElementById('bulkPreviewHead').innerHTML =
+          '<tr>' + headers.map(h => `<th style="padding:8px 12px;text-align:left;font-size:14px;">${h}</th>`).join('') + '</tr>';
+
+        const preview = rows.slice(0, 5);
+        document.getElementById('bulkPreviewBody').innerHTML = preview.map(r =>
+          '<tr>' + headers.map((_, i) => `<td style="padding:7px 12px;border-bottom:1px solid #f0f0f0;font-size:14px;">${r[i] || ''}</td>`).join('') + '</tr>'
+        ).join('') + (rows.length > 5 ? `<tr><td colspan="${headers.length}" style="padding:8px 12px;color:#888;font-style:italic;font-size:14px;">… and ${rows.length - 5} more row(s)</td></tr>` : '');
+
+        document.getElementById('bulkPreview').style.display = 'block';
+        document.getElementById('bulkResults').style.display = 'none';
+      };
+      reader.readAsText(file);
+    }
+
+    async function runBulkImport() {
+      const errEl = document.getElementById('bulkError');
+      const okEl  = document.getElementById('bulkSuccess');
+      errEl.style.display = 'none'; okEl.style.display = 'none';
+
+      const file = document.getElementById('bulkFile').files[0];
+      if (!file) { errEl.textContent = 'Please select a CSV or TXT file.'; errEl.style.display = 'block'; return; }
+      if (!_bulkParsed) { errEl.textContent = 'Please wait for file preview to load.'; errEl.style.display = 'block'; return; }
+      if (!confirm(`Import ${_bulkParsed.rows.length} member(s)? Each will receive a welcome email and SMS.`)) return;
+
+      const btn = document.getElementById('bulkImportBtn');
+      btn.disabled = true; btn.textContent = 'Importing…';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res  = await fetch('/api/admin/users/bulk-import', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken() },
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Import failed.'; errEl.style.display = 'block'; return; }
+
+        okEl.textContent = data.message; okEl.style.display = 'block';
+
+        // Show results table
+        const detail = document.getElementById('bulkResultsDetail');
+        const mkTable = (title, color, rows, cols) => {
+          if (!rows.length) return '';
+          return `<div style="margin-bottom:16px;">
+            <strong style="color:${color}">${title} (${rows.length})</strong>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:6px;">
+              <thead><tr>${cols.map(c => `<th style="background:${color};color:white;padding:7px 12px;text-align:left;">${c}</th>`).join('')}</tr></thead>
+              <tbody>${rows.map(r => `<tr>${cols.map(c => `<td style="padding:7px 12px;border-bottom:1px solid #f0f0f0;">${r[c.toLowerCase().replace(' ','_')] ?? r[Object.keys(r)[cols.indexOf(c)]] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>
+            </table></div>`;
+        };
+
+        detail.innerHTML =
+          mkTable('Created', '#2e7d32', data.created, ['Row','Name','Email','smsSent']) +
+          mkTable('Skipped', '#b45309', data.skipped, ['Row','Email','Reason']) +
+          mkTable('Failed',  '#c62828', data.failed,  ['Row','Email','Reason']);
+
+        document.getElementById('bulkResults').style.display = 'block';
+        document.getElementById('bulkFile').value = '';
+        document.getElementById('bulkPreview').style.display = 'none';
+        _bulkParsed = null;
+        loadMembers();
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+      finally { btn.disabled = false; btn.textContent = '📥 Import Members'; }
     }
 
     async function downloadMembersCSV() {
