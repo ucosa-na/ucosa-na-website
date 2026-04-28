@@ -171,7 +171,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
             <p>Welcome back to your old friends and brothers and sisters!</p>
             <p style="color:#888;font-size:0.85em;margin-top:24px">
               UCOSA-North America &mdash;
-              <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
+              <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>
             </p>
           </div>
         </div>
@@ -360,7 +360,7 @@ router.put('/users/:id/status', secOrAdmin, async (req, res) => {
               </div>
               <p style="margin-top:20px;color:#555;">
                 You can reach us at:
-                <a href="mailto:ucosa.northamerica@gmail.com" style="color:#7b2152;font-weight:600;">ucosa.northamerica@gmail.com</a>
+                <a href="mailto:admin@ucosa-na.org" style="color:#7b2152;font-weight:600;">admin@ucosa-na.org</a>
               </p>
               <p style="margin-top:24px;font-size:0.85rem;color:#888;">
                 UCOSA-North America &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a>
@@ -451,7 +451,7 @@ router.post('/users/:id/reset-password', secOrAdmin, async (req, res) => {
             <p style="color:#7b2152"><strong>You will be asked to change this password after logging in.</strong></p>
             <p style="color:#888;font-size:0.85em;margin-top:24px">
               If you did not request this reset, contact us at
-              <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.
+              <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>.
             </p>
           </div>
         </div>
@@ -761,7 +761,7 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
               <p><strong>Status:</strong> ${r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : '—'}</p>
             </div>
             <p>Please log in at <a href="https://ucosa-na.org">ucosa-na.org</a> to view your records, or contact the treasurer for assistance.</p>
-            <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a></p>
+            <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
           </div>
         </div>`,
     }).catch(err => log.error(`Endowment reminder email failed for ${r.email}: ${err.message}`));
@@ -865,7 +865,7 @@ router.post('/email/broadcast', proOrAdmin, async (req, res) => {
               <div style="white-space:pre-wrap;font-size:1em;color:#333;line-height:1.7;">${message.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
               <p style="color:#888;font-size:0.85em;margin-top:32px">
                 UCOSA-North America &mdash;
-                <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>
+                <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>
               </p>
             </div>
           </div>`,

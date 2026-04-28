@@ -164,13 +164,13 @@ router.post('/login', async (req, res) => {
     // Check if account is suspended
     if (user.is_active === false) {
       log.warn(`Login attempt on suspended account: ${user.email} from IP ${req.ip}`);
-      return res.status(403).json({ error: 'Your account has been suspended. Please contact the administrator at ucosa.northamerica@gmail.com.' });
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact the administrator at admin@ucosa-na.org.' });
     }
 
     // Check if account is locked
     if (user.is_locked === true) {
       log.warn(`Login attempt on locked account: ${user.email} from IP ${req.ip}`);
-      return res.status(403).json({ error: 'Your account has been locked by an administrator. Please contact ucosa.northamerica@gmail.com.' });
+      return res.status(403).json({ error: 'Your account has been locked by an administrator. Please contact admin@ucosa-na.org.' });
     }
 
     const valid = await bcrypt.compare(password.trim(), user.password_hash);
@@ -286,7 +286,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
               <tr><td style="padding:10px 0;color:#555;font-weight:600;width:130px">Account</td><td style="padding:10px 0;color:#111">${user.email}</td></tr>
               <tr style="background:#f0f0f0"><td style="padding:10px 0;color:#555;font-weight:600">Time (UTC)</td><td style="padding:10px 0;color:#111">${ts}</td></tr>
             </table>
-            <p style="margin-top:20px;color:#555">If you did not make this change, please contact us immediately at <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.</p>
+            <p style="margin-top:20px;color:#555">If you did not make this change, please contact us immediately at <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>.</p>
             <p style="margin-top:12px;font-size:0.85rem;color:#888">This is an automated security alert from UCOSA-NA.</p>
           </div>
         </div>`,
@@ -300,7 +300,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
       if (sid && token && from) {
         require('twilio')(sid, token).messages.create({
           to: user.phone, from,
-          body: `UCOSA-NA: Your password was changed on ${ts}. If you did not do this, contact us immediately at ucosa.northamerica@gmail.com`,
+          body: `UCOSA-NA: Your password was changed on ${ts}. If you did not do this, contact us immediately at admin@ucosa-na.org`,
         }).catch(err => log.error(`Password change SMS to ${user.phone}: ${err.message}`));
       }
     }

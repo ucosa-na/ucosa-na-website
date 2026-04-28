@@ -107,7 +107,7 @@ router.post('/', async (req, res) => {
 
             <p style="color:#aaa;font-size:0.8em;margin-top:28px;border-top:1px solid #e8d9c0;padding-top:16px">
               UCOSA-North America &mdash;
-              <a href="mailto:ucosa.northamerica@gmail.com" style="color:#aaa">ucosa.northamerica@gmail.com</a> &mdash;
+              <a href="mailto:admin@ucosa-na.org" style="color:#aaa">admin@ucosa-na.org</a> &mdash;
               <a href="https://ucosa-na.org" style="color:#aaa">ucosa-na.org</a>
             </p>
           </div>
