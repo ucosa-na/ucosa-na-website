@@ -240,6 +240,34 @@ router.get('/users', anyPriv, async (req, res) => {
   }
 });
 
+// GET /api/admin/users/export-csv — download all members as CSV
+router.get('/users/export-csv', secOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT u.full_name, u.email, u.role,
+             p.first_name, p.last_name,
+             COALESCE(p.phone, u.phone) AS phone,
+             COALESCE(p.address, u.address) AS address,
+             p.year_joined, p.graduation_year,
+             u.is_active, u.is_locked, u.created_at, u.last_login
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      ORDER BY u.full_name ASC
+    `);
+
+    const headers = ['full_name','email','role','first_name','last_name','phone','address','year_joined','graduation_year','is_active','is_locked','created_at','last_login'];
+    const escape  = v => v == null ? '' : `"${String(v).replace(/"/g, '""')}"`;
+    const csv     = [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h])).join(','))].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="ucosa-members-${new Date().toISOString().slice(0,10)}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    console.error('Export CSV error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/admin/welfare/members — member directory for welfare role (name, phone, email only)
 router.get('/welfare/members', welfareOrAdmin, async (req, res) => {
   try {

@@ -848,6 +848,7 @@
           <input type="text" id="memberSearch" oninput="renderMembers()" placeholder="Search by name, email or phone…" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:260px;" />
           <button onclick="document.getElementById('memberSearch').value='';renderMembers();" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;background:white;cursor:pointer;">Clear</button>
           <span id="memberCountLabel" style="font-size:14px;color:#888;"></span>
+          <button onclick="downloadMembersCSV()" style="margin-left:auto;padding:8px 18px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -1795,6 +1796,21 @@
       } catch (err) {
         document.getElementById('membersTableBody').innerHTML = `<tr class="empty-row"><td colspan="12">Error loading members: ${err.message}</td></tr>`;
       }
+    }
+
+    async function downloadMembersCSV() {
+      const token = getToken();
+      const res   = await fetch('/api/admin/users/export-csv', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) { alert('Failed to export CSV.'); return; }
+      const blob  = await res.blob();
+      const url   = URL.createObjectURL(blob);
+      const a     = document.createElement('a');
+      a.href      = url;
+      a.download  = `ucosa-members-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 
     function renderMembers() {
