@@ -926,6 +926,7 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
 <body>
 <div class="wrap">
   <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px"/>
     <h1>UCOSA-North America</h1>
     <p>Alumni United Across North America</p>
   </div>
