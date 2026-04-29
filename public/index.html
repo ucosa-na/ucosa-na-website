@@ -3047,30 +3047,118 @@
 </div><!-- end .content-wrapper -->
 
 <!-- Global lightbox — works across all pages -->
-<div id="lab-lightbox" onclick="closeLabLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;">
-  <span style="position:absolute;top:18px;right:28px;color:#fff;font-size:38px;line-height:1;cursor:pointer;user-select:none;">&times;</span>
-  <img id="lab-lightbox-img" src="" alt="enlarged photo" draggable="false" oncontextmenu="return false;"
-       style="max-width:92vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);pointer-events:none;user-select:none;-webkit-user-drag:none;">
+<!-- ── LIGHTBOX ── -->
+<div id="lab-lightbox" onclick="if(event.target===this)closeLabLightbox()"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+
+  <!-- Close -->
+  <span onclick="closeLabLightbox()"
+        style="position:absolute;top:16px;right:24px;color:#fff;font-size:40px;line-height:1;cursor:pointer;user-select:none;z-index:2;opacity:0.85;">&times;</span>
+
+  <!-- Counter e.g. 3 / 18 -->
+  <div id="lb-counter"
+       style="position:absolute;top:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.65);font-size:13px;font-family:'DM Sans',sans-serif;letter-spacing:0.05em;user-select:none;z-index:2;"></div>
+
+  <!-- Prev arrow -->
+  <button id="lb-prev" onclick="lbNav(-1)"
+          style="position:absolute;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.18);border:none;color:#fff;font-size:40px;width:52px;height:52px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;padding:0;transition:background 0.18s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">&#8249;</button>
+
+  <!-- Photo -->
+  <img id="lab-lightbox-img" src="" alt="" draggable="false" oncontextmenu="return false;"
+       style="max-width:88vw;max-height:82vh;border-radius:8px;box-shadow:0 8px 48px rgba(0,0,0,0.7);object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none;display:block;">
+
+  <!-- Caption -->
+  <div id="lb-caption"
+       style="color:rgba(255,255,255,0.65);font-size:13px;font-family:'DM Sans',sans-serif;margin-top:14px;max-width:80vw;text-align:center;user-select:none;min-height:18px;"></div>
+
+  <!-- Next arrow -->
+  <button id="lb-next" onclick="lbNav(1)"
+          style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.18);border:none;color:#fff;font-size:40px;width:52px;height:52px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;padding:0;transition:background 0.18s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">&#8250;</button>
 </div>
+
 <script>
+  var lbGallery = [], lbIndex = 0, lbTouchX = 0;
+
+  function lbNorm(s) {
+    try { return new URL(s, location.origin).pathname; } catch(e) { return s; }
+  }
+
   function openLabLightbox(src) {
+    var activePage = document.querySelector('.page.active');
+    lbGallery = [];
+
+    if (activePage) {
+      // Gallery / event images — onclick="openLabLightbox(this.src)"
+      activePage.querySelectorAll('img[onclick*="openLabLightbox"]').forEach(function(img) {
+        lbGallery.push({ src: img.src, alt: img.alt || '' });
+      });
+      // Computer lab cards — onclick is on .lab-card, img is inside
+      if (lbGallery.length === 0) {
+        activePage.querySelectorAll('.lab-card').forEach(function(card) {
+          var img = card.querySelector('img');
+          var lbl = card.querySelector('.lab-card-label');
+          if (img) lbGallery.push({ src: img.src, alt: lbl ? lbl.textContent.trim() : (img.alt || '') });
+        });
+      }
+    }
+
+    if (lbGallery.length === 0) lbGallery = [{ src: src, alt: '' }];
+
+    // Find the clicked image by matching pathname
+    var norm = lbNorm(src);
+    lbIndex = lbGallery.findIndex(function(item) { return lbNorm(item.src) === norm; });
+    if (lbIndex < 0) lbIndex = 0;
+
+    lbShow();
+
     var lb = document.getElementById('lab-lightbox');
-    document.getElementById('lab-lightbox-img').src = src;
     lb.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    var activePage = document.querySelector('.page.active');
     if (activePage) activePage.style.overflow = 'hidden';
   }
+
+  function lbShow() {
+    var item = lbGallery[lbIndex];
+    document.getElementById('lab-lightbox-img').src = item.src;
+    document.getElementById('lb-caption').textContent = item.alt;
+    document.getElementById('lb-counter').textContent =
+      lbGallery.length > 1 ? (lbIndex + 1) + ' / ' + lbGallery.length : '';
+    var show = lbGallery.length > 1 ? 'flex' : 'none';
+    document.getElementById('lb-prev').style.display = show;
+    document.getElementById('lb-next').style.display = show;
+  }
+
+  function lbNav(dir) {
+    lbIndex = (lbIndex + dir + lbGallery.length) % lbGallery.length;
+    lbShow();
+  }
+
   function closeLabLightbox() {
     document.getElementById('lab-lightbox').style.display = 'none';
     document.getElementById('lab-lightbox-img').src = '';
     document.body.style.overflow = '';
     var activePage = document.querySelector('.page.active');
     if (activePage) activePage.style.overflow = '';
+    lbGallery = [];
   }
+
+  // Keyboard: Esc closes, ←/→ navigates
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeLabLightbox();
+    if (document.getElementById('lab-lightbox').style.display !== 'flex') return;
+    if (e.key === 'Escape')      closeLabLightbox();
+    if (e.key === 'ArrowLeft')   lbNav(-1);
+    if (e.key === 'ArrowRight')  lbNav(1);
   });
+
+  // Touch swipe
+  var lb = document.getElementById('lab-lightbox');
+  lb.addEventListener('touchstart', function(e) { lbTouchX = e.changedTouches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend',   function(e) {
+    var dx = e.changedTouches[0].clientX - lbTouchX;
+    if (Math.abs(dx) > 50) lbNav(dx < 0 ? 1 : -1);
+  }, { passive: true });
 </script>
 
 
