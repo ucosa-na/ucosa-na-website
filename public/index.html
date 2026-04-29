@@ -167,7 +167,7 @@
   #page-event-golden-jubilee [style*="display:grid"],
   #page-event-staff-quarters [style*="display:grid"],
   #page-event-inaugural [style*="display:grid"] {
-    grid-template-columns: repeat(10,1fr) !important; width: 100%; gap: 4px !important;
+    grid-template-columns: repeat(6,1fr) !important; width: 100%; gap: 8px !important;
   }
   #page-executive-current.active,
   #page-executive-past.active,
@@ -180,57 +180,44 @@
   #page-event-inaugural [style*="border:1px solid #e8d8c4"] {
     border: none !important; border-radius: 0 !important; padding: 0 !important; background: none !important;
   }
-  #page-gallery img,
-  #page-event-golden-jubilee img,
-  #page-event-staff-quarters img,
-  #page-event-inaugural img {
-    width: 64px !important;
-    height: 64px !important;
-    border-radius: 50% !important;
-    object-fit: cover !important;
-    border: 1px solid var(--border) !important;
-    display: block !important;
-    margin: 0 auto !important;
-    box-shadow: none !important;
-  }
   #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
   #page-computer-lab .gallery-section { width: 100%; }
   #page-computer-lab .lab-grid {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
     width: 100%;
   }
   .lab-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 20px 16px;
-    text-align: center;
-    transition: border-color 0.2s, transform 0.2s;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    transition: transform 0.18s, box-shadow 0.18s;
     cursor: pointer;
   }
-  .lab-card:hover { border-color: var(--accent2); transform: translateY(-3px); }
+  .lab-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.16); }
   .lab-card img {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+    width: 100%;
+    aspect-ratio: 4/3;
     object-fit: cover;
     display: block;
-    margin: 0 auto 12px;
-    border: 1px solid var(--border);
     filter: contrast(1.1) saturate(1.1);
   }
   .lab-card-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--muted);
-    letter-spacing: 0.06em;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #444;
+    text-align: center;
+    background: #f8f6f2;
+    border-top: 1px solid #ede8e0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   #page-gallery .gallery-section { margin-bottom: 32px; }
-  #page-gallery [style*="display:grid"] { grid-template-columns: repeat(10, 1fr) !important; width: 100%; }
+  #page-gallery [style*="display:grid"] { grid-template-columns: repeat(6, 1fr) !important; width: 100%; }
 
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(12px); }
@@ -725,20 +712,20 @@
   /* EXECUTIVE */
   .exec-grid {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
     width: 100%;
   }
 
   .exec-card {
     background: var(--card);
     border: 1px solid var(--border);
-    padding: 20px 16px;
+    padding: 28px;
     text-align: center;
-    transition: border-color 0.2s, transform 0.2s;
+    transition: border-color 0.2s;
   }
 
-  .exec-card:hover { border-color: var(--accent2); transform: translateY(-3px); }
+  .exec-card:hover { border-color: var(--accent2); }
 
   .exec-avatar {
     width: 80px;
@@ -757,13 +744,11 @@
   }
 
   .exec-avatar-photo {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+    width: 130px;
+    height: 160px;
     background: none;
     overflow: hidden;
-    border: 2px solid var(--accent);
-    margin: 0 auto 12px;
+    border: 3px solid var(--accent);
   }
 
   .exec-avatar-photo img {
@@ -830,8 +815,8 @@
   /* MEMBERS */
   .members-grid {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
     width: 100%;
   }
 
@@ -1566,13 +1551,13 @@
     .about-card ul  { font-size: 16px; }
 
     /* Executive grid */
-    .exec-grid      { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .exec-card      { padding: 14px 8px; }
-    .exec-name      { font-size: 16px; }
-    .exec-avatar-photo { width: 80px; height: 100px; }
+    .exec-grid      { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .exec-card      { padding: 18px 12px; }
+    .exec-name      { font-size: 18px; }
+    .exec-avatar-photo { width: 90px; height: 110px; }
 
     /* Members grid */
-    .members-grid   { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .members-grid   { grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
     /* Gallery */
     .gallery-grid   { grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -1595,7 +1580,7 @@
     .hero-title     { font-size: 20px; }
     .stats-bar      { grid-template-columns: 1fr; }
     .exec-grid      { grid-template-columns: repeat(2, 1fr); }
-    .gallery-grid   { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .gallery-grid   { grid-template-columns: repeat(2, 1fr); gap: 5px; }
     .members-grid   { grid-template-columns: repeat(2, 1fr); }
     .page           { padding: 18px 12px; }
   }
