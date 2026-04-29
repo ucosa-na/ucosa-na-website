@@ -2555,7 +2555,7 @@
 
       localStorage.setItem('token', data.token);
       if (data.mustChangePassword) {
-        window.location.href = '/change-password.html';
+        window.location.href = '/change-password.html?required=1';
       } else if (data.user.role === 'admin') {
         window.location.href = '/admin.html';
       } else {
