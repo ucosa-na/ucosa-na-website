@@ -1467,9 +1467,8 @@
   }
   .sidebar-overlay.mobile-open { display: block; }
 
-  /* ── FULL-WIDTH PHOTO PAGES (hide sidebar, expand main) ── */
-  .photo-page-active .sidebar { display: none; }
-  .photo-page-active .main { width: 100%; }
+  /* ── FULL-WIDTH for photo pages outside <main> ── */
+  .main.collapsed { flex: 0 0 0 !important; overflow: hidden !important; min-width: 0 !important; width: 0 !important; }
 
   /* ── TABLET & MOBILE (≤ 768px) ── */
   @media (max-width: 768px) {
@@ -2451,8 +2450,8 @@
   // Gallery images are static — no lightbox, no download
 
   // ── Page navigation ──
-  const PHOTO_PAGES = new Set([
-    'executive-current', 'executive-past', 'members',
+  // These pages live OUTSIDE <main> in .content-wrapper, so <main> must be collapsed
+  const OUTSIDE_MAIN_PAGES = new Set([
     'computer-lab', 'gallery',
     'event-golden-jubilee', 'event-staff-quarters', 'event-inaugural'
   ]);
@@ -2463,9 +2462,9 @@
     document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + id).classList.add('active');
     if (clickedEl) clickedEl.classList.add('active');
+    // Collapse <main> so outside-main pages fill the full viewport width
+    document.querySelector('main.main').classList.toggle('collapsed', OUTSIDE_MAIN_PAGES.has(id));
     document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
-    // Hide sidebar on photo/gallery pages so photos fill the full viewport width
-    document.querySelector('.content-wrapper').classList.toggle('photo-page-active', PHOTO_PAGES.has(id));
   }
 
 
