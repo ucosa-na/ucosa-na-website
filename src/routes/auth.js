@@ -180,6 +180,11 @@ router.post('/login', async (req, res) => {
       const attemptsLeft = MAX_ATTEMPTS - (entry ? entry.count : 0);
 
       log.warn(`Failed login — wrong password for: ${user.email} from IP ${req.ip} (attempt ${entry ? entry.count : 1}/${MAX_ATTEMPTS})`);
+      pool.query(
+        `INSERT INTO audit_log (action, entity_type, entity_id, entity_name, performed_by, performed_by_name, details)
+         VALUES ('LOGIN_FAILED', 'AUTH', $1, $2, $1, $2, $3)`,
+        [user.id, user.full_name || user.email, JSON.stringify({ email: user.email, ip: req.ip })]
+      ).catch(() => {});
 
       if (entry && entry.lockedUntil) {
         // Just got locked on this attempt
@@ -209,6 +214,11 @@ router.post('/login', async (req, res) => {
 
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     log.info(`Login successful: ${user.email} (role: ${user.role}) from IP ${req.ip}`);
+    pool.query(
+      `INSERT INTO audit_log (action, entity_type, entity_id, entity_name, performed_by, performed_by_name, details)
+       VALUES ('LOGIN_SUCCESS', 'AUTH', $1, $2, $1, $2, $3)`,
+      [user.id, user.full_name || user.email, JSON.stringify({ email: user.email, role: user.role, ip: req.ip })]
+    ).catch(() => {});
     if (user.role === 'admin') sendAdminLoginAlert('success', user.email, req.ip);
 
     const token = jwt.sign(

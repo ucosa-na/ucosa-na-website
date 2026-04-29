@@ -1134,19 +1134,20 @@
       <section id="auditLog">
         <h2>&#128196; Audit Log</h2>
         <p style="color:#555;font-size:19px;margin-bottom:16px;">
-          Full history of all record creations, modifications, suspensions, locks, and deletions.
+          Tracks logins, modifications, annual dues changes, and deletions.
         </p>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
           <input type="text" id="auditSearch" oninput="renderAuditLog()"
-            placeholder="Search by member, action, or performed by…"
-            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:17px;min-width:280px;" />
-          <select id="auditEntityFilter" onchange="renderAuditLog()"
+            placeholder="Search by member name, action, or performed by…"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:17px;min-width:260px;" />
+          <select id="auditCategoryFilter" onchange="renderAuditLog()"
             style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:17px;background:white;">
-            <option value="">All Types</option>
-            <option value="MEMBER">Members</option>
-            <option value="DUES">Annual Dues</option>
-            <option value="ENDOWMENT">Endowment Fund</option>
-            <option value="MEETING_NOTE">Meeting Notes</option>
+            <option value="">All Events</option>
+            <option value="login_failed">Failed Logins</option>
+            <option value="login_success">Successful Logins</option>
+            <option value="modifications">Modifications</option>
+            <option value="dues">Annual Dues Changes</option>
+            <option value="deletions">Deletions</option>
           </select>
           <button onclick="loadAuditLog()"
             style="padding:8px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:17px;font-weight:600;cursor:pointer;">&#8635; Refresh</button>
@@ -1661,25 +1662,42 @@
 
     // ── AUDIT LOG ─────────────────────────────────────────────────────────────
     const auditActionLabels = {
-      MEMBER_CREATED: '👤 Member Created',    MEMBER_UPDATED: '✏️ Member Updated',
-      MEMBER_DELETED: '🗑️ Member Deleted',    ROLE_CHANGED: '🔄 Role Changed',
-      MEMBER_SUSPENDED: '🚫 Suspended',        MEMBER_REINSTATED: '✅ Reinstated',
-      MEMBER_LOCKED: '🔒 Locked',              MEMBER_UNLOCKED: '🔓 Unlocked',
-      PASSWORD_RESET: '🔑 Password Reset',
-      DUES_CREATED: '💰 Dues Created',         DUES_UPDATED: '💰 Dues Updated',
-      DUES_DELETED: '💰 Dues Deleted',
-      ENDOWMENT_CREATED: '🎁 Endowment Created', ENDOWMENT_UPDATED: '🎁 Endowment Updated',
-      ENDOWMENT_DELETED: '🎁 Endowment Deleted',
-      MEETING_NOTE_UPLOADED: '📄 Note Uploaded', MEETING_NOTE_DELETED: '📄 Note Deleted',
+      LOGIN_SUCCESS:   '✅ Login Successful',  LOGIN_FAILED:    '❌ Login Failed',
+      MEMBER_UPDATED:  '✏️ Member Modified',   ROLE_CHANGED:    '🔄 Role Changed',
+      MEMBER_SUSPENDED:'🚫 Member Suspended',  MEMBER_REINSTATED:'✅ Reinstated',
+      MEMBER_LOCKED:   '🔒 Account Locked',    MEMBER_UNLOCKED: '🔓 Account Unlocked',
+      PASSWORD_RESET:  '🔑 Password Reset',
+      DUES_CREATED:    '💰 Dues Added',        DUES_UPDATED:    '💰 Dues Modified',
+      DUES_DELETED:    '💰 Dues Deleted',
+      MEMBER_DELETED:  '🗑️ Member Deleted',
+      ENDOWMENT_DELETED:'🗑️ Endowment Deleted', MEETING_NOTE_DELETED:'🗑️ Note Deleted',
     };
 
     const auditActionColors = {
-      MEMBER_CREATED: '#065f46', MEMBER_UPDATED: '#1e40af', MEMBER_DELETED: '#991b1b',
-      ROLE_CHANGED: '#6b21a8',   MEMBER_SUSPENDED: '#c2410c', MEMBER_REINSTATED: '#15803d',
-      MEMBER_LOCKED: '#92400e',  MEMBER_UNLOCKED: '#15803d', PASSWORD_RESET: '#b45309',
-      DUES_CREATED: '#065f46',   DUES_UPDATED: '#1e40af',    DUES_DELETED: '#991b1b',
-      ENDOWMENT_CREATED: '#065f46', ENDOWMENT_UPDATED: '#1e40af', ENDOWMENT_DELETED: '#991b1b',
-      MEETING_NOTE_UPLOADED: '#065f46', MEETING_NOTE_DELETED: '#991b1b',
+      LOGIN_SUCCESS: '#15803d',   LOGIN_FAILED: '#b91c1c',
+      MEMBER_UPDATED: '#1e40af',  ROLE_CHANGED: '#6b21a8',
+      MEMBER_SUSPENDED: '#c2410c', MEMBER_REINSTATED: '#15803d',
+      MEMBER_LOCKED: '#92400e',   MEMBER_UNLOCKED: '#15803d',
+      PASSWORD_RESET: '#b45309',
+      DUES_CREATED: '#065f46',    DUES_UPDATED: '#1e40af',    DUES_DELETED: '#991b1b',
+      MEMBER_DELETED: '#991b1b',  ENDOWMENT_DELETED: '#991b1b', MEETING_NOTE_DELETED: '#991b1b',
+    };
+
+    // The only action types shown in the audit log
+    const AUDIT_ACTIONS = new Set([
+      'LOGIN_SUCCESS', 'LOGIN_FAILED',
+      'MEMBER_UPDATED', 'ROLE_CHANGED', 'MEMBER_SUSPENDED', 'MEMBER_REINSTATED',
+      'MEMBER_LOCKED', 'MEMBER_UNLOCKED', 'PASSWORD_RESET',
+      'DUES_CREATED', 'DUES_UPDATED', 'DUES_DELETED',
+      'MEMBER_DELETED', 'ENDOWMENT_DELETED', 'MEETING_NOTE_DELETED',
+    ]);
+
+    const AUDIT_CATEGORIES = {
+      login_failed:  new Set(['LOGIN_FAILED']),
+      login_success: new Set(['LOGIN_SUCCESS']),
+      modifications: new Set(['MEMBER_UPDATED','ROLE_CHANGED','MEMBER_SUSPENDED','MEMBER_REINSTATED','MEMBER_LOCKED','MEMBER_UNLOCKED','PASSWORD_RESET']),
+      dues:          new Set(['DUES_CREATED','DUES_UPDATED','DUES_DELETED']),
+      deletions:     new Set(['MEMBER_DELETED','DUES_DELETED','ENDOWMENT_DELETED','MEETING_NOTE_DELETED']),
     };
 
     async function loadAuditLog() {
@@ -1696,11 +1714,17 @@
     }
 
     function renderAuditLog() {
-      const entries = window._auditLog || [];
-      const q       = (document.getElementById('auditSearch')?.value || '').toLowerCase();
-      const ef      = (document.getElementById('auditEntityFilter')?.value || '');
+      const entries  = window._auditLog || [];
+      const q        = (document.getElementById('auditSearch')?.value || '').toLowerCase();
+      const category = (document.getElementById('auditCategoryFilter')?.value || '');
+      const allowedSet = category ? AUDIT_CATEGORIES[category] : null;
+
       const filtered = entries.filter(e => {
-        if (ef && e.entity_type !== ef) return false;
+        // Always restrict to the tracked action types
+        if (!AUDIT_ACTIONS.has(e.action)) return false;
+        // Apply category filter if selected
+        if (allowedSet && !allowedSet.has(e.action)) return false;
+        // Text search
         if (!q) return true;
         return (e.entity_name || '').toLowerCase().includes(q)
             || (e.action || '').toLowerCase().includes(q)
