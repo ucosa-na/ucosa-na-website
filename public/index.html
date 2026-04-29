@@ -180,6 +180,19 @@
   #page-event-inaugural [style*="border:1px solid #e8d8c4"] {
     border: none !important; border-radius: 0 !important; padding: 0 !important; background: none !important;
   }
+  #page-gallery img,
+  #page-event-golden-jubilee img,
+  #page-event-staff-quarters img,
+  #page-event-inaugural img {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 1px solid var(--border) !important;
+    display: block !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+  }
   #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
   #page-computer-lab .gallery-section { width: 100%; }
   #page-computer-lab .lab-grid {
@@ -189,29 +202,29 @@
     width: 100%;
   }
   .lab-card {
-    background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-    transition: transform 0.18s, box-shadow 0.18s;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px 16px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
     cursor: pointer;
   }
-  .lab-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.16); }
+  .lab-card:hover { border-color: var(--accent2); transform: translateY(-3px); }
   .lab-card img {
-    width: 100%;
-    aspect-ratio: 4/3;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
     object-fit: cover;
     display: block;
+    margin: 0 auto 12px;
+    border: 1px solid var(--border);
     filter: contrast(1.1) saturate(1.1);
   }
   .lab-card-label {
-    padding: 8px 10px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #444;
-    text-align: center;
-    background: #f8f6f2;
-    border-top: 1px solid #ede8e0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -713,19 +726,19 @@
   .exec-grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
-    gap: 16px;
+    gap: 12px;
     width: 100%;
   }
 
   .exec-card {
     background: var(--card);
     border: 1px solid var(--border);
-    padding: 28px;
+    padding: 20px 16px;
     text-align: center;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s;
   }
 
-  .exec-card:hover { border-color: var(--accent2); }
+  .exec-card:hover { border-color: var(--accent2); transform: translateY(-3px); }
 
   .exec-avatar {
     width: 80px;
@@ -744,11 +757,13 @@
   }
 
   .exec-avatar-photo {
-    width: 130px;
-    height: 160px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
     background: none;
     overflow: hidden;
-    border: 3px solid var(--accent);
+    border: 2px solid var(--accent);
+    margin: 0 auto 12px;
   }
 
   .exec-avatar-photo img {
