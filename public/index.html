@@ -764,66 +764,66 @@
   /* EXECUTIVE */
   .exec-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
     width: 100%;
   }
 
-  .exec-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 28px;
-    text-align: center;
-    transition: border-color 0.2s;
+  .exec-photo-card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    transition: transform 0.18s, box-shadow 0.18s;
   }
+  .exec-photo-card.has-photo { cursor: pointer; }
+  .exec-photo-card.has-photo:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.16); }
 
-  .exec-card:hover { border-color: var(--accent2); }
-
-  .exec-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto 16px;
-    background: linear-gradient(135deg, var(--accent2) 0%, #3a3020 100%);
+  .exec-photo-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: linear-gradient(135deg, #7b2152 0%, #3a1030 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--accent);
-    border: 2px solid var(--border);
   }
-
-  .exec-avatar-photo {
-    width: 130px;
-    height: 160px;
-    background: none;
-    overflow: hidden;
-    border: 3px solid var(--accent);
-  }
-
-  .exec-avatar-photo img {
+  .exec-photo-wrap img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    filter: contrast(1.1) saturate(1.1);
   }
-
-  .exec-name {
+  .exec-photo-initials {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 30px;
+    font-size: 2.4rem;
     font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
+    color: #c8a96e;
   }
-
-  .exec-role {
-    font-size: 15px;
-    letter-spacing: 0.14em;
+  .exec-photo-label {
+    padding: 8px 10px;
+    text-align: center;
+    background: #f8f6f2;
+    border-top: 1px solid #ede8e0;
+  }
+  .exec-photo-label .ep-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .exec-photo-label .ep-role {
+    font-size: 0.72rem;
+    color: #7b2152;
+    font-weight: 500;
     text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 12px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .exec-bio {
@@ -1606,10 +1606,7 @@
     .about-card ul  { font-size: 16px; }
 
     /* Executive grid */
-    .exec-grid      { grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .exec-card      { padding: 18px 12px; }
-    .exec-name      { font-size: 18px; }
-    .exec-avatar-photo { width: 90px; height: 110px; }
+    .exec-grid      { grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
     /* Members grid */
     .members-grid   { grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -1634,7 +1631,7 @@
     .page-heading   { font-size: 22px; }
     .hero-title     { font-size: 20px; }
     .stats-bar      { grid-template-columns: 1fr; }
-    .exec-grid      { grid-template-columns: repeat(2, 1fr); }
+    .exec-grid      { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .gallery-grid   { grid-template-columns: repeat(2, 1fr); gap: 5px; }
     .members-grid   { grid-template-columns: repeat(2, 1fr); }
     .page           { padding: 18px 12px; }
@@ -2419,23 +2416,26 @@
     { initials: 'EO', name: 'Mr. Edebor Onosigho',          role: 'Welfare Officer 2 — U.S.' },
   ];
 
-  function renderExecGrid(data, gridId, past = false) {
+  function renderExecGrid(data, gridId) {
     const grid = document.getElementById(gridId);
-    data.forEach(e => {
-      const avatar = e.photo
-        ? `<div class="exec-avatar exec-avatar-photo"><img src="${e.photo}" alt="${e.name}"></div>`
-        : `<div class="exec-avatar">${e.initials}</div>`;
-      grid.innerHTML += `
-        <div class="exec-card${past ? ' past' : ''}">
-          ${avatar}
-          <div class="exec-name">${e.name}</div>
-          <div class="exec-role">${e.role}</div>
+    grid.innerHTML = data.map(e => {
+      const photoArea = e.photo
+        ? `<div class="exec-photo-wrap"><img src="${e.photo}" alt="${e.name}" draggable="false" oncontextmenu="return false;"></div>`
+        : `<div class="exec-photo-wrap"><span class="exec-photo-initials">${e.initials}</span></div>`;
+      const clickAttr = e.photo ? `onclick="openLabLightbox('${e.photo}')"` : '';
+      return `
+        <div class="exec-photo-card${e.photo ? ' has-photo' : ''}" ${clickAttr}>
+          ${photoArea}
+          <div class="exec-photo-label">
+            <div class="ep-name">${e.name}</div>
+            <div class="ep-role">${e.role}</div>
+          </div>
         </div>`;
-    });
+    }).join('');
   }
 
-  renderExecGrid(currentExec, 'exec-grid-current', false);
-  renderExecGrid(pastExec,    'exec-grid-past',    true);
+  renderExecGrid(currentExec, 'exec-grid-current');
+  renderExecGrid(pastExec,    'exec-grid-past');
 
   // ── Members placeholder ──
   const colors = ['#3a2e1a','#1a2e2a','#2a1a2e','#1a2a3a','#2e1a1a','#1a2e1a'];
@@ -3188,6 +3188,15 @@
           var img = card.querySelector('img');
           var lbl = card.querySelector('.lab-card-label');
           if (img) lbGallery.push({ src: img.src, alt: lbl ? lbl.textContent.trim() : (img.alt || '') });
+        });
+      }
+      // Executive photo cards
+      if (lbGallery.length === 0) {
+        activePage.querySelectorAll('.exec-photo-card.has-photo').forEach(function(card) {
+          var img = card.querySelector('img');
+          var name = card.querySelector('.ep-name');
+          var role = card.querySelector('.ep-role');
+          if (img) lbGallery.push({ src: img.src, alt: (name ? name.textContent : '') + (role ? ' — ' + role.textContent : '') });
         });
       }
     }
