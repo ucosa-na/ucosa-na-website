@@ -2197,11 +2197,6 @@
     <p class="page-sub">
       A snapshot of UCOSA-NA members. Log in to view the full member directory.
     </p>
-    <div style="margin-bottom:36px;">
-      <img src="/ucosa_na_members/ucosa-na-group.jpg" alt="UCOSA-NA Group Photo"
-           style="width:100%;max-width:100%;border-radius:10px;display:block;box-shadow:0 4px 20px rgba(0,0,0,0.15);filter:contrast(1.2) saturate(1.15) brightness(1.03);image-rendering:high-quality;"
-           draggable="false" oncontextmenu="return false;">
-    </div>
     <div class="members-grid" id="members-grid"></div>
   </section>
 
@@ -2409,62 +2404,6 @@
   renderExecGrid(currentExec, 'exec-grid-current');
   renderExecGrid(pastExec,    'exec-grid-past');
 
-  // ── Members placeholder ──
-  const colors = ['#3a2e1a','#1a2e2a','#2a1a2e','#1a2a3a','#2e1a1a','#1a2e1a'];
-  const memberData = [
-    { initials:'AO', name:'Aisha Okonkwo',      title:'Member' },
-    { initials:'BE', name:'Bright Ezeudo',      title:'Member' },
-    { initials:'CO', name:'Chidi Osagie',       title:'Member' },
-    { initials:'DO', name:'David Okoye',        title:'Member' },
-    { initials:'EI', name:'Emeka Ihejirika',    title:'Member' },
-    { initials:'FO', name:'Felicia Ojo',        title:'Member' },
-    { initials:'GO', name:'Grace Obi',          title:'Member' },
-    { initials:'HU', name:'Henry Uwaifo',       title:'Member' },
-    { initials:'IO', name:'Ike Okonkwo',        title:'Member' },
-    { initials:'JE', name:'Joy Ehigie',         title:'Member' },
-    { initials:'KO', name:'Kingsley Osaghae',   title:'Member' },
-    { initials:'LI', name:'Lilian Izoduwa',     title:'Member' },
-    { initials:'MO', name:'Michael Ogbeide',    title:'Member' },
-    { initials:'NO', name:'Ngozi Okoro',        title:'Member' },
-    { initials:'OE', name:'Osaro Ekhator',      title:'Member' },
-    { initials:'PE', name:'Peter Eribo',        title:'Member' },
-    { initials:'RO', name:'Rita Omoruyi',       title:'Member' },
-    { initials:'SO', name:'Samuel Osagie',      title:'Member' },
-    { initials:'TO', name:'Tina Ogiehor',       title:'Member' },
-    { initials:'UO', name:'Uche Oboh',          title:'Member' },
-    { initials:'VO', name:'Victor Ogieva',      title:'Member' },
-    { initials:'WE', name:'Wendy Evbayiro',     title:'Member' },
-    { initials:'XO', name:'Xavier Osaghae',     title:'Member' },
-    { initials:'YI', name:'Yemi Irabor',        title:'Member' },
-    { initials:'ZO', name:'Zara Okungbowa',     title:'Member' },
-    { initials:'AE', name:'Austin Ehimwenma',   title:'Member' },
-    { initials:'BI', name:'Blessing Idahosa',   title:'Member' },
-    { initials:'CE', name:'Chris Eromosele',    title:'Member' },
-    { initials:'DE', name:'Dorothy Eguavoen',   title:'Member' },
-    { initials:'EO', name:'Edwin Osabuohien',   title:'Member' },
-    { initials:'FI', name:'Francis Igbinoba',   title:'Member' },
-    { initials:'GE', name:'Gloria Ekhaguere',   title:'Member' },
-    { initials:'HI', name:'Hope Imasuen',       title:'Member' },
-    { initials:'IE', name:'Irene Ehigie',       title:'Member' },
-    { initials:'JO', name:'Julius Ogbebor',     title:'Member' },
-    { initials:'KE', name:'Kenneth Ezeokoli',   title:'Member' },
-    { initials:'LO', name:'Lawrence Omoregie',  title:'Member' },
-    { initials:'MU', name:'Mary Uwumarogie',    title:'Member' },
-    { initials:'NO', name:'Nosa Osaghae',       title:'Member' },
-    { initials:'OO', name:'Oswald Omoike',      title:'Member' },
-  ];
-
-  const grid = document.getElementById('members-grid');
-  grid.innerHTML = memberData.map((m, i) => `
-    <div class="exec-photo-card">
-      <div class="exec-photo-wrap" style="background:linear-gradient(135deg,${colors[i % colors.length]} 0%,#1a0a10 100%);">
-        <span class="exec-photo-initials">${m.initials}</span>
-      </div>
-      <div class="exec-photo-label">
-        <div class="ep-name">${m.name}</div>
-        <div class="ep-role">${m.title}</div>
-      </div>
-    </div>`).join('');
 
   // ── Convention tabs ──
   function switchConvTab(panel, btn) {
