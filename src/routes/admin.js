@@ -1208,7 +1208,8 @@ router.get('/logs', secOrAdmin, (req, res) => {
     const content = fs.readFileSync(logPath, 'utf8');
     const lines   = content.split('\n').filter(Boolean);
     log.info(`Log viewer accessed by user ${req.user.id} (${req.user.role})`);
-    res.json({ lines: lines.slice(-limit), total: lines.length });
+    const filtered = lines.filter(l => !/\] INFO\s+GET /.test(l));
+    res.json({ lines: filtered.slice(-limit), total: filtered.length });
   } catch (err) {
     res.status(500).json({ error: 'Could not read log file' });
   }
