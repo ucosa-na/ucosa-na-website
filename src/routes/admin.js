@@ -1207,7 +1207,6 @@ router.get('/logs', secOrAdmin, (req, res) => {
     if (!fs.existsSync(logPath)) return res.json({ lines: [] });
     const content = fs.readFileSync(logPath, 'utf8');
     const lines   = content.split('\n').filter(Boolean);
-    log.info(`Log viewer accessed by user ${req.user.id} (${req.user.role})`);
     const filtered = lines.filter(l => !/\] INFO\s+GET /.test(l));
     res.json({ lines: filtered.slice(-limit), total: filtered.length });
   } catch (err) {
