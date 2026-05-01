@@ -50,6 +50,48 @@ function logoHeader() {
     </div>`;
 }
 
+// ── January 1st: Populate annual dues records ─────────────────────────────────
+
+async function populateAnnualDues() {
+  const year    = new Date().getFullYear();
+  const dueDate = `${year}-05-03`;   // May 3rd of the current year
+  log.info(`Scheduler: populating annual dues records for ${year}`);
+
+  let members;
+  try {
+    const { rows } = await pool.query(
+      `SELECT id FROM users WHERE is_active = true ORDER BY id ASC`
+    );
+    members = rows;
+  } catch (err) {
+    log.error(`Scheduler: failed to fetch active members for dues population — ${err.message}`);
+    return;
+  }
+
+  let inserted = 0;
+  let skipped  = 0;
+
+  for (const m of members) {
+    try {
+      // Only insert if no record already exists for this member/year
+      const { rowCount } = await pool.query(`
+        INSERT INTO annual_dues (user_id, year, amount, status, due_date, paid_date, payment_method)
+        SELECT $1, $2, 100.00, 'unpaid', $3, NULL, NULL
+        WHERE NOT EXISTS (
+          SELECT 1 FROM annual_dues WHERE user_id = $1 AND year = $2
+        )
+      `, [m.id, year, dueDate]);
+
+      if (rowCount > 0) inserted++;
+      else              skipped++;
+    } catch (err) {
+      log.error(`Scheduler: dues record insert failed for user ${m.id} — ${err.message}`);
+    }
+  }
+
+  log.info(`Scheduler: dues population complete for ${year} — ${inserted} inserted, ${skipped} already existed`);
+}
+
 // ── 30-Day Advance Reminder (April 3rd) ───────────────────────────────────────
 
 async function sendAdvanceReminders() {
@@ -162,12 +204,15 @@ async function sendDueDateReminders() {
 
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
+// January 1st at 00:01 AM — populate annual dues records for all active members
+cron.schedule('1 0 1 1 *', populateAnnualDues, { timezone: 'America/New_York' });
+
 // April 3rd at 9:00 AM — 30-day advance reminder
 cron.schedule('0 9 3 4 *', sendAdvanceReminders, { timezone: 'America/New_York' });
 
 // May 3rd at 9:00 AM — due date reminder
 cron.schedule('0 9 3 5 *', sendDueDateReminders, { timezone: 'America/New_York' });
 
-log.info('Scheduler: annual dues reminders registered (Apr 3 & May 3 at 09:00 ET)');
+log.info('Scheduler: annual dues jobs registered (Jan 1 populate, Apr 3 & May 3 reminders at 09:00 ET)');
 
-module.exports = { sendAdvanceReminders, sendDueDateReminders };
+module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders };
