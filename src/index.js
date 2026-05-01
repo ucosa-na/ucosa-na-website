@@ -7,6 +7,8 @@ const path = require('path');
 const log = require('./logger');
 
 const app = express();
+
+require('./scheduler');
 const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
