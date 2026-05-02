@@ -1344,15 +1344,28 @@
           <button class="btn-primary" onclick="saveEndowment()">Add Endowment Record</button>
         </div>
 
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:15px;font-weight:600;color:#444;">Year:</label>
+          <input type="number" id="endYearFilter" oninput="applyEndowFilter()" placeholder="All years" min="2000" max="2099" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;width:110px;" />
+          <label style="font-size:15px;font-weight:600;color:#444;">Status:</label>
+          <select id="endStatusFilter" onchange="applyEndowFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="partial">Partial</option>
+            <option value="paid">Paid</option>
+          </select>
+          <input type="text" id="endMemberSearch" oninput="applyEndowFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
+          <span id="endCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
         <div class="table-wrap">
           <table class="fin-table">
             <thead>
               <tr>
-                <th>Member</th><th>Year</th><th>Amount</th><th>Status</th><th>Date</th><th>Method</th><th>Notes</th><th>Actions</th>
+                <th>Member</th><th>Year</th><th>Amount</th><th>Status</th><th>Date</th><th>Method</th><th>Notes</th><th>Recorded By</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="endTableBody">
-              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
             </tbody>
             <tfoot id="endTableFoot"></tfoot>
           </table>
@@ -2461,40 +2474,63 @@
 
     async function loadEndowment() {
       const tbody = document.getElementById('endTableBody');
-      const tfoot = document.getElementById('endTableFoot');
       try {
         const res = await fetch('/api/admin/endowment', { headers: { 'Authorization': 'Bearer ' + getToken() } });
         const rows = await res.json();
-        const statusBadge = s => {
-          const map = { paid: ['#d1fae5','#065f46','Paid'], pending: ['#fff8e1','#7c5700','Pending'], partial: ['#dbeafe','#1e40af','Partial'] };
-          const [bg, color, label] = map[(s||'paid').toLowerCase()] || ['#f0f0f0','#555', s||'—'];
-          return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.82em;font-weight:700;text-transform:uppercase;background:${bg};color:${color}">${label}</span>`;
-        };
-        if (!rows.length) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No endowment records yet.</td></tr>';
-          tfoot.innerHTML = '';
-          return;
-        }
-        tbody.innerHTML = rows.map(r => `
-          <tr>
-            <td>${escapeHtml(r.full_name)}</td>
-            <td>${r.year || '—'}</td>
-            <td>$${parseFloat(r.amount).toFixed(2)}</td>
-            <td>${statusBadge(r.status)}</td>
-            <td>${r.contribution_date ? r.contribution_date.slice(0,10) : '—'}</td>
-            <td>${escapeHtml(r.payment_method || '—')}</td>
-            <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
-            <td>
-              <button class="btn-sm" onclick="openEndowEdit(${r.id},${r.year||'null'},'${escapeHtml(r.status||'paid')}',${parseFloat(r.amount).toFixed(2)},'${r.contribution_date?r.contribution_date.slice(0,10):''}','${escapeHtml(r.payment_method||'')}','${escapeHtml(r.notes||'')}')">Edit</button>
-              <button class="btn-sm" style="background:#c8a96e;color:white;" onclick="remindEndowment(${r.id},'${escapeHtml(r.full_name)}')">Remind</button>
-              <button class="btn-sm btn-danger" onclick="deleteEndowment(${r.id})">Delete</button>
-            </td>
-          </tr>`).join('');
-        const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
-        tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td></td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
+        window._allEndow = rows;
+        applyEndowFilter();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color:#e63946;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="color:#e63946;">${err.message}</td></tr>`;
       }
+    }
+
+    function applyEndowFilter() {
+      const rows       = window._allEndow || [];
+      const tbody      = document.getElementById('endTableBody');
+      const tfoot      = document.getElementById('endTableFoot');
+      const yearVal    = (document.getElementById('endYearFilter')?.value || '').trim();
+      const statusVal  = document.getElementById('endStatusFilter')?.value || 'all';
+      const searchVal  = (document.getElementById('endMemberSearch')?.value || '').toLowerCase().trim();
+
+      let filtered = rows;
+      if (yearVal)              filtered = filtered.filter(r => String(r.year) === yearVal);
+      if (statusVal !== 'all')  filtered = filtered.filter(r => (r.status || '').toLowerCase() === statusVal);
+      if (searchVal)            filtered = filtered.filter(r => (r.full_name || '').toLowerCase().includes(searchVal));
+
+      const label = document.getElementById('endCountLabel');
+      if (label) label.textContent = `Showing ${filtered.length} of ${rows.length} records`;
+
+      const statusBadge = s => {
+        const map = { paid: ['#d1fae5','#065f46','Paid'], pending: ['#fff8e1','#7c5700','Pending'], partial: ['#dbeafe','#1e40af','Partial'] };
+        const [bg, color, lbl] = map[(s||'pending').toLowerCase()] || ['#f0f0f0','#555', s||'—'];
+        return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.82em;font-weight:700;text-transform:uppercase;background:${bg};color:${color}">${lbl}</span>`;
+      };
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;">No endowment records found.</td></tr>';
+        tfoot.innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td>${escapeHtml(r.full_name)}</td>
+          <td>${r.year || '—'}</td>
+          <td>$${parseFloat(r.amount).toFixed(2)}</td>
+          <td>${statusBadge(r.status)}</td>
+          <td>${r.contribution_date ? r.contribution_date.slice(0,10) : '—'}</td>
+          <td>${escapeHtml(r.payment_method || '—')}</td>
+          <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
+          <td style="color:#555;">${escapeHtml(r.recorded_by_name || '—')}</td>
+          <td>
+            <button class="btn-sm" onclick="openEndowEdit(${r.id},${r.year||'null'},'${escapeHtml(r.status||'pending')}',${parseFloat(r.amount).toFixed(2)},'${r.contribution_date?r.contribution_date.slice(0,10):''}','${escapeHtml(r.payment_method||'')}','${escapeHtml(r.notes||'')}')">Edit</button>
+            <button class="btn-sm" style="background:#c8a96e;color:white;" onclick="remindEndowment(${r.id},'${escapeHtml(r.full_name)}')">Remind</button>
+            <button class="btn-sm btn-danger" onclick="deleteEndowment(${r.id})">Delete</button>
+          </td>
+        </tr>`).join('');
+
+      const total = filtered.reduce((s, r) => s + parseFloat(r.amount), 0);
+      tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td></td><td>$${total.toFixed(2)}</td><td colspan="6"></td></tr>`;
     }
 
     async function saveEndowment() {

@@ -80,6 +80,19 @@ async function seedDuesForMember(userId, memberSinceYear, recordedById) {
   }
 }
 
+// Seed endowment_fund records from max(memberSinceYear, 2024) up to the current year
+async function seedEndowmentForMember(userId, memberSinceYear, recordedById) {
+  const currentYear = new Date().getFullYear();
+  const startYear   = Math.max(parseInt(memberSinceYear) || 2024, 2024);
+  for (let year = startYear; year <= currentYear; year++) {
+    await pool.query(`
+      INSERT INTO endowment_fund (user_id, year, amount, status, contribution_date, payment_method, recorded_by)
+      SELECT $1, $2, 0, 'pending', NULL, NULL, $3
+      WHERE NOT EXISTS (SELECT 1 FROM endowment_fund WHERE user_id = $1 AND year = $2)
+    `, [userId, year, recordedById]);
+  }
+}
+
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', secOrAdmin, async (req, res) => {
   const { firstName, lastName, email, address, phone, yearJoined, graduationYear, role } = req.body;
@@ -132,8 +145,9 @@ router.post('/users', secOrAdmin, async (req, res) => {
       );
     }
 
-    // Seed annual dues from member_since (year_joined) through current year
+    // Seed annual dues and endowment records from member_since (year_joined) through current year
     if (yearJoined) await seedDuesForMember(userId, yearJoined, req.user.id);
+    await seedEndowmentForMember(userId, yearJoined, req.user.id);
 
     log.info(`Member created: ${fullName} (${emailVal}) by user ${req.user.id}`);
     await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email: emailVal, role: assignedRole });
@@ -363,8 +377,9 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
         await pool.query('UPDATE users SET address=$1, phone=$2 WHERE id=$3', [address || null, phone || null, userId]);
       }
 
-      // Seed annual dues from year_joined through current year
+      // Seed annual dues and endowment records from year_joined through current year
       if (yearJoined) await seedDuesForMember(userId, yearJoined, req.user.id);
+      await seedEndowmentForMember(userId, yearJoined, req.user.id);
 
       await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email, role, source: 'bulk-import' });
       log.info(`Bulk import: created ${fullName} (${email})`);
@@ -833,10 +848,12 @@ router.get('/endowment', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT e.id, e.amount, e.contribution_date, e.year, e.status, e.payment_method, e.notes, e.created_at,
-             u.full_name, u.id AS user_id
+             u.full_name, u.id AS user_id,
+             rb.full_name AS recorded_by_name
       FROM endowment_fund e
       JOIN users u ON u.id = e.user_id
-      ORDER BY e.contribution_date DESC, u.full_name ASC
+      LEFT JOIN users rb ON rb.id = e.recorded_by
+      ORDER BY e.year DESC NULLS LAST, u.full_name ASC
     `);
     res.json(rows);
   } catch (err) {
