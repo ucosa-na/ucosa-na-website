@@ -1147,6 +1147,7 @@
             <option value="login_success">Successful Logins</option>
             <option value="modifications">Modifications</option>
             <option value="dues">Annual Dues Changes</option>
+            <option value="endowment">Endowment Fund Changes</option>
             <option value="deletions">Deletions</option>
           </select>
           <button onclick="loadAuditLog()"
@@ -1679,6 +1680,7 @@
       PASSWORD_RESET:  '🔑 Password Reset',
       DUES_CREATED:    '💰 Dues Added',        DUES_UPDATED:    '💰 Dues Modified',
       DUES_DELETED:    '💰 Dues Deleted',
+      ENDOWMENT_CREATED:'🏦 Endowment Added',  ENDOWMENT_UPDATED:'🏦 Endowment Modified',
       MEMBER_DELETED:  '🗑️ Member Deleted',
       ENDOWMENT_DELETED:'🗑️ Endowment Deleted', MEETING_NOTE_DELETED:'🗑️ Note Deleted',
     };
@@ -1690,6 +1692,7 @@
       MEMBER_LOCKED: '#92400e',   MEMBER_UNLOCKED: '#15803d',
       PASSWORD_RESET: '#b45309',
       DUES_CREATED: '#065f46',    DUES_UPDATED: '#1e40af',    DUES_DELETED: '#991b1b',
+      ENDOWMENT_CREATED: '#065f46', ENDOWMENT_UPDATED: '#1e40af',
       MEMBER_DELETED: '#991b1b',  ENDOWMENT_DELETED: '#991b1b', MEETING_NOTE_DELETED: '#991b1b',
     };
 
@@ -1699,7 +1702,8 @@
       'MEMBER_UPDATED', 'ROLE_CHANGED', 'MEMBER_SUSPENDED', 'MEMBER_REINSTATED',
       'MEMBER_LOCKED', 'MEMBER_UNLOCKED', 'PASSWORD_RESET',
       'DUES_CREATED', 'DUES_UPDATED', 'DUES_DELETED',
-      'MEMBER_DELETED', 'ENDOWMENT_DELETED', 'MEETING_NOTE_DELETED',
+      'ENDOWMENT_CREATED', 'ENDOWMENT_UPDATED', 'ENDOWMENT_DELETED',
+      'MEMBER_DELETED', 'MEETING_NOTE_DELETED',
     ]);
 
     const AUDIT_CATEGORIES = {
@@ -1707,6 +1711,7 @@
       login_success: new Set(['LOGIN_SUCCESS']),
       modifications: new Set(['MEMBER_UPDATED','ROLE_CHANGED','MEMBER_SUSPENDED','MEMBER_REINSTATED','MEMBER_LOCKED','MEMBER_UNLOCKED','PASSWORD_RESET']),
       dues:          new Set(['DUES_CREATED','DUES_UPDATED','DUES_DELETED']),
+      endowment:     new Set(['ENDOWMENT_CREATED','ENDOWMENT_UPDATED','ENDOWMENT_DELETED']),
       deletions:     new Set(['MEMBER_DELETED','DUES_DELETED','ENDOWMENT_DELETED','MEETING_NOTE_DELETED']),
     };
 

@@ -815,7 +815,7 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
       JOIN users u ON u.id = d.user_id WHERE d.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE annual_dues SET year=$1, amount=$2, paid_date=$3, payment_method=$4,
-        status=$5, notes=$6, updated_at=NOW(), updated_by=$7 WHERE id=$8
+        status=$5, notes=$6, updated_at=NOW(), updated_by=$7, recorded_by=$7 WHERE id=$8
     `, [year, amount || 0, paidDate || null, paymentMethod || null,
         status || 'unpaid', notes || null, req.user.id, req.params.id]);
     if (before.length) {
@@ -892,7 +892,7 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
     await pool.query(`
       UPDATE endowment_fund
       SET amount=$1, year=$2, status=$3, contribution_date=$4, payment_method=$5, notes=$6,
-          updated_at=NOW(), updated_by=$7
+          updated_at=NOW(), updated_by=$7, recorded_by=$7
       WHERE id=$8
     `, [amount, year || null, status || 'paid', contributionDate || null, paymentMethod || null, notes || null, req.user.id, req.params.id]);
     if (before.length) {
