@@ -2546,7 +2546,7 @@
       const userId = document.getElementById('endMember').value;
       const amount = document.getElementById('endAmount').value;
       if (!userId) { errEl.textContent = 'Please select a member.'; errEl.style.display = 'block'; return; }
-      if (!amount) { errEl.textContent = 'Amount is required.'; errEl.style.display = 'block'; return; }
+      if (amount === '' || amount === null || amount === undefined) { errEl.textContent = 'Amount is required.'; errEl.style.display = 'block'; return; }
 
       const body = {
         userId: parseInt(userId),
@@ -2597,7 +2597,7 @@
       errEl.style.display = 'none'; okEl.style.display = 'none';
       const id     = document.getElementById('endowEditId').value;
       const amount = document.getElementById('endowEditAmount').value;
-      if (!amount) { errEl.textContent = 'Amount is required.'; errEl.style.display = 'block'; return; }
+      if (amount === '' || amount === null || amount === undefined) { errEl.textContent = 'Amount is required.'; errEl.style.display = 'block'; return; }
       const body = {
         amount:           parseFloat(amount),
         year:             parseInt(document.getElementById('endowEditYear').value) || null,

@@ -884,7 +884,7 @@ router.post('/endowment', finOrAdmin, async (req, res) => {
 // PUT /api/admin/endowment/:id — update an endowment record
 router.put('/endowment/:id', finOrAdmin, async (req, res) => {
   const { amount, year, status, contributionDate, paymentMethod, notes } = req.body;
-  if (!amount) return res.status(400).json({ error: 'Amount is required' });
+  if (amount === undefined || amount === null || amount === '') return res.status(400).json({ error: 'Amount is required' });
   try {
     const { rows: before } = await pool.query(`
       SELECT e.amount, e.status, u.full_name FROM endowment_fund e
