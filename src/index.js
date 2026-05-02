@@ -8,7 +8,7 @@ const log = require('./logger');
 
 const app = express();
 
-require('./scheduler');
+if (process.env.NODE_ENV !== 'test') require('./scheduler');
 const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
