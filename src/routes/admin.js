@@ -66,6 +66,20 @@ function generatePassword(length = 10) {
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
+// Seed annual_dues records from memberSinceYear up to the current year
+async function seedDuesForMember(userId, memberSinceYear, recordedById) {
+  const currentYear = new Date().getFullYear();
+  const startYear   = parseInt(memberSinceYear);
+  if (!startYear || startYear > currentYear) return;
+  for (let year = startYear; year <= currentYear; year++) {
+    await pool.query(`
+      INSERT INTO annual_dues (user_id, year, amount, status, due_date, paid_date, payment_method, recorded_by)
+      SELECT $1, $2, 100.00, 'unpaid', $3, NULL, NULL, $4
+      WHERE NOT EXISTS (SELECT 1 FROM annual_dues WHERE user_id = $1 AND year = $2)
+    `, [userId, year, `${year}-05-03`, recordedById]);
+  }
+}
+
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', secOrAdmin, async (req, res) => {
   const { firstName, lastName, email, address, phone, yearJoined, graduationYear, role } = req.body;
@@ -117,6 +131,9 @@ router.post('/users', secOrAdmin, async (req, res) => {
         [address || null, phone || null, userId]
       );
     }
+
+    // Seed annual dues from member_since (year_joined) through current year
+    if (yearJoined) await seedDuesForMember(userId, yearJoined, req.user.id);
 
     log.info(`Member created: ${fullName} (${emailVal}) by user ${req.user.id}`);
     await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email: emailVal, role: assignedRole });
@@ -345,6 +362,9 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
       if (address || phone) {
         await pool.query('UPDATE users SET address=$1, phone=$2 WHERE id=$3', [address || null, phone || null, userId]);
       }
+
+      // Seed annual dues from year_joined through current year
+      if (yearJoined) await seedDuesForMember(userId, yearJoined, req.user.id);
 
       await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email, role, source: 'bulk-import' });
       log.info(`Bulk import: created ${fullName} (${email})`);
@@ -737,9 +757,11 @@ router.get('/dues', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT d.id, d.year, d.amount, d.paid_date, d.payment_method, d.status, d.notes, d.created_at,
-             u.full_name, u.id AS user_id
+             u.full_name, u.id AS user_id,
+             rb.full_name AS recorded_by_name
       FROM annual_dues d
       JOIN users u ON u.id = d.user_id
+      LEFT JOIN users rb ON rb.id = d.recorded_by
       ORDER BY d.year DESC, u.full_name ASC
     `);
     res.json(rows);

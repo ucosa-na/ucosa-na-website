@@ -1262,11 +1262,8 @@
         </div>
 
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
-          <label style="font-size:15px;font-weight:600;color:#444;">Filter by Year:</label>
-          <select id="duesYearFilter" onchange="applyDuesYearFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
-            <option value="latest2">Latest 2 Years</option>
-            <option value="all">All Years</option>
-          </select>
+          <label style="font-size:15px;font-weight:600;color:#444;">Year:</label>
+          <input type="number" id="duesYearFilter" oninput="applyDuesYearFilter()" placeholder="All years" min="2000" max="2099" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;width:110px;" />
           <label style="font-size:15px;font-weight:600;color:#444;">Status:</label>
           <select id="duesStatusFilter" onchange="applyDuesYearFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
             <option value="all">All</option>
@@ -1282,11 +1279,11 @@
             <thead>
               <tr>
                 <th>Member</th><th>Year</th><th>Amount</th><th>Status</th>
-                <th>Paid Date</th><th>Method</th><th>Notes</th><th>Actions</th>
+                <th>Paid Date</th><th>Method</th><th>Notes</th><th>Recorded By</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="duesTableBody">
-              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
             </tbody>
             <tfoot id="duesTableFoot"></tfoot>
           </table>
@@ -2341,18 +2338,14 @@
       const rows        = window._allDues || [];
       const tbody       = document.getElementById('duesTableBody');
       const tfoot       = document.getElementById('duesTableFoot');
-      const filterVal   = document.getElementById('duesYearFilter')?.value || 'latest2';
+      const filterVal   = (document.getElementById('duesYearFilter')?.value || '').trim();
       const statusVal   = document.getElementById('duesStatusFilter')?.value || 'all';
       const searchVal   = (document.getElementById('duesMemberSearch')?.value || '').toLowerCase().trim();
 
       let filtered = rows;
 
-      // Year filter
-      if (filterVal === 'latest2') {
-        const years = [...new Set(rows.map(r => r.year).filter(Boolean))].sort((a,b) => b - a);
-        const topTwo = years.slice(0, 2);
-        filtered = filtered.filter(r => topTwo.includes(r.year));
-      }
+      // Year filter — exact match if a year is entered
+      if (filterVal) filtered = filtered.filter(r => String(r.year) === filterVal);
 
       // Status filter
       if (statusVal !== 'all') {
@@ -2368,7 +2361,7 @@
       if (label) label.textContent = `Showing ${filtered.length} of ${rows.length} records`;
 
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No dues records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;">No dues records found.</td></tr>';
         tfoot.innerHTML = '';
         return;
       }
@@ -2388,6 +2381,7 @@
           <td>${r.paid_date ? r.paid_date.slice(0,10) : '—'}</td>
           <td>${escapeHtml(r.payment_method || '—')}</td>
           <td style="color:#666;">${escapeHtml(r.notes || '')}</td>
+          <td style="color:#555;">${escapeHtml(r.recorded_by_name || '—')}</td>
           <td>
             <button class="btn-sm" onclick="editDues(${r.id},'${r.user_id}',${r.year},${r.amount},'${r.paid_date ? r.paid_date.slice(0,10) : ''}','${escapeHtml(r.payment_method||'')}','${r.status}','${escapeHtml(r.notes||'')}')">Edit</button>
             <button class="btn-sm" style="background:#2a9d8f;" onclick="sendDuesReminder(${r.id},'${escapeHtml(r.full_name)}')">&#128241; Remind</button>
