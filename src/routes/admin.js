@@ -265,6 +265,7 @@ router.get('/users', anyPriv, async (req, res) => {
              p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.role != 'admin'
       ORDER BY u.created_at DESC
     `);
     res.json(rows);
@@ -286,6 +287,7 @@ router.get('/users/export-csv', secOrAdmin, async (req, res) => {
              u.is_active, u.is_locked, u.created_at, u.last_login
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.role != 'admin'
       ORDER BY u.full_name ASC
     `);
 
@@ -449,6 +451,7 @@ router.get('/welfare/members', welfareOrAdmin, async (req, res) => {
              COALESCE(p.phone, u.phone) AS phone
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.role != 'admin'
       ORDER BY u.full_name ASC
     `);
     res.json(rows);
@@ -775,7 +778,7 @@ router.get('/dues', finOrAdmin, async (req, res) => {
              u.full_name, u.id AS user_id,
              rb.full_name AS recorded_by_name
       FROM annual_dues d
-      JOIN users u ON u.id = d.user_id
+      JOIN users u ON u.id = d.user_id AND u.role != 'admin'
       LEFT JOIN users rb ON rb.id = d.recorded_by
       ORDER BY d.year DESC, u.full_name ASC
     `);
@@ -851,7 +854,7 @@ router.get('/endowment', finOrAdmin, async (req, res) => {
              u.full_name, u.id AS user_id,
              rb.full_name AS recorded_by_name
       FROM endowment_fund e
-      JOIN users u ON u.id = e.user_id
+      JOIN users u ON u.id = e.user_id AND u.role != 'admin'
       LEFT JOIN users rb ON rb.id = e.recorded_by
       ORDER BY e.year DESC NULLS LAST, u.full_name ASC
     `);

@@ -35,6 +35,7 @@ async function getUnpaidMembers(year) {
     LEFT JOIN member_profiles p ON p.user_id = u.id
     LEFT JOIN annual_dues d ON d.user_id = u.id AND d.year = $1
     WHERE u.is_active = true
+      AND u.role != 'admin'
       AND (d.id IS NULL OR d.status != 'paid')
     ORDER BY u.full_name ASC
   `, [year]);
@@ -60,7 +61,7 @@ async function populateAnnualDues() {
   let members;
   try {
     const { rows } = await pool.query(
-      `SELECT id FROM users WHERE is_active = true ORDER BY id ASC`
+      `SELECT id FROM users WHERE is_active = true AND role != 'admin' ORDER BY id ASC`
     );
     members = rows;
   } catch (err) {
