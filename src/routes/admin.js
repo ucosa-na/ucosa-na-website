@@ -867,7 +867,7 @@ router.get('/endowment', finOrAdmin, async (req, res) => {
 // POST /api/admin/endowment — add an endowment record
 router.post('/endowment', finOrAdmin, async (req, res) => {
   const { userId, amount, contributionDate, year, status, paymentMethod, notes } = req.body;
-  if (!userId || !amount) return res.status(400).json({ error: 'Member and amount are required' });
+  if (!userId || amount === undefined || amount === null || amount === '') return res.status(400).json({ error: 'Member and amount are required' });
   try {
     const { rows } = await pool.query(`
       INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes, recorded_by)
