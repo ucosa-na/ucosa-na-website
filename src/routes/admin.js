@@ -735,16 +735,13 @@ router.get('/backup', adminOnly, (req, res) => {
 // GET /api/admin/dues — all dues records with member names
 router.get('/dues', finOrAdmin, async (req, res) => {
   try {
-    const currentYear = new Date().getFullYear();
     const { rows } = await pool.query(`
       SELECT d.id, d.year, d.amount, d.paid_date, d.payment_method, d.status, d.notes, d.created_at,
              u.full_name, u.id AS user_id
       FROM annual_dues d
       JOIN users u ON u.id = d.user_id
-      WHERE d.year = $1
-         OR (d.year < $1 AND d.status != 'paid')
       ORDER BY d.year DESC, u.full_name ASC
-    `, [currentYear]);
+    `);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
