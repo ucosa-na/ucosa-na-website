@@ -267,7 +267,6 @@ router.get('/users', anyPriv, async (req, res) => {
              p.address, p.phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
-      WHERE u.role IS DISTINCT FROM 'admin'
       ORDER BY u.full_name ASC
     `);
     res.json(rows);
@@ -782,7 +781,6 @@ router.get('/dues', finOrAdmin, async (req, res) => {
       FROM users u
       LEFT JOIN annual_dues d ON d.user_id = u.id
       LEFT JOIN users rb ON rb.id = d.recorded_by
-      WHERE u.role != 'admin'
       ORDER BY d.year DESC NULLS LAST, u.full_name ASC
     `);
     res.json(rows);
@@ -856,8 +854,8 @@ router.get('/endowment', finOrAdmin, async (req, res) => {
       SELECT e.id, e.amount, e.contribution_date, e.year, e.status, e.payment_method, e.notes, e.created_at,
              u.full_name, u.id AS user_id,
              rb.full_name AS recorded_by_name
-      FROM endowment_fund e
-      JOIN users u ON u.id = e.user_id AND u.role != 'admin'
+      FROM users u
+      LEFT JOIN endowment_fund e ON e.user_id = u.id
       LEFT JOIN users rb ON rb.id = e.recorded_by
       ORDER BY e.year DESC NULLS LAST, u.full_name ASC
     `);
