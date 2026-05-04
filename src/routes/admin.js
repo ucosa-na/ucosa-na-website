@@ -777,10 +777,11 @@ router.get('/dues', finOrAdmin, async (req, res) => {
       SELECT d.id, d.year, d.amount, d.paid_date, d.payment_method, d.status, d.notes, d.created_at,
              u.full_name, u.id AS user_id,
              rb.full_name AS recorded_by_name
-      FROM annual_dues d
-      JOIN users u ON u.id = d.user_id AND u.role != 'admin'
+      FROM users u
+      LEFT JOIN annual_dues d ON d.user_id = u.id
       LEFT JOIN users rb ON rb.id = d.recorded_by
-      ORDER BY d.year DESC, u.full_name ASC
+      WHERE u.role != 'admin'
+      ORDER BY d.year DESC NULLS LAST, u.full_name ASC
     `);
     res.json(rows);
   } catch (err) {
