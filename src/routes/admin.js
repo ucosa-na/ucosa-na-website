@@ -77,7 +77,7 @@ async function seedDuesForMember(userId, memberSinceYear, recordedById) {
       INSERT INTO annual_dues (user_id, year, amount, status, due_date, paid_date, payment_method, recorded_by)
       SELECT $1, $2, 100.00, 'unpaid', $3, NULL, NULL, $4
       WHERE NOT EXISTS (SELECT 1 FROM annual_dues WHERE user_id = $1 AND year = $2)
-    `, [userId, year, `${year}-06-04`, recordedById]);
+    `, [userId, year, `${year}-06-01`, recordedById]);
   }
 }
 
@@ -1199,7 +1199,7 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Dues record not found' });
     const r = rows[0];
 
-    const dueDate   = `June 4, ${r.year}`;
+    const dueDate   = `June 1, ${r.year}`;
     const amountFmt = `$${parseFloat(r.amount).toFixed(2)}`;
 
     // Email
@@ -1252,7 +1252,7 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
 // POST /api/admin/dues/remind-all — send dues reminder to all unpaid/partial members
 router.post('/dues/remind-all', finOrAdmin, async (req, res) => {
   const year = new Date().getFullYear();
-  const dueDate = `June 4, ${year}`;
+  const dueDate = `June 1, ${year}`;
   try {
     const { rows: members } = await pool.query(`
       SELECT u.id, u.full_name, u.email,

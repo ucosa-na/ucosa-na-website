@@ -55,7 +55,7 @@ function logoHeader() {
 
 async function populateAnnualDues() {
   const year    = new Date().getFullYear();
-  const dueDate = `${year}-06-04`;   // June 4th of the current year
+  const dueDate = `${year}-06-01`;   // June 4th of the current year
   log.info(`Scheduler: populating annual dues records for ${year}`);
 
   let members;
@@ -97,7 +97,7 @@ async function populateAnnualDues() {
 
 async function sendAdvanceReminders() {
   const year    = new Date().getFullYear();
-  const dueDate = `June 4, ${year}`;
+  const dueDate = `June 1, ${year}`;
   log.info(`Scheduler: sending 30-day dues advance reminders for ${year}`);
 
   let members;
@@ -148,11 +148,11 @@ async function sendAdvanceReminders() {
   log.info(`Scheduler: 30-day dues reminders dispatched for ${year}`);
 }
 
-// ── Due Date Reminder (June 4th) ─────────────────────────────────────────────
+// ── Due Date Reminder (June 1st) ─────────────────────────────────────────────
 
 async function sendDueDateReminders() {
   const year    = new Date().getFullYear();
-  const dueDate = `June 4, ${year}`;
+  const dueDate = `June 1, ${year}`;
   log.info(`Scheduler: sending due-date dues reminders for ${year}`);
 
   let members;
@@ -208,12 +208,12 @@ async function sendDueDateReminders() {
 // January 1st at 00:01 AM — populate annual dues records for all active members
 cron.schedule('1 0 1 1 *', populateAnnualDues, { timezone: 'America/New_York' });
 
-// May 4th at 9:00 AM — 30-day advance reminder (30 days before June 4)
-cron.schedule('0 9 4 5 *', sendAdvanceReminders, { timezone: 'America/New_York' });
+// May 2nd at 9:00 AM — 30-day advance reminder (30 days before June 1)
+cron.schedule('0 9 2 5 *', sendAdvanceReminders, { timezone: 'America/New_York' });
 
-// June 4th at 9:00 AM — due date reminder
-cron.schedule('0 9 4 6 *', sendDueDateReminders, { timezone: 'America/New_York' });
+// June 1st at 9:00 AM — due date reminder
+cron.schedule('0 9 1 6 *', sendDueDateReminders, { timezone: 'America/New_York' });
 
-log.info('Scheduler: annual dues jobs registered (Jan 1 populate, May 4 & June 4 reminders at 09:00 ET)');
+log.info('Scheduler: annual dues jobs registered (Jan 1 populate, May 2 & June 1 reminders at 09:00 ET)');
 
 module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders };

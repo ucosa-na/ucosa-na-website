@@ -133,7 +133,7 @@ The **Annual Dues** section shows your dues payment history by year, including:
 - **Year** — the dues year
 - **Amount** — the dues amount for that year (standard: $100.00)
 - **Status** — Paid, Partial, or Unpaid
-- **Due Date** — June 4th of each year
+- **Due Date** — June 1th of each year
 
 **How to pay:** Make your payment via **Zelle** to:
 > **ucosa.northamerica@gmail.com**
@@ -157,8 +157,8 @@ The **Endowment Fund** section shows your contributions to the association's end
 
 If your dues are unpaid as the due date approaches, the system will automatically send you:
 
-- An **email and SMS reminder 30 days before June 4th** (around May 4th).
-- An **email and SMS reminder on June 4th** (due date).
+- An **email and SMS reminder 30 days before June 1th** (around May 2th).
+- An **email and SMS reminder on June 1th** (due date).
 
 If you have already paid, please ignore the automated reminders. Your treasurer will update your record.
 

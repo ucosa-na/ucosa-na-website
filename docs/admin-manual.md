@@ -145,7 +145,7 @@ Click **Download CSV** at the top of the All Members section to export all membe
 
 > Accessible by: **Admin**, **Fin-Sec**
 
-Annual dues are due on **June 4th** each year. The system seeds dues records automatically on January 1st for all members.
+Annual dues are due on **June 1th** each year. The system seeds dues records automatically on January 1st for all members.
 
 ### 5.1 Adding a Dues Record
 
@@ -185,8 +185,8 @@ Click **Remind** (teal button) on any dues row. An SMS is sent to the member's p
 ### 5.6 Automated Reminders
 
 The scheduler sends reminders automatically:
-- **May 4th at 9:00 AM ET** — 30-day advance reminder (email + SMS) to all unpaid/partial members.
-- **June 4th at 9:00 AM ET** — Due-date reminder (email + SMS) to all unpaid/partial members.
+- **May 2th at 9:00 AM ET** — 30-day advance reminder (email + SMS) to all unpaid/partial members.
+- **June 1th at 9:00 AM ET** — Due-date reminder (email + SMS) to all unpaid/partial members.
 
 ---
 
@@ -344,9 +344,9 @@ The server runs scheduled jobs automatically:
 
 | Date | Time (ET) | Job |
 |---|---|---|
-| January 1st | 12:01 AM | Create annual dues records ($100 each) for all members for the new year with due date June 4. |
-| May 4th | 9:00 AM | Send 30-day advance dues reminder (email + SMS) to all unpaid/partial members. |
-| June 4th | 9:00 AM | Send due-date dues reminder (email + SMS) to all unpaid/partial members. |
+| January 1st | 12:01 AM | Create annual dues records ($100 each) for all members for the new year with due date June 1. |
+| May 2th | 9:00 AM | Send 30-day advance dues reminder (email + SMS) to all unpaid/partial members. |
+| June 1th | 9:00 AM | Send due-date dues reminder (email + SMS) to all unpaid/partial members. |
 
 No manual action is required for these jobs. They run silently and log results to the application log.
 
