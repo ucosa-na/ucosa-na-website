@@ -139,7 +139,7 @@ async function sendAdvanceReminders() {
     if (m.phone) {
       sendSMS(m.phone,
         `UCOSA-NA Dues Reminder\n` +
-        `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due on ${dueDate}.\n` +
+        `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due in 30 days, on ${dueDate}.\n` +
         `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\nor contact the treasurer for assistance.\nIf you've already made your payment, please ignore this message — and thank you!`
       ).catch(err => log.error(`Scheduler: advance reminder SMS failed for ${m.phone}: ${err.message}`));
     }
