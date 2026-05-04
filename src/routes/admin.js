@@ -47,10 +47,11 @@ function getTwilioClient() {
 
 async function sendSMS(to, body) {
   const client = getTwilioClient();
-  if (!client) throw new Error('Twilio not configured (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER missing)');
+  if (!client) { log.warn('SMS skipped: Twilio not configured'); return false; }
   const from = process.env.TWILIO_PHONE_NUMBER;
-  if (!from) throw new Error('TWILIO_PHONE_NUMBER not set');
-  return client.messages.create({ to, from, body });
+  if (!from) { log.warn('SMS skipped: TWILIO_PHONE_NUMBER not set'); return false; }
+  await client.messages.create({ to, from, body });
+  return true;
 }
 
 
@@ -944,8 +945,9 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
     const statusUp   = (r.status || 'pending').toUpperCase();
 
     // SMS
+    let smsSent = false;
     if (r.phone) {
-      await sendSMS(r.phone,
+      smsSent = await sendSMS(r.phone,
         `UCOSA-NA Endowment Fund Reminder\n` +
         `Dear ${r.full_name},\n` +
         `Your ${yearLabel}endowment fund contribution of ${amountFmt} is currently: ${statusUp}.\n` +
@@ -978,7 +980,7 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
         </div>`,
     }).catch(err => log.error(`Endowment reminder email failed for ${r.email}: ${err.message}`));
 
-    res.json({ message: `Reminder sent to ${r.full_name}${r.phone ? ' via SMS' : ''} and email` });
+    res.json({ message: smsSent ? `Reminder sent to ${r.full_name} via SMS and email` : `Email reminder sent to ${r.full_name}${r.phone ? ' (SMS not configured)' : ' (no phone on record)'}` });
   } catch (err) {
     console.error('Endowment reminder error:', err.message);
     res.status(500).json({ error: err.message });
@@ -1206,11 +1208,84 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
       `or contact the treasurer for assistance.\n` +
       `If you've already made your payment, please ignore this message — and thank you!`;
 
-    await sendSMS(r.phone, body);
+    const smsSent = await sendSMS(r.phone, body);
     await pool.query('UPDATE annual_dues SET reminder_sent_at = NOW() WHERE id = $1', [req.params.duesId]);
-    res.json({ message: `Reminder sent to ${r.full_name} at ${r.phone}` });
+    res.json({ message: smsSent ? `Reminder sent to ${r.full_name} at ${r.phone}` : `Email reminder sent to ${r.full_name} (SMS not configured)` });
   } catch (err) {
     console.error('Dues reminder SMS error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/dues/remind-all — send dues reminder to all unpaid/partial members
+router.post('/dues/remind-all', finOrAdmin, async (req, res) => {
+  const year = new Date().getFullYear();
+  const dueDate = `June 4, ${year}`;
+  try {
+    const { rows: members } = await pool.query(`
+      SELECT u.id, u.full_name, u.email,
+             COALESCE(p.phone, u.phone) AS phone,
+             d.amount, d.status
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      LEFT JOIN annual_dues d ON d.user_id = u.id AND d.year = $1
+      WHERE u.id != 1
+        AND u.is_active = true
+        AND (d.id IS NULL OR d.status != 'paid')
+      ORDER BY u.full_name ASC
+    `, [year]);
+
+    if (!members.length) return res.json({ message: 'All members are paid — no reminders needed.', sent: 0 });
+
+    let emailsSent = 0, smsSent = 0;
+
+    for (const m of members) {
+      const amountFmt = m.amount ? `$${parseFloat(m.amount).toFixed(2)}` : '$100.00';
+
+      // Email
+      sendEmail({
+        to: m.email,
+        subject: `UCOSA-NA — Annual Dues Reminder: Due ${dueDate}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+            <div style="background:#7b2152;text-align:center;padding:28px 32px">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            </div>
+            <div style="background:#fdf6ec;padding:32px">
+              <h2 style="color:#7b2152;margin-top:0">Annual Dues Reminder</h2>
+              <p>Dear <strong>${m.full_name}</strong>,</p>
+              <p>This is a friendly reminder that your <strong>${year} annual dues</strong> are due on <strong>${dueDate}</strong>.</p>
+              <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+                <p style="margin:0"><strong>Due Date:</strong> ${dueDate}</p>
+                <p style="margin:8px 0 0"><strong>Amount:</strong> ${amountFmt}</p>
+                ${m.status ? `<p style="margin:8px 0 0"><strong>Status:</strong> ${m.status.charAt(0).toUpperCase() + m.status.slice(1)}</p>` : ''}
+              </div>
+              <p>Please make your payment through Zelle to: <strong>ucosa.northamerica@gmail.com</strong><br>or contact the treasurer for assistance.<br><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
+              <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
+            </div>
+          </div>`,
+      }).then(() => { emailsSent++; }).catch(err => log.error(`Remind-all email failed for ${m.email}: ${err.message}`));
+
+      // SMS
+      if (m.phone) {
+        const sent = await sendSMS(m.phone,
+          `UCOSA-NA Dues Reminder\n` +
+          `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due on ${dueDate}.\n` +
+          `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\nor contact the treasurer for assistance.\nIf you've already made your payment, please ignore this message — and thank you!`
+        ).catch(err => { log.error(`Remind-all SMS failed for ${m.phone}: ${err.message}`); return false; });
+        if (sent) smsSent++;
+      }
+    }
+
+    log.info(`Remind-all: ${members.length} members notified (${smsSent} SMS, emails dispatched) for ${year} by ${req.user.email}`);
+    res.json({
+      message: `Reminders dispatched to ${members.length} member(s)${smsSent ? ` (${smsSent} SMS sent)` : ' (email only — SMS not configured)'}.`,
+      total: members.length,
+      smsSent,
+    });
+  } catch (err) {
+    log.error(`Remind-all dues error: ${err.message}`);
     res.status(500).json({ error: err.message });
   }
 });

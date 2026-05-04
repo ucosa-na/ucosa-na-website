@@ -1274,6 +1274,7 @@
           </select>
           <input type="text" id="duesMemberSearch" oninput="applyDuesYearFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
           <span id="duesCountLabel" style="font-size:14px;color:#888;"></span>
+          <button onclick="sendAllDuesReminders()" style="margin-left:auto;background:#7b2152;color:white;border:none;border-radius:8px;padding:7px 18px;font-size:14px;font-weight:600;cursor:pointer;">&#128680; Send All Reminders</button>
         </div>
         <div class="table-wrap">
           <table class="fin-table">
@@ -2801,6 +2802,20 @@
         if (!res.ok) { alert('Error: ' + (data.error || 'Failed to update role.')); loadMembers(); return; }
         loadMembers();
       } catch { alert('Network error.'); loadMembers(); }
+    }
+
+    async function sendAllDuesReminders() {
+      const year = new Date().getFullYear();
+      if (!confirm(`Send annual dues reminders to ALL unpaid/partial members for ${year}?\n\nThis will send an email (and SMS if configured) to every member who has not yet paid.`)) return;
+      try {
+        const res  = await fetch('/api/admin/dues/remind-all', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'Failed to send.')); return; }
+        alert(data.message);
+      } catch { alert('Network error.'); }
     }
 
     async function sendDuesReminder(duesId, memberName) {
