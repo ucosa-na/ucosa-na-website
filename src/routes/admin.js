@@ -949,7 +949,7 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
         `UCOSA-NA Endowment Fund Reminder\n` +
         `Dear ${r.full_name},\n` +
         `Your ${yearLabel}endowment fund contribution of ${amountFmt} is currently: ${statusUp}.\n` +
-        `Please log in at https://ucosa-na.org or contact the treasurer. Thank you!`
+        `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\nor contact the treasurer for assistance.\nIf you've already made your payment, please ignore this message — and thank you!`
       );
     }
 
@@ -972,7 +972,7 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
               <p><strong>Amount:</strong> ${amountFmt}</p>
               <p><strong>Status:</strong> ${r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : '—'}</p>
             </div>
-            <p>Please log in at <a href="https://ucosa-na.org">ucosa-na.org</a> to view your records, or contact the treasurer for assistance.</p>
+            <p>Please make your payment through Zelle to: <strong>ucosa.northamerica@gmail.com</strong><br>or contact the treasurer for assistance.<br><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
             <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
           </div>
         </div>`,
@@ -1202,8 +1202,9 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
       `UCOSA-NA Dues Reminder\n` +
       `Dear ${r.full_name},\n` +
       `Your ${r.year} annual dues of $${parseFloat(r.amount).toFixed(2)} are currently: ${r.status.toUpperCase()}.\n` +
-      `Please log in at https://ucosa-na.org or contact the treasurer.\n` +
-      `Thank you!`;
+      `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\n` +
+      `or contact the treasurer for assistance.\n` +
+      `If you've already made your payment, please ignore this message — and thank you!`;
 
     await sendSMS(r.phone, body);
     await pool.query('UPDATE annual_dues SET reminder_sent_at = NOW() WHERE id = $1', [req.params.duesId]);
