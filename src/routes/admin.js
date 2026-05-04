@@ -951,7 +951,7 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
         `UCOSA-NA Endowment Fund Reminder\n` +
         `Dear ${r.full_name},\n` +
         `Your ${yearLabel}endowment fund contribution of ${amountFmt} is currently: ${statusUp}.\n` +
-        `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\nor contact the treasurer for assistance.\nIf you've already made your payment, please ignore this message — and thank you!`
+        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!`
       );
     }
 
@@ -973,8 +973,9 @@ router.post('/endowment/:id/remind', finOrAdmin, async (req, res) => {
               ${r.year ? `<p><strong>Year:</strong> ${r.year}</p>` : ''}
               <p><strong>Amount:</strong> ${amountFmt}</p>
               <p><strong>Status:</strong> ${r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : '—'}</p>
+              <p><strong>Payment Info:</strong> Zelle to — ucosa.northamerica@gmail.com</p>
             </div>
-            <p>Please make your payment through Zelle to: <strong>ucosa.northamerica@gmail.com</strong><br>or contact the treasurer for assistance.<br><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
+            <p><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
             <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
           </div>
         </div>`,
@@ -1220,8 +1221,9 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
               <p style="margin:0"><strong>Due Date:</strong> ${dueDate}</p>
               <p style="margin:8px 0 0"><strong>Amount:</strong> ${amountFmt}</p>
               <p style="margin:8px 0 0"><strong>Status:</strong> ${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</p>
+              <p style="margin:8px 0 0"><strong>Payment Info:</strong> Zelle to — ucosa.northamerica@gmail.com</p>
             </div>
-            <p>Please make your payment through Zelle to: <strong>ucosa.northamerica@gmail.com</strong><br>or contact the treasurer for assistance.<br><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
+            <p><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
             <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
           </div>
         </div>`,
@@ -1233,8 +1235,7 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
       smsSent = await sendSMS(r.phone,
         `UCOSA-NA Dues Reminder\n` +
         `Dear ${r.full_name}, your ${r.year} annual dues (${amountFmt}) are due on ${dueDate}.\n` +
-        `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\n` +
-        `or contact the treasurer for assistance.\n` +
+        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\n` +
         `If you've already made your payment, please ignore this message — and thank you!`
       );
     }
@@ -1292,8 +1293,9 @@ router.post('/dues/remind-all', finOrAdmin, async (req, res) => {
                 <p style="margin:0"><strong>Due Date:</strong> ${dueDate}</p>
                 <p style="margin:8px 0 0"><strong>Amount:</strong> ${amountFmt}</p>
                 ${m.status ? `<p style="margin:8px 0 0"><strong>Status:</strong> ${m.status.charAt(0).toUpperCase() + m.status.slice(1)}</p>` : ''}
+                <p style="margin:8px 0 0"><strong>Payment Info:</strong> Zelle to — ucosa.northamerica@gmail.com</p>
               </div>
-              <p>Please make your payment through Zelle to: <strong>ucosa.northamerica@gmail.com</strong><br>or contact the treasurer for assistance.<br><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
+              <p><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
               <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
             </div>
           </div>`,
@@ -1304,7 +1306,7 @@ router.post('/dues/remind-all', finOrAdmin, async (req, res) => {
         const sent = await sendSMS(m.phone,
           `UCOSA-NA Dues Reminder\n` +
           `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due on ${dueDate}.\n` +
-          `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\nor contact the treasurer for assistance.\nIf you've already made your payment, please ignore this message — and thank you!`
+          `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!`
         ).catch(err => { log.error(`Remind-all SMS failed for ${m.phone}: ${err.message}`); return false; });
         if (sent) smsSent++;
       }
