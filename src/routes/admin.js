@@ -262,11 +262,13 @@ router.get('/users', anyPriv, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.is_active, u.is_locked, u.created_at, u.last_login,
-             p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
+             COALESCE(p.first_name, split_part(u.full_name, ' ', 1))  AS first_name,
+             COALESCE(p.last_name,  NULLIF(substring(u.full_name FROM position(' ' IN u.full_name) + 1), '')) AS last_name,
+             p.address, p.phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
-      WHERE u.role != 'admin'
-      ORDER BY u.created_at DESC
+      WHERE u.role IS DISTINCT FROM 'admin'
+      ORDER BY u.full_name ASC
     `);
     res.json(rows);
   } catch (err) {
