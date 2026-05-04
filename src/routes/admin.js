@@ -267,6 +267,7 @@ router.get('/users', anyPriv, async (req, res) => {
              p.address, p.phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.id != 1
       ORDER BY u.full_name ASC
     `);
     res.json(rows);
@@ -288,7 +289,7 @@ router.get('/users/export-csv', secOrAdmin, async (req, res) => {
              u.is_active, u.is_locked, u.created_at, u.last_login
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
-      WHERE u.role != 'admin'
+      WHERE u.id != 1
       ORDER BY u.full_name ASC
     `);
 
@@ -452,7 +453,7 @@ router.get('/welfare/members', welfareOrAdmin, async (req, res) => {
              COALESCE(p.phone, u.phone) AS phone
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
-      WHERE u.role != 'admin'
+      WHERE u.id != 1
       ORDER BY u.full_name ASC
     `);
     res.json(rows);
@@ -781,6 +782,7 @@ router.get('/dues', finOrAdmin, async (req, res) => {
       FROM users u
       LEFT JOIN annual_dues d ON d.user_id = u.id
       LEFT JOIN users rb ON rb.id = d.recorded_by
+      WHERE u.id != 1
       ORDER BY d.year DESC NULLS LAST, u.full_name ASC
     `);
     res.json(rows);
@@ -857,6 +859,7 @@ router.get('/endowment', finOrAdmin, async (req, res) => {
       FROM users u
       LEFT JOIN endowment_fund e ON e.user_id = u.id
       LEFT JOIN users rb ON rb.id = e.recorded_by
+      WHERE u.id != 1
       ORDER BY e.year DESC NULLS LAST, u.full_name ASC
     `);
     res.json(rows);
@@ -1028,7 +1031,7 @@ router.post('/sms/broadcast', proOrAdmin, async (req, res) => {
       `SELECT u.full_name, COALESCE(p.phone, u.phone) AS phone
        FROM users u
        LEFT JOIN member_profiles p ON p.user_id = u.id
-       WHERE COALESCE(p.phone, u.phone) IS NOT NULL AND u.role != 'admin'`
+       WHERE COALESCE(p.phone, u.phone) IS NOT NULL AND u.id != 1`
     );
 
     if (!rows.length) return res.status(400).json({ error: 'No members with phone numbers found' });
@@ -1055,7 +1058,7 @@ router.post('/email/broadcast', proOrAdmin, async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      `SELECT full_name, email FROM users WHERE role != 'admin' ORDER BY full_name ASC`
+      `SELECT full_name, email FROM users WHERE id != 1 ORDER BY full_name ASC`
     );
     if (!rows.length) return res.status(400).json({ error: 'No members found' });
 
