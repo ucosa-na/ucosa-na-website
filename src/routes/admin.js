@@ -76,7 +76,7 @@ async function seedDuesForMember(userId, memberSinceYear, recordedById) {
       INSERT INTO annual_dues (user_id, year, amount, status, due_date, paid_date, payment_method, recorded_by)
       SELECT $1, $2, 100.00, 'unpaid', $3, NULL, NULL, $4
       WHERE NOT EXISTS (SELECT 1 FROM annual_dues WHERE user_id = $1 AND year = $2)
-    `, [userId, year, `${year}-05-03`, recordedById]);
+    `, [userId, year, `${year}-06-04`, recordedById]);
   }
 }
 
