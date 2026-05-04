@@ -1189,7 +1189,7 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT d.year, d.amount, d.status,
-             u.full_name, COALESCE(p.phone, u.phone) AS phone
+             u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
       FROM annual_dues d
       JOIN users u ON u.id = d.user_id
       LEFT JOIN member_profiles p ON p.user_id = u.id
@@ -1198,21 +1198,53 @@ router.post('/sms/dues-reminder/:duesId', finOrAdmin, async (req, res) => {
 
     if (!rows.length) return res.status(404).json({ error: 'Dues record not found' });
     const r = rows[0];
-    if (!r.phone) return res.status(400).json({ error: `${r.full_name} has no phone number on record` });
 
-    const body =
-      `UCOSA-NA Dues Reminder\n` +
-      `Dear ${r.full_name},\n` +
-      `Your ${r.year} annual dues of $${parseFloat(r.amount).toFixed(2)} are currently: ${r.status.toUpperCase()}.\n` +
-      `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\n` +
-      `or contact the treasurer for assistance.\n` +
-      `If you've already made your payment, please ignore this message — and thank you!`;
+    const dueDate   = `June 4, ${r.year}`;
+    const amountFmt = `$${parseFloat(r.amount).toFixed(2)}`;
 
-    const smsSent = await sendSMS(r.phone, body);
+    // Email
+    await sendEmail({
+      to: r.email,
+      subject: `UCOSA-NA — Annual Dues Reminder: Due ${dueDate}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:32px">
+            <h2 style="color:#7b2152;margin-top:0">Annual Dues Reminder</h2>
+            <p>Dear <strong>${r.full_name}</strong>,</p>
+            <p>This is a friendly reminder that your <strong>${r.year} annual dues</strong> are due on <strong>${dueDate}</strong>.</p>
+            <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+              <p style="margin:0"><strong>Due Date:</strong> ${dueDate}</p>
+              <p style="margin:8px 0 0"><strong>Amount:</strong> ${amountFmt}</p>
+              <p style="margin:8px 0 0"><strong>Status:</strong> ${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</p>
+            </div>
+            <p>Please make your payment through Zelle to: <strong>ucosa.northamerica@gmail.com</strong><br>or contact the treasurer for assistance.<br><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
+            <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
+          </div>
+        </div>`,
+    });
+
+    // SMS
+    let smsSent = false;
+    if (r.phone) {
+      smsSent = await sendSMS(r.phone,
+        `UCOSA-NA Dues Reminder\n` +
+        `Dear ${r.full_name}, your ${r.year} annual dues (${amountFmt}) are due on ${dueDate}.\n` +
+        `Please make your payment through Zelle to: ucosa.northamerica@gmail.com\n` +
+        `or contact the treasurer for assistance.\n` +
+        `If you've already made your payment, please ignore this message — and thank you!`
+      );
+    }
+
     await pool.query('UPDATE annual_dues SET reminder_sent_at = NOW() WHERE id = $1', [req.params.duesId]);
-    res.json({ message: smsSent ? `Reminder sent to ${r.full_name} at ${r.phone}` : `Email reminder sent to ${r.full_name} (SMS not configured)` });
+    res.json({ message: smsSent
+      ? `Reminder sent to ${r.full_name} via email and SMS`
+      : `Email reminder sent to ${r.full_name}${r.phone ? ' (SMS not configured)' : ' (no phone on record)'}` });
   } catch (err) {
-    console.error('Dues reminder SMS error:', err.message);
+    log.error(`Dues reminder error: ${err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
