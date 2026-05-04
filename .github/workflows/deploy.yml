@@ -111,9 +111,13 @@ jobs:
               && sed -i "s|^TWILIO_PHONE_NUMBER=.*|TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}|" /opt/ucosa-na/.env \
               || echo "TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}" >> /opt/ucosa-na/.env
 
-            # Deploy app
+            # Deploy app — pull with retry
             cd /opt/ucosa-na
-            docker pull ${{ env.IMAGE_NAME }}:latest
+            for i in 1 2 3; do
+              docker pull ${{ env.IMAGE_NAME }}:latest && break
+              echo "Pull attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
             docker stop ${{ env.CONTAINER_NAME }} || true
             docker rm ${{ env.CONTAINER_NAME }} || true
             docker run -d \
@@ -124,4 +128,22 @@ jobs:
               --env-file /opt/ucosa-na/.env \
               ${{ env.IMAGE_NAME }}:latest
             docker image prune -f
+
+            # Wait for container to become healthy
+            echo "Waiting for app to start..."
+            for i in $(seq 1 12); do
+              sleep 5
+              STATUS=$(docker inspect --format='{{.State.Status}}' ${{ env.CONTAINER_NAME }} 2>/dev/null || echo 'missing')
+              if [ "$STATUS" = "running" ]; then
+                if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
+                  echo "App is healthy after $((i*5))s"
+                  break
+                fi
+              elif [ "$STATUS" = "exited" ] || [ "$STATUS" = "dead" ]; then
+                echo "Container failed to start:"
+                docker logs --tail 30 ${{ env.CONTAINER_NAME }}
+                exit 1
+              fi
+              echo "  waiting... ($((i*5))s)"
+            done
             echo "Deployed ${{ github.sha }} at $(date)"
