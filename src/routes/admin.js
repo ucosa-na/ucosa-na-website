@@ -1324,6 +1324,77 @@ router.post('/dues/remind-all', finOrAdmin, async (req, res) => {
   }
 });
 
+// ── EXPENSE RECORDS ──────────────────────────────────────────────────────────
+
+// GET /api/admin/expenses
+router.get('/expenses', finOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT e.id, e.expense_date, e.category, e.description, e.amount, e.approved_by, e.created_at,
+             u.full_name AS recorded_by_name
+      FROM expense_records e
+      LEFT JOIN users u ON u.id = e.recorded_by
+      ORDER BY e.expense_date DESC, e.id DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/expenses
+router.post('/expenses', finOrAdmin, async (req, res) => {
+  const { expenseDate, category, description, amount, approvedBy } = req.body;
+  if (!expenseDate || !category || amount === undefined || amount === null || amount === '') {
+    return res.status(400).json({ error: 'Date, category, and amount are required' });
+  }
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO expense_records (expense_date, category, description, amount, approved_by, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+    `, [expenseDate, category.trim(), description?.trim() || null,
+        parseFloat(amount) || 0, approvedBy?.trim() || null, req.user.id]);
+    await logAudit(req.user.id, req.user.email, 'EXPENSE_CREATED', 'EXPENSE', rows[0].id, category,
+      { expenseDate, category, amount, approvedBy });
+    res.status(201).json({ message: 'Expense record added', id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/expenses/:id
+router.put('/expenses/:id', finOrAdmin, async (req, res) => {
+  const { expenseDate, category, description, amount, approvedBy } = req.body;
+  try {
+    const { rowCount } = await pool.query(`
+      UPDATE expense_records
+      SET expense_date = $1, category = $2, description = $3, amount = $4, approved_by = $5
+      WHERE id = $6
+    `, [expenseDate, category?.trim(), description?.trim() || null,
+        parseFloat(amount) || 0, approvedBy?.trim() || null, req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Expense record not found' });
+    await logAudit(req.user.id, req.user.email, 'EXPENSE_UPDATED', 'EXPENSE', parseInt(req.params.id), category,
+      { expenseDate, category, amount, approvedBy });
+    res.json({ message: 'Expense record updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/expenses/:id
+router.delete('/expenses/:id', finOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT category, amount FROM expense_records WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Expense record not found' });
+    await pool.query('DELETE FROM expense_records WHERE id = $1', [req.params.id]);
+    await logAudit(req.user.id, req.user.email, 'EXPENSE_DELETED', 'EXPENSE', parseInt(req.params.id), rows[0].category,
+      { amount: rows[0].amount });
+    res.json({ message: 'Expense record deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── AUDIT LOG ────────────────────────────────────────────────────────────────
 
 // GET /api/admin/audit — view audit log (admin only)

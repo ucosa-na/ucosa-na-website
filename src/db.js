@@ -121,6 +121,19 @@ pool.query(`
   pool.query(`ALTER TABLE endowment_fund ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`)
 ).then(() =>
   pool.query(`
+    CREATE TABLE IF NOT EXISTS expense_records (
+      id           SERIAL PRIMARY KEY,
+      expense_date DATE NOT NULL,
+      category     TEXT NOT NULL,
+      description  TEXT,
+      amount       NUMERIC(10,2) NOT NULL DEFAULT 0,
+      approved_by  TEXT,
+      recorded_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at   TIMESTAMPTZ DEFAULT NOW()
+    );
+  `),
+
+  pool.query(`
     CREATE TABLE IF NOT EXISTS audit_log (
       id                SERIAL PRIMARY KEY,
       action            TEXT NOT NULL,

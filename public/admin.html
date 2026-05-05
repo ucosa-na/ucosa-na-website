@@ -706,6 +706,7 @@
         <div class="sidebar-group-items open" id="groupFinItems">
           <a href="#annualDues">Annual Dues</a>
           <a href="#endowmentFund">Endowment Fund</a>
+          <a href="#expenseRecords">Expense Records</a>
         </div>
       </div>
 
@@ -1374,6 +1375,83 @@
         </div>
       </section>
 
+      <!-- EXPENSE RECORDS -->
+      <section id="expenseRecords">
+        <h2>&#128176; Expense Records</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">Record and track association expenses.</p>
+
+        <div id="expenseError"   class="msg error"></div>
+        <div id="expenseSuccess" class="msg success"></div>
+
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+          <div class="form-group" style="max-width:160px;">
+            <label for="expenseDate">Date <span style="color:#e63946;">*</span></label>
+            <input type="date" id="expenseDate" />
+          </div>
+          <div class="form-group" style="max-width:180px;">
+            <label for="expenseCategory">Category <span style="color:#e63946;">*</span></label>
+            <select id="expenseCategory">
+              <option value="">— Select —</option>
+              <option value="Administrative">Administrative</option>
+              <option value="Events">Events</option>
+              <option value="Communications">Communications</option>
+              <option value="Travel">Travel</option>
+              <option value="Welfare">Welfare</option>
+              <option value="Scholarship">Scholarship</option>
+              <option value="Donation">Donation</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="expenseDescription">Description</label>
+            <input type="text" id="expenseDescription" placeholder="Brief description of expense" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="expenseAmount">Amount ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="expenseAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:200px;">
+            <label for="expenseApprovedBy">Approved By</label>
+            <input type="text" id="expenseApprovedBy" placeholder="Name of approver" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="expenseSaveBtn" onclick="saveExpense()">Add Expense</button>
+          <button class="btn-secondary" id="expenseCancelBtn" style="display:none;margin-left:10px;" onclick="cancelExpenseEdit()">Cancel Edit</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:15px;font-weight:600;color:#444;">Category:</label>
+          <select id="expenseCategoryFilter" onchange="applyExpenseFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
+            <option value="all">All</option>
+            <option value="Administrative">Administrative</option>
+            <option value="Events">Events</option>
+            <option value="Communications">Communications</option>
+            <option value="Travel">Travel</option>
+            <option value="Welfare">Welfare</option>
+            <option value="Scholarship">Scholarship</option>
+            <option value="Donation">Donation</option>
+            <option value="Other">Other</option>
+          </select>
+          <input type="text" id="expenseSearch" oninput="applyExpenseFilter()" placeholder="Search description…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
+          <span id="expenseCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Date</th><th>Category</th><th>Description</th>
+                <th>Amount</th><th>Approved By</th><th>Recorded By</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="expenseTableBody">
+              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+            </tbody>
+            <tfoot id="expenseTableFoot"></tfoot>
+          </table>
+        </div>
+      </section>
+
       <!-- SMS BROADCAST -->
       <section id="smsBroadcast">
         <h2>&#128241; SMS Broadcast</h2>
@@ -1627,7 +1705,7 @@
 
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
-      const finSections      = ['annualDues', 'endowmentFund'];
+      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
@@ -2834,6 +2912,130 @@
       } catch { alert('Network error.'); }
     }
 
+    // ── EXPENSE RECORDS ───────────────────────────────────────────────────────
+
+    let expenseEditId = null;
+
+    async function loadExpenses() {
+      const tbody = document.getElementById('expenseTableBody');
+      try {
+        const res  = await fetch('/api/admin/expenses', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+        if (!Array.isArray(data)) throw new Error('Unexpected response from server');
+        window._allExpenses = data;
+        applyExpenseFilter();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="color:#e63946;padding:16px;">Error loading expenses: ${err.message}</td></tr>`;
+      }
+    }
+
+    function applyExpenseFilter() {
+      const rows      = window._allExpenses || [];
+      const tbody     = document.getElementById('expenseTableBody');
+      const tfoot     = document.getElementById('expenseTableFoot');
+      const catVal    = document.getElementById('expenseCategoryFilter')?.value || 'all';
+      const searchVal = (document.getElementById('expenseSearch')?.value || '').toLowerCase().trim();
+
+      let filtered = rows;
+      if (catVal !== 'all') filtered = filtered.filter(r => r.category === catVal);
+      if (searchVal)        filtered = filtered.filter(r => (r.description || '').toLowerCase().includes(searchVal) || (r.category || '').toLowerCase().includes(searchVal));
+
+      const label = document.getElementById('expenseCountLabel');
+      if (label) label.textContent = `Showing ${filtered.length} of ${rows.length} records`;
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;">No expense records found.</td></tr>';
+        tfoot.innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td style="color:#aaa;font-size:0.9em;">#${r.id}</td>
+          <td>${r.expense_date ? r.expense_date.slice(0,10) : '—'}</td>
+          <td>${escapeHtml(r.category)}</td>
+          <td>${escapeHtml(r.description || '—')}</td>
+          <td style="font-weight:600;">$${parseFloat(r.amount).toFixed(2)}</td>
+          <td>${escapeHtml(r.approved_by || '—')}</td>
+          <td style="color:#666;">${escapeHtml(r.recorded_by_name || '—')}</td>
+          <td>
+            <button class="btn-sm" onclick="editExpense(${r.id})">Edit</button>
+            <button class="btn-sm btn-danger" onclick="deleteExpense(${r.id})">Delete</button>
+          </td>
+        </tr>`).join('');
+
+      const total = filtered.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+      tfoot.innerHTML = `<tr style="font-weight:700;background:#fdf6ec;"><td colspan="4" style="text-align:right;padding:10px 12px;">Total:</td><td style="padding:10px 12px;">$${total.toFixed(2)}</td><td colspan="3"></td></tr>`;
+    }
+
+    async function saveExpense() {
+      const errEl = document.getElementById('expenseError');
+      const sucEl = document.getElementById('expenseSuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+      const expenseDate  = document.getElementById('expenseDate').value.trim();
+      const category     = document.getElementById('expenseCategory').value;
+      const description  = document.getElementById('expenseDescription').value.trim();
+      const amount       = document.getElementById('expenseAmount').value;
+      const approvedBy   = document.getElementById('expenseApprovedBy').value.trim();
+
+      if (!expenseDate || !category || amount === '') {
+        errEl.textContent = 'Date, category, and amount are required.';
+        errEl.style.display = 'block'; return;
+      }
+
+      const body   = { expenseDate, category, description, amount, approvedBy };
+      const isEdit = expenseEditId !== null;
+      const url    = isEdit ? `/api/admin/expenses/${expenseEditId}` : '/api/admin/expenses';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed to save.'; errEl.style.display = 'block'; return; }
+        sucEl.textContent = isEdit ? 'Expense record updated.' : 'Expense record added.';
+        sucEl.style.display = 'block';
+        cancelExpenseEdit();
+        loadExpenses();
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+    }
+
+    function editExpense(id) {
+      const r = (window._allExpenses || []).find(x => x.id === id);
+      if (!r) return;
+      expenseEditId = id;
+      document.getElementById('expenseDate').value        = r.expense_date ? r.expense_date.slice(0,10) : '';
+      document.getElementById('expenseCategory').value    = r.category || '';
+      document.getElementById('expenseDescription').value = r.description || '';
+      document.getElementById('expenseAmount').value      = r.amount != null ? parseFloat(r.amount).toFixed(2) : '';
+      document.getElementById('expenseApprovedBy').value  = r.approved_by || '';
+      document.getElementById('expenseSaveBtn').textContent = 'Update Expense';
+      document.getElementById('expenseCancelBtn').style.display = '';
+      document.getElementById('expenseRecords').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelExpenseEdit() {
+      expenseEditId = null;
+      document.getElementById('expenseDate').value        = '';
+      document.getElementById('expenseCategory').value    = '';
+      document.getElementById('expenseDescription').value = '';
+      document.getElementById('expenseAmount').value      = '';
+      document.getElementById('expenseApprovedBy').value  = '';
+      document.getElementById('expenseSaveBtn').textContent = 'Add Expense';
+      document.getElementById('expenseCancelBtn').style.display = 'none';
+    }
+
+    async function deleteExpense(id) {
+      if (!confirm('Delete this expense record? This cannot be undone.')) return;
+      try {
+        const res  = await fetch(`/api/admin/expenses/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'Failed to delete.')); return; }
+        loadExpenses();
+      } catch { alert('Network error.'); }
+    }
+
     // ── MEETING NOTES ─────────────────────────────────────────────────────────
 
     async function fetchAdminNoteBlob(id) {
@@ -3063,6 +3265,7 @@
       if (['admin', 'fin-role'].includes(user.role)) {
         loadDues();
         loadEndowment();
+        loadExpenses();
       }
 
       if (['admin', 'security-role'].includes(user.role)) {
