@@ -2343,13 +2343,14 @@
       const tfoot = document.getElementById('duesTableFoot');
       try {
         const res = await fetch('/api/admin/dues', { headers: { 'Authorization': 'Bearer ' + getToken() } });
-        const rows = await res.json();
-        // Sort by year descending
-        rows.sort((a, b) => (b.year || 0) - (a.year || 0));
-        window._allDues = rows;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+        if (!Array.isArray(data)) throw new Error('Unexpected response from server');
+        data.sort((a, b) => (b.year || 0) - (a.year || 0));
+        window._allDues = data;
         applyDuesYearFilter();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="color:#e63946;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="color:#e63946;padding:16px;">Error loading dues: ${err.message}</td></tr>`;
       }
     }
 
@@ -2484,11 +2485,13 @@
       const tbody = document.getElementById('endTableBody');
       try {
         const res = await fetch('/api/admin/endowment', { headers: { 'Authorization': 'Bearer ' + getToken() } });
-        const rows = await res.json();
-        window._allEndow = rows;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+        if (!Array.isArray(data)) throw new Error('Unexpected response from server');
+        window._allEndow = data;
         applyEndowFilter();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="9" style="color:#e63946;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="color:#e63946;padding:16px;">Error loading endowment: ${err.message}</td></tr>`;
       }
     }
 
