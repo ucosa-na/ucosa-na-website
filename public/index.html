@@ -1596,6 +1596,72 @@
     .event-info-box { padding: 16px; font-size: 0.92rem; }
   }
 
+  /* ── TABLET / iPad (769px – 1024px) ── */
+  @media (min-width: 769px) and (max-width: 1024px) {
+
+    /* Sidebar: narrower so content area gets more room */
+    .sidebar           { width: 240px; min-width: 240px; }
+    .sidebar-logo img  { width: 100px; height: 100px; }
+    .sidebar-logo .wordmark { font-size: 16px; }
+    .sidebar-footer    { padding: 14px 16px; }
+    .nav-label         { font-size: 20px; padding: 0 16px 8px; }
+    .nav-item          { font-size: 17px; padding: 11px 16px; gap: 10px; }
+    .nav-sub-item      { font-size: 15px; padding: 9px 16px 9px 34px; gap: 10px; }
+    .nav-item-lg       { font-size: 17px; }
+
+    /* Banner */
+    .banner-content    { padding: 18px 16px; }
+    .banner-center     { padding: 14px 16px; }
+    .banner-logo       { width: 72px; height: 72px; }
+    .banner-title      { font-size: 24px; white-space: normal; line-height: 1.3; }
+    .banner-sub        { font-size: 14px; white-space: normal; }
+    .banner-nav-bar > span       { font-size: 13px; padding: 10px 14px; }
+    .nav-dropdown-trigger        { font-size: 13px; padding: 10px 14px; }
+    .banner-login-btn            { font-size: 12px; padding: 0 14px; }
+
+    /* Page content */
+    .page              { padding: 28px 22px; }
+    .page-heading      { font-size: 34px; }
+    .page-sub          { font-size: 16px; margin-bottom: 20px; }
+
+    /* Hero */
+    .welcome-hero      { padding: 32px 0 24px; }
+    .hero-title        { font-size: 30px; }
+    .stats-bar         { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
+    .stat-item         { padding: 18px 14px; }
+    .stat-number       { font-size: 30px; }
+
+    /* About cards */
+    .about-grid        { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .about-card        { padding: 20px 18px; }
+    .about-card h3     { font-size: 22px; }
+
+    /* Exec / Members grids */
+    .exec-grid         { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .members-grid      { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    /* Photo gallery */
+    .gallery-grid      { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .gallery-section-heading { font-size: 1.1rem; }
+
+    /* Override inline repeat(5,1fr) grids inside gallery/event sections */
+    .gallery-section [style*="grid-template-columns:repeat(5"],
+    #page-event-golden-jubilee [style*="grid-template-columns:repeat(5"],
+    #page-event-inaugural [style*="grid-template-columns:repeat(5"] {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+
+    /* Convention tabs */
+    .conv-tabs         { gap: 8px; }
+    .conv-tab          { font-size: 13px; padding: 9px 12px; }
+
+    /* Event info box */
+    .event-info-box    { padding: 18px; font-size: 0.93rem; }
+
+    /* Computer lab grid */
+    .lab-photo-grid    { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  }
+
   /* ── SMALL PHONES (≤ 480px) ── */
   @media (max-width: 480px) {
     .banner-title   { font-size: 17px; }
