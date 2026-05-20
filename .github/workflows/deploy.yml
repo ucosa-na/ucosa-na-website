@@ -120,12 +120,15 @@ jobs:
             done
             docker stop ${{ env.CONTAINER_NAME }} || true
             docker rm ${{ env.CONTAINER_NAME }} || true
+            # Ensure media directory exists on host (upload videos here manually via SCP/SFTP)
+            mkdir -p /opt/ucosa-na/media/Video2
             docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
               --restart unless-stopped \
               --network app-network \
               -p 3000:3000 \
               --env-file /opt/ucosa-na/.env \
+              -v /opt/ucosa-na/media/Video2:/app/public/Video2:ro \
               ${{ env.IMAGE_NAME }}:latest
             docker image prune -f
 

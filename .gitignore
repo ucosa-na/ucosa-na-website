@@ -5,3 +5,12 @@ app.log
 coverage/
 *.log
 twilio_2FA_recovery_code.txt
+
+# Large media files — store on server, not in git/Docker
+*.mp4
+*.mov
+*.avi
+*.mkv
+public/Video/
+public/Video2/
+public/Golden_jubilee2/

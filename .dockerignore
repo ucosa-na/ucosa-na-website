@@ -9,3 +9,12 @@ nginx
 scripts
 docker-compose*.yml
 data/
+
+# Large media files — served from host volume mount
+public/Video/
+public/Video2/
+public/Golden_jubilee2/
+*.mp4
+*.mov
+*.avi
+*.mkv
