@@ -120,15 +120,42 @@ jobs:
             done
             docker stop ${{ env.CONTAINER_NAME }} || true
             docker rm ${{ env.CONTAINER_NAME }} || true
-            # Ensure media directory exists on host (upload videos here manually via SCP/SFTP)
-            mkdir -p /opt/ucosa-na/media/Video2
+            # Ensure all media directories exist on host (populate once via SCP/rsync)
+            mkdir -p \
+              /opt/ucosa-na/media/Video2 \
+              /opt/ucosa-na/media/Golden_Jubilee \
+              "/opt/ucosa-na/media/Gala-night" \
+              /opt/ucosa-na/media/Principal_Building_Commissioning \
+              /opt/ucosa-na/media/computer_lab \
+              /opt/ucosa-na/media/Welcome-night \
+              "/opt/ucosa-na/media/pic1" \
+              "/opt/ucosa-na/media/current executive" \
+              "/opt/ucosa-na/media/Past executives" \
+              /opt/ucosa-na/media/911-Museum \
+              /opt/ucosa-na/media/Minute_Of_Meetings \
+              /opt/ucosa-na/media/ucosa_na_members \
+              /opt/ucosa-na/media/ucosa-na-members \
+              /opt/ucosa-na/media/photo_gallery
             docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
               --restart unless-stopped \
               --network app-network \
               -p 3000:3000 \
               --env-file /opt/ucosa-na/.env \
-              -v /opt/ucosa-na/media/Video2:/app/public/Video2:ro \
+              -v "/opt/ucosa-na/media/Video2:/app/public/Video2:ro" \
+              -v "/opt/ucosa-na/media/Golden_Jubilee:/app/public/Golden_Jubilee:ro" \
+              -v "/opt/ucosa-na/media/Gala-night:/app/public/Gala-night:ro" \
+              -v "/opt/ucosa-na/media/Principal_Building_Commissioning:/app/public/Principal_Building_Commissioning:ro" \
+              -v "/opt/ucosa-na/media/computer_lab:/app/public/computer_lab:ro" \
+              -v "/opt/ucosa-na/media/Welcome-night:/app/public/Welcome-night:ro" \
+              -v "/opt/ucosa-na/media/pic1:/app/public/pic1:ro" \
+              -v "/opt/ucosa-na/media/current executive:/app/public/current executive:ro" \
+              -v "/opt/ucosa-na/media/Past executives:/app/public/Past executives:ro" \
+              -v "/opt/ucosa-na/media/911-Museum:/app/public/911-Museum:ro" \
+              -v "/opt/ucosa-na/media/Minute_Of_Meetings:/app/public/Minute_Of_Meetings:ro" \
+              -v "/opt/ucosa-na/media/ucosa_na_members:/app/public/ucosa_na_members:ro" \
+              -v "/opt/ucosa-na/media/ucosa-na-members:/app/public/ucosa-na-members:ro" \
+              -v "/opt/ucosa-na/media/photo_gallery:/app/public/photo_gallery:ro" \
               ${{ env.IMAGE_NAME }}:latest
             docker image prune -f
 

@@ -10,10 +10,24 @@ scripts
 docker-compose*.yml
 data/
 
-# Large media files — served from host volume mount
+# Large media files — served from host volume mount, never bake into image
 public/Video/
 public/Video2/
+public/Golden_Jubilee/
 public/Golden_jubilee2/
+public/Gala-night/
+public/Principal_Building_Commissioning/
+public/computer_lab/
+public/Welcome-night/
+public/Welcome-night2/
+public/pic1/
+public/current executive/
+public/Past executives/
+public/911-Museum/
+public/Minute_Of_Meetings/
+public/ucosa_na_members/
+public/ucosa-na-members/
+public/photo_gallery/
 *.mp4
 *.mov
 *.avi
