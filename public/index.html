@@ -504,24 +504,48 @@
   .donate-modal {
     background: #fdf6ec;
     border-radius: 14px;
-    max-width: 600px;
+    max-width: 900px;
     width: 100%;
-    padding: 44px 40px 36px;
+    padding: 0;
     position: relative;
     box-shadow: 0 8px 40px rgba(0,0,0,0.22);
     max-height: 90vh;
     overflow-y: auto;
+    display: flex;
+  }
+  .donate-modal-left {
+    background: #1b5e20;
+    color: #fff;
+    border-radius: 14px 0 0 14px;
+    padding: 44px 32px 36px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .donate-modal-right {
+    background: #fdf6ec;
+    border-radius: 0 14px 14px 0;
+    padding: 44px 32px 36px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  @media (max-width: 640px) {
+    .donate-modal { flex-direction: column; max-width: 98vw; }
+    .donate-modal-left  { border-radius: 14px 14px 0 0; padding: 28px 20px 24px; }
+    .donate-modal-right { border-radius: 0 0 14px 14px; padding: 24px 20px 28px; }
   }
   .donate-modal-close {
     position: absolute;
-    top: 14px;
-    right: 18px;
+    top: 12px;
+    right: 14px;
     background: none;
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: #888;
+    color: #aaa;
     line-height: 1;
+    z-index: 1;
   }
   .donate-modal-close:hover { color: #333; }
   .donate-modal-icon {
@@ -3572,62 +3596,76 @@
 <script src="https://js.stripe.com/v3/"></script>
 <div class="donate-modal-overlay" id="donateModalOverlay" onclick="handleDonateOverlayClick(event)">
   <div class="donate-modal">
-    <button class="donate-modal-close" onclick="closeDonateModal()" aria-label="Close">&times;</button>
-    <div class="donate-modal-icon">
-      <svg width="44" height="44" fill="none" stroke="#2e7d32" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-      </svg>
-    </div>
-    <div class="donate-modal-title">Help Us Empower the Next Generation</div>
-    <p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:18px;">
-      Your donation supports students at Ugbeka College — funding the computer lab, school supplies, and resources that open doors for the next generation.
-      <button class="donate-modal-lab-link" style="display:inline;background:none;color:#2e7d32;padding:0;font-size:13px;font-weight:600;text-decoration:underline;text-transform:none;letter-spacing:0;border:none;cursor:pointer;" onclick="closeDonateModal(); showPage('computer-lab', null);">View our Computer Lab &#8594;</button>
-    </p>
 
-    <div id="donateFormArea">
-      <!-- Donor info -->
-      <div style="margin-bottom:12px;">
-        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Full Name <span style="color:#e63946;">*</span></label>
-        <input id="donateName" type="text" placeholder="Your full name" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+    <!-- LEFT: Appeal -->
+    <div class="donate-modal-left">
+      <div style="margin-bottom:18px;">
+        <svg width="48" height="48" fill="none" stroke="#a5d6a7" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
       </div>
-      <div style="margin-bottom:12px;">
-        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Email Address <span style="color:#e63946;">*</span></label>
-        <input id="donateEmail" type="email" placeholder="you@example.com" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Phone Number <span style="color:#aaa;font-weight:400;">(optional)</span></label>
-        <input id="donatePhone" type="tel" placeholder="+1 (555) 000-0000" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
-      </div>
-
-      <!-- Amount -->
-      <div style="margin-bottom:16px;">
-        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:8px;">Donation Amount <span style="color:#e63946;">*</span></label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="donate-amt-btn selected" onclick="selectDonateAmt(25,  this)">$25</button>
-          <button class="donate-amt-btn"          onclick="selectDonateAmt(50,  this)">$50</button>
-          <button class="donate-amt-btn"          onclick="selectDonateAmt(100, this)">$100</button>
-          <button class="donate-amt-btn"          onclick="selectDonateAmt(150, this)">$150</button>
-          <button class="donate-amt-btn"          onclick="selectDonateAmt(200, this)">$200</button>
-        </div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
-          <span style="font-size:13px;color:#666;">Or enter amount: $</span>
-          <input id="donateCustomAmt" type="number" min="1" placeholder="Other" style="width:80px;border:1.5px solid #d0d0d0;border-radius:7px;padding:7px 10px;font-size:14px;outline:none;" oninput="setCustomDonateAmt(this.value)">
-        </div>
-      </div>
-
-      <!-- Stripe card -->
-      <div style="margin-bottom:6px;">
-        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:8px;">Card Details <span style="color:#e63946;">*</span></label>
-        <div id="donate-card-element" style="border:1.5px solid #d0d0d0;border-radius:7px;padding:11px 12px;background:#fafafa;"></div>
-        <div id="donate-card-errors" style="color:#e63946;font-size:12px;margin-top:5px;min-height:16px;"></div>
-      </div>
-
-      <div id="donateErrMsg" style="color:#e63946;font-size:13px;margin-bottom:8px;display:none;"></div>
-      <button id="donatePay" onclick="submitDonation()" style="width:100%;background:#2e7d32;color:#fff;border:none;padding:13px;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;transition:background 0.2s;" onmouseover="this.style.background='#1b5e20'" onmouseout="this.style.background='#2e7d32'">
-        Make a Payment
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;margin:0 0 16px;line-height:1.35;">Help Us Empower the Next Generation</h2>
+      <p style="font-size:13.5px;line-height:1.8;color:#c8e6c9;margin-bottom:14px;">
+        Back home at Ugbeka College, hundreds of students are eager to learn and build a future — but opportunity does not always match that eagerness.
+      </p>
+      <p style="font-size:13.5px;line-height:1.8;color:#c8e6c9;margin-bottom:14px;">
+        Your donation directly funds our <strong style="color:#fff;">computer laboratory</strong>, school supplies, and resources that open doors for the next generation of students.
+      </p>
+      <p style="font-size:13.5px;line-height:1.8;color:#c8e6c9;margin-bottom:20px;">
+        No amount is too small. Together, we can make a lasting difference.
+      </p>
+      <p style="font-style:italic;font-size:13px;color:#a5d6a7;margin-bottom:20px;">
+        &ldquo;The roots of education are bitter, but the fruit is sweet.&rdquo;<br>&mdash; Aristotle
+      </p>
+      <button onclick="closeDonateModal(); showPage('computer-lab', null);" style="background:none;border:1.5px solid #a5d6a7;color:#a5d6a7;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(165,214,167,0.15)'" onmouseout="this.style.background='none'">
+        &#128187; View Our Computer Lab
       </button>
-      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:8px;">&#128274; Secured by Stripe. We never store your card details.</p>
     </div>
+
+    <!-- RIGHT: Form -->
+    <div class="donate-modal-right">
+      <button class="donate-modal-close" onclick="closeDonateModal()" aria-label="Close">&times;</button>
+      <div class="donate-modal-title" style="margin-bottom:18px;">Make a Donation</div>
+      <div id="donateFormArea">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Full Name <span style="color:#e63946;">*</span></label>
+          <input id="donateName" type="text" placeholder="Your full name" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Email Address <span style="color:#e63946;">*</span></label>
+          <input id="donateEmail" type="email" placeholder="you@example.com" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Phone Number <span style="color:#aaa;font-weight:400;">(optional)</span></label>
+          <input id="donatePhone" type="tel" placeholder="+1 (555) 000-0000" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:8px;">Donation Amount <span style="color:#e63946;">*</span></label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="donate-amt-btn selected" onclick="selectDonateAmt(25,  this)">$25</button>
+            <button class="donate-amt-btn"          onclick="selectDonateAmt(50,  this)">$50</button>
+            <button class="donate-amt-btn"          onclick="selectDonateAmt(100, this)">$100</button>
+            <button class="donate-amt-btn"          onclick="selectDonateAmt(150, this)">$150</button>
+            <button class="donate-amt-btn"          onclick="selectDonateAmt(200, this)">$200</button>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;color:#666;">Or enter amount: $</span>
+            <input id="donateCustomAmt" type="number" min="1" placeholder="Other" style="width:80px;border:1.5px solid #d0d0d0;border-radius:7px;padding:7px 10px;font-size:14px;outline:none;" oninput="setCustomDonateAmt(this.value)">
+          </div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:8px;">Card Details <span style="color:#e63946;">*</span></label>
+          <div id="donate-card-element" style="border:1.5px solid #d0d0d0;border-radius:7px;padding:11px 12px;background:#fafafa;"></div>
+          <div id="donate-card-errors" style="color:#e63946;font-size:12px;margin-top:5px;min-height:16px;"></div>
+        </div>
+        <div id="donateErrMsg" style="color:#e63946;font-size:13px;margin-bottom:8px;display:none;"></div>
+        <button id="donatePay" onclick="submitDonation()" style="width:100%;background:#2e7d32;color:#fff;border:none;padding:13px;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;transition:background 0.2s;" onmouseover="this.style.background='#1b5e20'" onmouseout="this.style.background='#2e7d32'">
+          Make a Payment
+        </button>
+        <p style="font-size:11px;color:#aaa;text-align:center;margin-top:8px;">&#128274; Secured by Stripe. We never store your card details.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
