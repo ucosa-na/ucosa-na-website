@@ -1645,6 +1645,19 @@
       window.location.href = '/';
     }
 
+    // ── Inactivity auto-logout after 5 minutes ──
+    (function() {
+      const TIMEOUT_MS = 5 * 60 * 1000;
+      let timer = setTimeout(logout, TIMEOUT_MS);
+      function resetTimer() {
+        clearTimeout(timer);
+        timer = setTimeout(logout, TIMEOUT_MS);
+      }
+      ['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(function(evt) {
+        document.addEventListener(evt, resetTimer, { passive: true });
+      });
+    })();
+
     function getToken() {
       return localStorage.getItem('ucosa_token');
     }
