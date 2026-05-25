@@ -12,27 +12,109 @@ function getStripe() {
 
 const router = express.Router();
 
-// Allowed amounts in cents: $100 dues, $50 or $150 endowment
-const ALLOWED = {
-  dues:      [10000],
-  endowment: [5000, 15000],
-};
+const DUES_AMOUNT      = 10000; // $100 in cents
+const ENDOW_ALLOWED    = [5000, 15000]; // $50 or $150
 
-// ── Member payment (requires login) ─────────────────────────────────────────
+// ── Member payment: create PaymentIntent (supports combined dues + endowment) ─
 router.post('/create-intent', requireAuth, async (req, res) => {
   try {
-    const { type, amount } = req.body;
-    if (!ALLOWED[type] || !ALLOWED[type].includes(amount)) {
-      return res.status(400).json({ error: 'Invalid payment type or amount.' });
+    const { payDues, endowmentAmount } = req.body;
+    const payEndow = ENDOW_ALLOWED.includes(endowmentAmount);
+
+    if (!payDues && !payEndow) {
+      return res.status(400).json({ error: 'Select at least one payment option.' });
     }
-    const labels = { dues: 'Annual Dues', endowment: 'Endowment Fund' };
+    if (endowmentAmount && !payEndow) {
+      return res.status(400).json({ error: 'Invalid endowment amount.' });
+    }
+
+    const total = (payDues ? DUES_AMOUNT : 0) + (payEndow ? endowmentAmount : 0);
+    const parts = [];
+    if (payDues)  parts.push('Annual Dues ($100)');
+    if (payEndow) parts.push(`Endowment Fund ($${endowmentAmount / 100})`);
+    const description = `UCOSA-NA — ${parts.join(' + ')} — ${req.user.email}`;
+
     const intent = await getStripe().paymentIntents.create({
-      amount,
+      amount: total,
       currency: 'usd',
-      description: `UCOSA-NA ${labels[type]} — ${req.user.name || req.user.email}`,
-      metadata: { member_email: req.user.email, member_name: req.user.name || '', payment_type: type },
+      description,
+      receipt_email: req.user.email,
+      metadata: {
+        member_id:        String(req.user.id),
+        member_email:     req.user.email,
+        pay_dues:         String(payDues || false),
+        endowment_amount: String(payEndow ? endowmentAmount : 0),
+      },
     });
-    res.json({ clientSecret: intent.client_secret });
+    res.json({ clientSecret: intent.client_secret, total });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Member payment: confirm, record in DB, send receipt ──────────────────────
+router.post('/member-confirm', requireAuth, async (req, res) => {
+  try {
+    const { paymentIntentId, payDues, endowmentAmount } = req.body;
+    if (!paymentIntentId) return res.status(400).json({ error: 'Missing paymentIntentId.' });
+
+    const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
+    if (intent.status !== 'succeeded') {
+      return res.status(400).json({ error: 'Payment not completed.' });
+    }
+
+    const year  = new Date().getFullYear();
+    const today = new Date().toISOString().split('T')[0];
+    const items = [];
+
+    if (payDues) {
+      await db.query(
+        `INSERT INTO annual_dues (user_id, year, amount, paid_date, payment_method, status, notes)
+         VALUES ($1, $2, $3, $4, 'stripe', 'paid', 'Online payment via Stripe')
+         ON CONFLICT DO NOTHING`,
+        [req.user.id, year, 100, today]
+      );
+      items.push({ label: 'Annual Dues', amount: '$100.00' });
+    }
+
+    if (ENDOW_ALLOWED.includes(endowmentAmount)) {
+      const endAmt = (endowmentAmount / 100).toFixed(2);
+      await db.query(
+        `INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes)
+         VALUES ($1, $2, $3, $4, 'paid', 'stripe', 'Online payment via Stripe')`,
+        [req.user.id, endAmt, today, year]
+      );
+      items.push({ label: 'Endowment Fund', amount: `$${endAmt}` });
+    }
+
+    const total = (intent.amount / 100).toFixed(2);
+    const rows  = items.map(i => `<tr><td style="padding:6px 12px;">${i.label}</td><td style="padding:6px 12px;font-weight:700;color:#1b5e20;">${i.amount}</td></tr>`).join('');
+
+    await sendEmail({
+      to: req.user.email,
+      subject: 'Payment Receipt — UCOSA-NA',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:22px;">Payment Received</h1>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+            <p>Dear <strong>${req.user.fullName || req.user.email}</strong>,</p>
+            <p>Thank you! Your payment has been successfully processed. Here is your receipt:</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <thead><tr style="background:#1a1a2e;color:#fff;"><th style="padding:10px 12px;text-align:left;">Description</th><th style="padding:10px 12px;text-align:left;">Amount</th></tr></thead>
+              <tbody>${rows}</tbody>
+              <tfoot><tr style="border-top:2px solid #eee;"><td style="padding:10px 12px;font-weight:700;">Total Paid</td><td style="padding:10px 12px;font-weight:700;color:#1b5e20;">$${total}</td></tr></tfoot>
+            </table>
+            <p style="font-size:13px;color:#888;">Reference: ${paymentIntentId}</p>
+            <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+            <p style="margin-top:20px;">Thank you for your continued support of UCOSA-NA and Ugbeka College.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`,
+    }).catch(() => {});
+
+    res.json({ ok: true, total });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

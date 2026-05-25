@@ -737,13 +737,14 @@
             <h2>&#128179; Make a Payment</h2>
             <p class="pay-sub">Pay your annual dues or contribute to the endowment fund securely by credit card.</p>
             <div id="payFormArea">
+              <p style="font-size:0.83rem;color:#888;margin-bottom:12px;">Click to select one or both. You will be charged in a single transaction.</p>
               <div class="pay-type-grid">
-                <div class="pay-type-card" id="card-dues" onclick="selectPayType('dues')">
+                <div class="pay-type-card" id="card-dues" onclick="togglePayType('dues')">
                   <div class="pay-label">Annual Dues</div>
                   <div class="pay-amount">$100</div>
                   <div class="pay-desc">Per year membership dues</div>
                 </div>
-                <div class="pay-type-card" id="card-endowment" onclick="selectPayType('endowment')">
+                <div class="pay-type-card" id="card-endowment" onclick="togglePayType('endowment')">
                   <div class="pay-label">Endowment Fund</div>
                   <div class="pay-amount" id="endow-amount-display">$50</div>
                   <div class="pay-desc">Support students at Ugbeka College</div>
@@ -809,7 +810,7 @@
     // ── Stripe Payment ──
     const STRIPE_PK = 'pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq';
     let stripeInstance, cardElement;
-    let selectedType = null, selectedAmount = 5000; // default endowment $50
+    let payDues = false, endowmentAmount = 5000; // endowment default $50
 
     function initStripe() {
       if (stripeInstance) return;
@@ -824,48 +825,54 @@
       });
     }
 
-    function selectPayType(type) {
-      selectedType = type;
-      document.getElementById('card-dues').classList.toggle('selected', type === 'dues');
-      document.getElementById('card-endowment').classList.toggle('selected', type === 'endowment');
+    function togglePayType(type) {
+      if (type === 'dues') {
+        payDues = !payDues;
+        document.getElementById('card-dues').classList.toggle('selected', payDues);
+      } else {
+        const wasSelected = document.getElementById('card-endowment').classList.contains('selected');
+        document.getElementById('card-endowment').classList.toggle('selected', !wasSelected);
+      }
+      const anySelected = payDues || document.getElementById('card-endowment').classList.contains('selected');
       const wrap = document.getElementById('stripe-card-wrap');
-      wrap.style.display = 'block';
-      initStripe();
+      wrap.style.display = anySelected ? 'block' : 'none';
+      if (anySelected) initStripe();
       updateSummary();
     }
 
     function selectEndowAmount(amt, e) {
       e.stopPropagation();
-      selectedAmount = amt * 100;
+      endowmentAmount = amt * 100;
       document.getElementById('endow-50').classList.toggle('selected',  amt === 50);
       document.getElementById('endow-150').classList.toggle('selected', amt === 150);
       document.getElementById('endow-amount-display').textContent = '$' + amt;
-      if (selectedType === 'endowment') updateSummary();
+      updateSummary();
     }
 
     function updateSummary() {
       const el = document.getElementById('pay-summary');
-      if (!selectedType) { el.style.display = 'none'; return; }
-      const amt   = selectedType === 'dues' ? 10000 : selectedAmount;
-      const label = selectedType === 'dues' ? 'Annual Dues' : 'Endowment Fund';
+      const endowSelected = document.getElementById('card-endowment') && document.getElementById('card-endowment').classList.contains('selected');
+      if (!payDues && !endowSelected) { el.style.display = 'none'; return; }
+      const parts = [];
+      let total = 0;
+      if (payDues)       { parts.push('Annual Dues ($100.00)');                             total += 10000; }
+      if (endowSelected) { parts.push(`Endowment Fund ($${(endowmentAmount/100).toFixed(2)})`); total += endowmentAmount; }
       el.style.display = 'block';
-      el.innerHTML = `You are paying <strong>$${(amt/100).toFixed(2)}</strong> for <strong>${label}</strong>.`;
+      el.innerHTML = `Paying <strong>$${(total/100).toFixed(2)}</strong> for: ${parts.join(' + ')}`;
     }
 
     async function submitPayment() {
-      if (!selectedType) return;
-      const btn = document.getElementById('btn-pay');
+      const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
+      if (!payDues && !endowSelected) return;
+      const btn   = document.getElementById('btn-pay');
       const errEl = document.getElementById('card-errors');
-      const amt = selectedType === 'dues' ? 10000 : selectedAmount;
-      btn.disabled = true;
-      btn.textContent = 'Processing…';
-      errEl.textContent = '';
+      btn.disabled = true; btn.textContent = 'Processing…'; errEl.textContent = '';
       try {
         const token = localStorage.getItem('ucosa_token');
         const res   = await fetch('/api/payment/create-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ type: selectedType, amount: amt }),
+          body: JSON.stringify({ payDues, endowmentAmount: endowSelected ? endowmentAmount : 0 }),
         });
         const data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Payment error.'; btn.disabled = false; btn.textContent = 'Pay Now'; return; }
@@ -876,22 +883,35 @@
 
         if (result.error) {
           errEl.textContent = result.error.message;
-          btn.disabled = false;
-          btn.textContent = 'Pay Now';
-        } else if (result.paymentIntent.status === 'succeeded') {
-          const label = selectedType === 'dues' ? 'Annual Dues' : 'Endowment Fund';
+          btn.disabled = false; btn.textContent = 'Pay Now';
+          return;
+        }
+
+        if (result.paymentIntent.status === 'succeeded') {
+          // Confirm server-side: record in DB + send email receipt
+          await fetch('/api/payment/member-confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({
+              paymentIntentId: result.paymentIntent.id,
+              payDues,
+              endowmentAmount: endowSelected ? endowmentAmount : 0,
+            }),
+          });
+
+          const total = (result.paymentIntent.amount / 100).toFixed(2);
           document.getElementById('payFormArea').innerHTML = `
             <div class="pay-success">
               <div class="pay-check">&#9989;</div>
               <h3>Payment Successful!</h3>
-              <p>Your <strong>${label}</strong> payment of <strong>$${(amt/100).toFixed(2)}</strong> has been received.</p>
-              <p style="margin-top:8px;font-size:0.82rem;color:#aaa;">A receipt has been sent to your email by Stripe.</p>
+              <p>Your payment of <strong>$${total}</strong> has been received.</p>
+              <p style="margin-top:8px;font-size:0.82rem;color:#aaa;">A receipt has been sent to your email address.</p>
+              <button onclick="location.reload()" style="margin-top:16px;background:#1a1a2e;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.9rem;">Refresh to see updated records</button>
             </div>`;
         }
       } catch (err) {
         errEl.textContent = 'Network error — please try again.';
-        btn.disabled = false;
-        btn.textContent = 'Pay Now';
+        btn.disabled = false; btn.textContent = 'Pay Now';
       }
     }
 
