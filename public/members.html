@@ -743,6 +743,10 @@
                   <div class="pay-label">Annual Dues</div>
                   <div class="pay-amount">$100</div>
                   <div class="pay-desc">Per year membership dues</div>
+                  <div style="margin-top:10px;" onclick="event.stopPropagation()">
+                    <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Year</label>
+                    <select id="dues-year" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;"></select>
+                  </div>
                 </div>
                 <div class="pay-type-card" id="card-endowment" onclick="togglePayType('endowment')">
                   <div class="pay-label">Endowment Fund</div>
@@ -751,6 +755,10 @@
                   <div class="endow-options">
                     <button class="endow-opt selected" id="endow-50"  onclick="selectEndowAmount(50,  event)">$50</button>
                     <button class="endow-opt"          id="endow-150" onclick="selectEndowAmount(150, event)">$150</button>
+                  </div>
+                  <div style="margin-top:10px;" onclick="event.stopPropagation()">
+                    <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Year</label>
+                    <select id="endow-year" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;"></select>
                   </div>
                 </div>
               </div>
@@ -811,6 +819,17 @@
     const STRIPE_PK = 'pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq';
     let stripeInstance, cardElement;
     let payDues = false, endowmentAmount = 5000; // endowment default $50
+
+    (function populateYearSelects() {
+      const cur = new Date().getFullYear();
+      const opts = Array.from({ length: 7 }, (_, i) => cur - 3 + i) // 3 years back → 3 years forward
+        .map(y => `<option value="${y}"${y === cur ? ' selected' : ''}>${y}</option>`)
+        .join('');
+      ['dues-year', 'endow-year'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = opts;
+      });
+    })();
 
     function initStripe() {
       if (stripeInstance) return;
@@ -889,13 +908,17 @@
 
         if (result.paymentIntent.status === 'succeeded') {
           // Confirm server-side: record in DB + send email receipt
+          const duesYear  = parseInt(document.getElementById('dues-year').value, 10);
+          const endowYear = parseInt(document.getElementById('endow-year').value, 10);
           await fetch('/api/payment/member-confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({
               paymentIntentId: result.paymentIntent.id,
               payDues,
+              duesYear,
               endowmentAmount: endowSelected ? endowmentAmount : 0,
+              endowYear,
             }),
           });
 

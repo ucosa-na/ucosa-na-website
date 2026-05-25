@@ -55,7 +55,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 // ── Member payment: confirm, record in DB, send receipt ──────────────────────
 router.post('/member-confirm', requireAuth, async (req, res) => {
   try {
-    const { paymentIntentId, payDues, endowmentAmount } = req.body;
+    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear } = req.body;
     if (!paymentIntentId) return res.status(400).json({ error: 'Missing paymentIntentId.' });
 
     const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
@@ -63,28 +63,30 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Payment not completed.' });
     }
 
-    const year  = new Date().getFullYear();
-    const today = new Date().toISOString().split('T')[0];
-    const items = [];
+    const currentYear = new Date().getFullYear();
+    const today       = new Date().toISOString().split('T')[0];
+    const items       = [];
 
     if (payDues) {
+      const yr = duesYear || currentYear;
       await db.query(
         `INSERT INTO annual_dues (user_id, year, amount, paid_date, payment_method, status, notes)
          VALUES ($1, $2, $3, $4, 'stripe', 'paid', 'Online payment via Stripe')
          ON CONFLICT DO NOTHING`,
-        [req.user.id, year, 100, today]
+        [req.user.id, yr, 100, today]
       );
-      items.push({ label: 'Annual Dues', amount: '$100.00' });
+      items.push({ label: `Annual Dues (${yr})`, amount: '$100.00' });
     }
 
     if (ENDOW_ALLOWED.includes(endowmentAmount)) {
       const endAmt = (endowmentAmount / 100).toFixed(2);
+      const yr     = endowYear || currentYear;
       await db.query(
         `INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes)
          VALUES ($1, $2, $3, $4, 'paid', 'stripe', 'Online payment via Stripe')`,
-        [req.user.id, endAmt, today, year]
+        [req.user.id, endAmt, today, yr]
       );
-      items.push({ label: 'Endowment Fund', amount: `$${endAmt}` });
+      items.push({ label: `Endowment Fund (${yr})`, amount: `$${endAmt}` });
     }
 
     const total = (intent.amount / 100).toFixed(2);
