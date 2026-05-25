@@ -560,6 +560,12 @@
     transition: background 0.2s;
   }
   .donate-modal-lab-link:hover { background: #5a1840; }
+  .donate-amt-btn {
+    border: 2px solid #2e7d32; background: white; color: #2e7d32;
+    padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .donate-amt-btn.selected, .donate-amt-btn:hover { background: #2e7d32; color: white; }
 
   .welcome-hero {
     position: relative;
@@ -3563,38 +3569,64 @@
 </div>
 
 <!-- DONATE NOW MODAL -->
+<script src="https://js.stripe.com/v3/"></script>
 <div class="donate-modal-overlay" id="donateModalOverlay" onclick="handleDonateOverlayClick(event)">
   <div class="donate-modal">
     <button class="donate-modal-close" onclick="closeDonateModal()" aria-label="Close">&times;</button>
     <div class="donate-modal-icon">
-      <svg width="52" height="52" fill="none" stroke="#2e7d32" viewBox="0 0 24 24">
+      <svg width="44" height="44" fill="none" stroke="#2e7d32" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
       </svg>
     </div>
     <div class="donate-modal-title">Help Us Empower the Next Generation</div>
-    <div class="donate-modal-body">
-      <p>Dear Friends and Fellow Alumni,</p>
-      <p>
-        Back home at Ugbeka College, hundreds of students are eager to learn, grow, and build a future &mdash; but opportunity does not always match that eagerness.
-        As the Ugbeka College Old Students&rsquo; Association of North America, we carry a proud legacy and a solemn responsibility to give back to the school that shaped us.
-      </p>
-      <p>
-        Your generous donation directly supports our students: funding the <strong>computer laboratory</strong> that gives them their first hands-on experience with technology,
-        sponsoring school supplies, and helping maintain an environment where learning can truly thrive.
-        Every dollar you give plants a seed of possibility in a young mind.
-      </p>
-      <p>
-        No amount is too small. Together, we have already accomplished so much &mdash; and together, we can do even more.
-        Please give today and be a part of the story that changes lives.
-      </p>
-      <p style="font-style:italic;color:#7b2152;font-weight:600;">
-        &ldquo;The roots of education are bitter, but the fruit is sweet.&rdquo; &mdash; Aristotle
-      </p>
-      <div style="text-align:center;margin-top:24px;">
-        <button class="donate-modal-lab-link" onclick="closeDonateModal(); showPage('computer-lab', null);">
-          &#128187; View Our Computer Lab
-        </button>
+    <p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:18px;">
+      Your donation supports students at Ugbeka College — funding the computer lab, school supplies, and resources that open doors for the next generation.
+      <button class="donate-modal-lab-link" style="display:inline;background:none;color:#2e7d32;padding:0;font-size:13px;font-weight:600;text-decoration:underline;text-transform:none;letter-spacing:0;border:none;cursor:pointer;" onclick="closeDonateModal(); showPage('computer-lab', null);">View our Computer Lab &#8594;</button>
+    </p>
+
+    <div id="donateFormArea">
+      <!-- Donor info -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Full Name <span style="color:#e63946;">*</span></label>
+        <input id="donateName" type="text" placeholder="Your full name" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
       </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Email Address <span style="color:#e63946;">*</span></label>
+        <input id="donateEmail" type="email" placeholder="you@example.com" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:4px;">Phone Number <span style="color:#aaa;font-weight:400;">(optional)</span></label>
+        <input id="donatePhone" type="tel" placeholder="+1 (555) 000-0000" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+      </div>
+
+      <!-- Amount -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:8px;">Donation Amount <span style="color:#e63946;">*</span></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="donate-amt-btn selected" onclick="selectDonateAmt(25,  this)">$25</button>
+          <button class="donate-amt-btn"          onclick="selectDonateAmt(50,  this)">$50</button>
+          <button class="donate-amt-btn"          onclick="selectDonateAmt(100, this)">$100</button>
+          <button class="donate-amt-btn"          onclick="selectDonateAmt(150, this)">$150</button>
+          <button class="donate-amt-btn"          onclick="selectDonateAmt(200, this)">$200</button>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:13px;color:#666;">Or enter amount: $</span>
+          <input id="donateCustomAmt" type="number" min="1" placeholder="Other" style="width:80px;border:1.5px solid #d0d0d0;border-radius:7px;padding:7px 10px;font-size:14px;outline:none;" oninput="setCustomDonateAmt(this.value)">
+        </div>
+      </div>
+
+      <!-- Stripe card -->
+      <div style="margin-bottom:6px;">
+        <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:8px;">Card Details <span style="color:#e63946;">*</span></label>
+        <div id="donate-card-element" style="border:1.5px solid #d0d0d0;border-radius:7px;padding:11px 12px;background:#fafafa;"></div>
+        <div id="donate-card-errors" style="color:#e63946;font-size:12px;margin-top:5px;min-height:16px;"></div>
+      </div>
+
+      <div id="donateErrMsg" style="color:#e63946;font-size:13px;margin-bottom:8px;display:none;"></div>
+      <button id="donatePay" onclick="submitDonation()" style="width:100%;background:#2e7d32;color:#fff;border:none;padding:13px;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;transition:background 0.2s;" onmouseover="this.style.background='#1b5e20'" onmouseout="this.style.background='#2e7d32'">
+        Make a Payment
+      </button>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:8px;">&#128274; Secured by Stripe. We never store your card details.</p>
     </div>
   </div>
 </div>
@@ -3617,16 +3649,101 @@
     if (e.target === document.getElementById('joinModalOverlay')) closeJoinModal();
   }
 
+  // ── Donate Now ──
+  let _donateStripe, _donateCard, _donateAmtCents = 2500; // default $25
+
   function openDonateModal() {
     document.getElementById('donateModalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
+    if (!_donateStripe) {
+      _donateStripe = Stripe('pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq');
+      const els = _donateStripe.elements();
+      _donateCard = els.create('card', {
+        style: { base: { fontSize: '15px', color: '#1a1a2e', '::placeholder': { color: '#aaa' } } }
+      });
+      _donateCard.mount('#donate-card-element');
+      _donateCard.on('change', e => {
+        document.getElementById('donate-card-errors').textContent = e.error ? e.error.message : '';
+      });
+    }
   }
+
   function closeDonateModal() {
     document.getElementById('donateModalOverlay').classList.remove('open');
     document.body.style.overflow = '';
   }
+
   function handleDonateOverlayClick(e) {
     if (e.target === document.getElementById('donateModalOverlay')) closeDonateModal();
+  }
+
+  function selectDonateAmt(dollars, btn) {
+    _donateAmtCents = dollars * 100;
+    document.querySelectorAll('.donate-amt-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('donateCustomAmt').value = '';
+  }
+
+  function setCustomDonateAmt(val) {
+    const n = parseFloat(val);
+    if (n > 0) {
+      _donateAmtCents = Math.round(n * 100);
+      document.querySelectorAll('.donate-amt-btn').forEach(b => b.classList.remove('selected'));
+    }
+  }
+
+  async function submitDonation() {
+    const name  = document.getElementById('donateName').value.trim();
+    const email = document.getElementById('donateEmail').value.trim();
+    const phone = document.getElementById('donatePhone').value.trim();
+    const errEl = document.getElementById('donateErrMsg');
+    const btn   = document.getElementById('donatePay');
+
+    errEl.style.display = 'none';
+    if (!name)  { errEl.textContent = 'Please enter your name.';  errEl.style.display = 'block'; return; }
+    if (!email) { errEl.textContent = 'Please enter your email.'; errEl.style.display = 'block'; return; }
+    if (_donateAmtCents < 100) { errEl.textContent = 'Minimum donation is $1.'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = 'Processing…';
+
+    try {
+      const res  = await fetch('/api/payment/donate-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, amount: _donateAmtCents }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || 'Error creating payment.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='Make a Payment'; return; }
+
+      const result = await _donateStripe.confirmCardPayment(data.clientSecret, {
+        payment_method: { card: _donateCard, billing_details: { name, email } }
+      });
+
+      if (result.error) {
+        errEl.textContent = result.error.message; errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Make a Payment';
+        return;
+      }
+
+      // Confirm server-side, record in DB, send receipt
+      await fetch('/api/payment/donate-confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentIntentId: result.paymentIntent.id, name, email, phone }),
+      });
+
+      document.getElementById('donateFormArea').innerHTML = `
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:3rem;margin-bottom:12px;">&#9989;</div>
+          <h3 style="color:#2e7d32;font-size:1.2rem;margin-bottom:8px;">Thank You, ${name}!</h3>
+          <p style="color:#555;font-size:0.95rem;">Your donation of <strong>$${(_donateAmtCents/100).toFixed(2)}</strong> has been received.</p>
+          <p style="color:#888;font-size:0.82rem;margin-top:8px;">A receipt has been sent to <strong>${email}</strong>.</p>
+        </div>`;
+    } catch (err) {
+      errEl.textContent = 'Network error — please try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Make a Payment';
+    }
   }
 
   async function submitJoinRequest(e) {

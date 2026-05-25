@@ -1441,4 +1441,17 @@ router.get('/logs', secOrAdmin, (req, res) => {
   }
 });
 
+// ── Donations (public Donate Now form) ──────────────────────────────────────
+router.get('/donations', finOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, donor_name, donor_email, donor_phone, amount, stripe_payment_intent_id, donated_at
+       FROM donations ORDER BY donated_at DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

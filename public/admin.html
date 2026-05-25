@@ -707,6 +707,7 @@
           <a href="#annualDues">Annual Dues</a>
           <a href="#endowmentFund">Endowment Fund</a>
           <a href="#expenseRecords">Expense Records</a>
+          <a href="#donationsSection">Donations</a>
         </div>
       </div>
 
@@ -1520,6 +1521,28 @@
         <button class="btn-primary" onclick="sendInviteBroadcast()">&#128140; Send Invitations</button>
       </section>
 
+      <!-- DONATIONS -->
+      <section id="donationsSection" class="fin-section">
+        <h2>&#128155; Donations</h2>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">All donations received through the public Donate Now form.</p>
+        <div id="donationsError" class="msg error"></div>
+        <table class="fin-table" id="donationsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Amount</th>
+              <th>Stripe Ref</th>
+            </tr>
+          </thead>
+          <tbody id="donationsTbody">
+            <tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
     </main>
   </div>
 
@@ -1722,7 +1745,7 @@
 
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
-      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords'];
+      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
@@ -3283,6 +3306,7 @@
         loadDues();
         loadEndowment();
         loadExpenses();
+        loadDonations();
       }
 
       if (['admin', 'security-role'].includes(user.role)) {
@@ -3290,6 +3314,31 @@
         loadMeetingNotes();
       }
     })();
+
+    async function loadDonations() {
+      const tbody = document.getElementById('donationsTbody');
+      const errEl = document.getElementById('donationsError');
+      try {
+        const res  = await fetch('/api/admin/donations', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const rows = await res.json();
+        if (!res.ok) { errEl.textContent = rows.error || 'Error loading donations.'; errEl.style.display='block'; return; }
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No donations yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows.map(d => `
+          <tr>
+            <td>${new Date(d.donated_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</td>
+            <td>${escapeHtml(d.donor_name)}</td>
+            <td>${escapeHtml(d.donor_email)}</td>
+            <td>${d.donor_phone ? escapeHtml(d.donor_phone) : '—'}</td>
+            <td style="font-weight:700;color:#2e7d32;">$${parseFloat(d.amount).toFixed(2)}</td>
+            <td style="font-size:11px;color:#aaa;">${d.stripe_payment_intent_id}</td>
+          </tr>`).join('');
+      } catch (err) {
+        errEl.textContent = 'Failed to load donations.'; errEl.style.display = 'block';
+      }
+    }
   </script>
 
 </body>

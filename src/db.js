@@ -146,6 +146,20 @@ pool.query(`
       created_at        TIMESTAMPTZ DEFAULT NOW()
     );
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS donations (
+      id             SERIAL PRIMARY KEY,
+      donor_name     TEXT NOT NULL,
+      donor_email    TEXT NOT NULL,
+      donor_phone    TEXT DEFAULT NULL,
+      amount         NUMERIC(10,2) NOT NULL,
+      currency       TEXT NOT NULL DEFAULT 'usd',
+      stripe_payment_intent_id TEXT UNIQUE NOT NULL,
+      status         TEXT NOT NULL DEFAULT 'succeeded',
+      donated_at     TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
