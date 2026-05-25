@@ -333,7 +333,52 @@
       section { padding: 20px 16px; }
       .profile-card { flex-direction: column; }
     }
+
+    /* PAYMENT SECTION */
+    .payment-section { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 28px 24px; margin-bottom: 24px; border-top: 5px solid #2e7d32; }
+    .payment-section h2 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 6px; }
+    .payment-section p.pay-sub { font-size: 0.88rem; color: #888; margin-bottom: 20px; }
+    .pay-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .pay-type-card {
+      border: 2px solid #e0e0e0; border-radius: 10px; padding: 18px 16px; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s; text-align: center;
+    }
+    .pay-type-card:hover { border-color: #2e7d32; background: #f6fbf6; }
+    .pay-type-card.selected { border-color: #2e7d32; background: #f0f9f0; }
+    .pay-type-card .pay-label { font-weight: 700; font-size: 0.95rem; color: #1a1a2e; margin-bottom: 6px; }
+    .pay-type-card .pay-amount { font-size: 1.4rem; font-weight: 800; color: #2e7d32; }
+    .pay-type-card .pay-desc { font-size: 0.78rem; color: #888; margin-top: 4px; }
+    .endow-options { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+    .endow-opt {
+      border: 1.5px solid #aaa; border-radius: 20px; padding: 4px 16px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; background: white; color: #555;
+      transition: all 0.15s;
+    }
+    .endow-opt.selected { border-color: #2e7d32; background: #2e7d32; color: white; }
+    #stripe-card-wrap { display: none; margin-top: 4px; }
+    #stripe-card-wrap label { font-size: 0.85rem; font-weight: 600; color: #444; display: block; margin-bottom: 8px; }
+    #card-element {
+      border: 1.5px solid #d0d0d0; border-radius: 8px; padding: 12px 14px;
+      background: #fafafa; font-size: 0.95rem;
+    }
+    #card-errors { color: #e63946; font-size: 0.83rem; margin-top: 6px; min-height: 18px; }
+    #pay-summary { background: #f0f9f0; border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.9rem; color: #1a1a2e; display: none; }
+    #pay-summary strong { color: #2e7d32; }
+    .btn-pay {
+      width: 100%; background: #2e7d32; color: white; border: none;
+      padding: 13px; border-radius: 8px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s; margin-top: 10px;
+    }
+    .btn-pay:hover:not(:disabled) { background: #1b5e20; }
+    .btn-pay:disabled { opacity: 0.6; cursor: not-allowed; }
+    .pay-success {
+      text-align: center; padding: 24px 16px;
+    }
+    .pay-success .pay-check { font-size: 3rem; margin-bottom: 10px; }
+    .pay-success h3 { color: #2e7d32; font-size: 1.2rem; margin-bottom: 6px; }
+    .pay-success p { color: #666; font-size: 0.9rem; }
   </style>
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 
@@ -360,6 +405,7 @@
     <aside class="sidebar">
       <h3>Members Menu</h3>
       <a href="/members.html" class="active">Dashboard</a>
+      <a href="#payment-section" onclick="document.getElementById('payment-section').scrollIntoView({behavior:'smooth'})">&#128179; Make a Payment</a>
       <a href="#annual-dues-section" onclick="document.getElementById('annual-dues-section').scrollIntoView({behavior:'smooth'})">Annual Dues</a>
       <a href="#endowment-section" onclick="document.getElementById('endowment-section').scrollIntoView({behavior:'smooth'})">Endowment Fund</a>
       <a href="#meeting-notes-section" onclick="document.getElementById('meeting-notes-section').scrollIntoView({behavior:'smooth'})">Meeting Notes</a>
@@ -686,6 +732,37 @@
             </div>
           </div>
 
+          <!-- MAKE A PAYMENT -->
+          <div class="payment-section" id="payment-section">
+            <h2>&#128179; Make a Payment</h2>
+            <p class="pay-sub">Pay your annual dues or contribute to the endowment fund securely by credit card.</p>
+            <div id="payFormArea">
+              <div class="pay-type-grid">
+                <div class="pay-type-card" id="card-dues" onclick="selectPayType('dues')">
+                  <div class="pay-label">Annual Dues</div>
+                  <div class="pay-amount">$100</div>
+                  <div class="pay-desc">Per year membership dues</div>
+                </div>
+                <div class="pay-type-card" id="card-endowment" onclick="selectPayType('endowment')">
+                  <div class="pay-label">Endowment Fund</div>
+                  <div class="pay-amount" id="endow-amount-display">$50</div>
+                  <div class="pay-desc">Support students at Ugbeka College</div>
+                  <div class="endow-options">
+                    <button class="endow-opt selected" id="endow-50"  onclick="selectEndowAmount(50,  event)">$50</button>
+                    <button class="endow-opt"          id="endow-150" onclick="selectEndowAmount(150, event)">$150</button>
+                  </div>
+                </div>
+              </div>
+              <div id="stripe-card-wrap">
+                <div id="pay-summary"></div>
+                <label>Card Details</label>
+                <div id="card-element"></div>
+                <div id="card-errors"></div>
+                <button class="btn-pay" id="btn-pay" onclick="submitPayment()">Pay Now</button>
+              </div>
+            </div>
+          </div>
+
           <!-- ANNUAL DUES -->
           <section id="annual-dues-section">
             <h2>&#128181; Annual Dues</h2>
@@ -726,6 +803,95 @@
             <p style="color:#e63946;">Unable to load your profile. Please <a href="/login.html">log in again</a>.</p>
           </section>`;
         document.getElementById('mainLayout').style.display = 'flex';
+      }
+    }
+
+    // ── Stripe Payment ──
+    const STRIPE_PK = 'pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq';
+    let stripeInstance, cardElement;
+    let selectedType = null, selectedAmount = 5000; // default endowment $50
+
+    function initStripe() {
+      if (stripeInstance) return;
+      stripeInstance = Stripe(STRIPE_PK);
+      const elements = stripeInstance.elements();
+      cardElement = elements.create('card', {
+        style: { base: { fontSize: '16px', color: '#1a1a2e', '::placeholder': { color: '#aaa' } } }
+      });
+      cardElement.mount('#card-element');
+      cardElement.on('change', function(e) {
+        document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
+      });
+    }
+
+    function selectPayType(type) {
+      selectedType = type;
+      document.getElementById('card-dues').classList.toggle('selected', type === 'dues');
+      document.getElementById('card-endowment').classList.toggle('selected', type === 'endowment');
+      const wrap = document.getElementById('stripe-card-wrap');
+      wrap.style.display = 'block';
+      initStripe();
+      updateSummary();
+    }
+
+    function selectEndowAmount(amt, e) {
+      e.stopPropagation();
+      selectedAmount = amt * 100;
+      document.getElementById('endow-50').classList.toggle('selected',  amt === 50);
+      document.getElementById('endow-150').classList.toggle('selected', amt === 150);
+      document.getElementById('endow-amount-display').textContent = '$' + amt;
+      if (selectedType === 'endowment') updateSummary();
+    }
+
+    function updateSummary() {
+      const el = document.getElementById('pay-summary');
+      if (!selectedType) { el.style.display = 'none'; return; }
+      const amt   = selectedType === 'dues' ? 10000 : selectedAmount;
+      const label = selectedType === 'dues' ? 'Annual Dues' : 'Endowment Fund';
+      el.style.display = 'block';
+      el.innerHTML = `You are paying <strong>$${(amt/100).toFixed(2)}</strong> for <strong>${label}</strong>.`;
+    }
+
+    async function submitPayment() {
+      if (!selectedType) return;
+      const btn = document.getElementById('btn-pay');
+      const errEl = document.getElementById('card-errors');
+      const amt = selectedType === 'dues' ? 10000 : selectedAmount;
+      btn.disabled = true;
+      btn.textContent = 'Processing…';
+      errEl.textContent = '';
+      try {
+        const token = localStorage.getItem('ucosa_token');
+        const res   = await fetch('/api/payment/create-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ type: selectedType, amount: amt }),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Payment error.'; btn.disabled = false; btn.textContent = 'Pay Now'; return; }
+
+        const result = await stripeInstance.confirmCardPayment(data.clientSecret, {
+          payment_method: { card: cardElement }
+        });
+
+        if (result.error) {
+          errEl.textContent = result.error.message;
+          btn.disabled = false;
+          btn.textContent = 'Pay Now';
+        } else if (result.paymentIntent.status === 'succeeded') {
+          const label = selectedType === 'dues' ? 'Annual Dues' : 'Endowment Fund';
+          document.getElementById('payFormArea').innerHTML = `
+            <div class="pay-success">
+              <div class="pay-check">&#9989;</div>
+              <h3>Payment Successful!</h3>
+              <p>Your <strong>${label}</strong> payment of <strong>$${(amt/100).toFixed(2)}</strong> has been received.</p>
+              <p style="margin-top:8px;font-size:0.82rem;color:#aaa;">A receipt has been sent to your email by Stripe.</p>
+            </div>`;
+        }
+      } catch (err) {
+        errEl.textContent = 'Network error — please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Pay Now';
       }
     }
 
