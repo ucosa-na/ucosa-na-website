@@ -473,6 +473,94 @@
     background: #b71c1c;
   }
 
+  .banner-donate-btn {
+    background: #2e7d32;
+    color: #ffffff;
+    border: none;
+    padding: 0 22px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .banner-donate-btn:hover { background: #1b5e20; }
+
+  /* Donate Modal */
+  .donate-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.60);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .donate-modal-overlay.open { display: flex; }
+  .donate-modal {
+    background: #fdf6ec;
+    border-radius: 14px;
+    max-width: 600px;
+    width: 100%;
+    padding: 44px 40px 36px;
+    position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .donate-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    line-height: 1;
+  }
+  .donate-modal-close:hover { color: #333; }
+  .donate-modal-icon {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .donate-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #7b2152;
+    margin: 0 0 14px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .donate-modal-body {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.8;
+    margin: 0 0 20px;
+  }
+  .donate-modal-body p { margin: 0 0 14px; }
+  .donate-modal-lab-link {
+    display: inline-block;
+    margin-top: 6px;
+    background: #7b2152;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+  }
+  .donate-modal-lab-link:hover { background: #5a1840; }
+
   .welcome-hero {
     position: relative;
     padding: 64px 0 56px;
@@ -1744,6 +1832,7 @@
         <span onclick="window.location.href='/admin.html'">Admin Portal</span>
       </div>
     </div>
+    <button class="banner-donate-btn" onclick="openDonateModal()">Donate Now</button>
     <button class="banner-login-btn" onclick="showPage('login', null)">Member Login</button>
   </div>
 </div>
@@ -3473,6 +3562,43 @@
   </div>
 </div>
 
+<!-- DONATE NOW MODAL -->
+<div class="donate-modal-overlay" id="donateModalOverlay" onclick="handleDonateOverlayClick(event)">
+  <div class="donate-modal">
+    <button class="donate-modal-close" onclick="closeDonateModal()" aria-label="Close">&times;</button>
+    <div class="donate-modal-icon">
+      <svg width="52" height="52" fill="none" stroke="#2e7d32" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+    </div>
+    <div class="donate-modal-title">Help Us Empower the Next Generation</div>
+    <div class="donate-modal-body">
+      <p>Dear Friends and Fellow Alumni,</p>
+      <p>
+        Back home at Ugbeka College, hundreds of students are eager to learn, grow, and build a future &mdash; but opportunity does not always match that eagerness.
+        As the Ugbeka College Old Students&rsquo; Association of North America, we carry a proud legacy and a solemn responsibility to give back to the school that shaped us.
+      </p>
+      <p>
+        Your generous donation directly supports our students: funding the <strong>computer laboratory</strong> that gives them their first hands-on experience with technology,
+        sponsoring school supplies, and helping maintain an environment where learning can truly thrive.
+        Every dollar you give plants a seed of possibility in a young mind.
+      </p>
+      <p>
+        No amount is too small. Together, we have already accomplished so much &mdash; and together, we can do even more.
+        Please give today and be a part of the story that changes lives.
+      </p>
+      <p style="font-style:italic;color:#7b2152;font-weight:600;">
+        &ldquo;The roots of education are bitter, but the fruit is sweet.&rdquo; &mdash; Aristotle
+      </p>
+      <div style="text-align:center;margin-top:24px;">
+        <button class="donate-modal-lab-link" onclick="closeDonateModal(); showPage('computer-lab', null);">
+          &#128187; View Our Computer Lab
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   function openJoinModal() {
     document.getElementById('joinModalOverlay').classList.add('open');
@@ -3490,6 +3616,19 @@
   function handleJoinOverlayClick(e) {
     if (e.target === document.getElementById('joinModalOverlay')) closeJoinModal();
   }
+
+  function openDonateModal() {
+    document.getElementById('donateModalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDonateModal() {
+    document.getElementById('donateModalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function handleDonateOverlayClick(e) {
+    if (e.target === document.getElementById('donateModalOverlay')) closeDonateModal();
+  }
+
   async function submitJoinRequest(e) {
     e.preventDefault();
     const btn = document.getElementById('joinSubmitBtn');
