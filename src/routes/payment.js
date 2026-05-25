@@ -1,6 +1,12 @@
 const express  = require('express');
-const stripe   = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Stripe   = require('stripe');
 const requireAuth = require('../middleware/requireAuth');
+
+let _stripe;
+function getStripe() {
+  if (!_stripe) _stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  return _stripe;
+}
 
 const router = express.Router();
 
@@ -20,7 +26,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 
     const labels = { dues: 'Annual Dues', endowment: 'Endowment Fund' };
 
-    const intent = await stripe.paymentIntents.create({
+    const intent = await getStripe().paymentIntents.create({
       amount,
       currency: 'usd',
       description: `UCOSA-NA ${labels[type]} — ${req.user.name || req.user.email}`,
