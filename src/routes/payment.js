@@ -69,23 +69,40 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
 
     if (payDues) {
       const yr = duesYear || currentYear;
-      await db.query(
-        `INSERT INTO annual_dues (user_id, year, amount, paid_date, payment_method, status, notes)
-         VALUES ($1, $2, $3, $4, 'stripe', 'paid', 'Online payment via Stripe')
-         ON CONFLICT DO NOTHING`,
+      const upd = await db.query(
+        `UPDATE annual_dues
+         SET amount = $3, paid_date = $4, payment_method = 'stripe',
+             status = 'paid', notes = 'Online payment via Stripe', updated_at = NOW()
+         WHERE user_id = $1 AND year = $2`,
         [req.user.id, yr, 100, today]
       );
+      if (upd.rowCount === 0) {
+        await db.query(
+          `INSERT INTO annual_dues (user_id, year, amount, paid_date, payment_method, status, notes)
+           VALUES ($1, $2, $3, $4, 'stripe', 'paid', 'Online payment via Stripe')`,
+          [req.user.id, yr, 100, today]
+        );
+      }
       items.push({ label: `Annual Dues (${yr})`, amount: '$100.00' });
     }
 
     if (ENDOW_ALLOWED.includes(endowmentAmount)) {
       const endAmt = (endowmentAmount / 100).toFixed(2);
       const yr     = endowYear || currentYear;
-      await db.query(
-        `INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes)
-         VALUES ($1, $2, $3, $4, 'paid', 'stripe', 'Online payment via Stripe')`,
-        [req.user.id, endAmt, today, yr]
+      const upd = await db.query(
+        `UPDATE endowment_fund
+         SET amount = $3, contribution_date = $4, payment_method = 'stripe',
+             status = 'paid', notes = 'Online payment via Stripe', updated_at = NOW()
+         WHERE user_id = $1 AND year = $2`,
+        [req.user.id, yr, endAmt, today]
       );
+      if (upd.rowCount === 0) {
+        await db.query(
+          `INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes)
+           VALUES ($1, $2, $3, $4, 'paid', 'stripe', 'Online payment via Stripe')`,
+          [req.user.id, endAmt, today, yr]
+        );
+      }
       items.push({ label: `Endowment Fund (${yr})`, amount: `$${endAmt}` });
     }
 
