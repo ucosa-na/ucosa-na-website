@@ -764,7 +764,12 @@
               </div>
               <div id="stripe-card-wrap">
                 <div id="pay-summary"></div>
-                <label>Card Details</label>
+                <div style="margin-bottom:12px;">
+                  <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Name on Card</label>
+                  <input id="card-name" type="text" placeholder="As it appears on your card" style="width:100%;border:1.5px solid #d0d0d0;border-radius:7px;padding:9px 12px;font-size:14px;outline:none;">
+                  <div id="card-name-error" style="color:#e63946;font-size:12px;margin-top:4px;min-height:16px;"></div>
+                </div>
+                <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Card Details <span style="font-size:11px;color:#aaa;font-weight:400;">(number, expiry, CVC)</span></label>
                 <div id="card-element"></div>
                 <div id="card-errors"></div>
                 <button class="btn-pay" id="btn-pay" onclick="submitPayment()">Pay Now</button>
@@ -804,6 +809,7 @@
 
         document.getElementById('mainLayout').style.display = 'flex';
         filterDues('all');
+        populateYearSelects();
 
       } catch (err) {
         document.getElementById('mainContent').innerHTML = `
@@ -820,16 +826,16 @@
     let stripeInstance, cardElement;
     let payDues = false, endowmentAmount = 5000; // endowment default $50
 
-    (function populateYearSelects() {
+    function populateYearSelects() {
       const cur = new Date().getFullYear();
-      const opts = Array.from({ length: 7 }, (_, i) => cur - 3 + i) // 3 years back → 3 years forward
+      const opts = Array.from({ length: 7 }, (_, i) => cur - 3 + i)
         .map(y => `<option value="${y}"${y === cur ? ' selected' : ''}>${y}</option>`)
         .join('');
       ['dues-year', 'endow-year'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = opts;
       });
-    })();
+    }
 
     function initStripe() {
       if (stripeInstance) return;
@@ -883,6 +889,10 @@
     async function submitPayment() {
       const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
       if (!payDues && !endowSelected) return;
+      const cardName    = document.getElementById('card-name').value.trim();
+      const nameErrEl   = document.getElementById('card-name-error');
+      nameErrEl.textContent = '';
+      if (!cardName) { nameErrEl.textContent = 'Please enter the name on your card.'; return; }
       const btn   = document.getElementById('btn-pay');
       const errEl = document.getElementById('card-errors');
       btn.disabled = true; btn.textContent = 'Processing…'; errEl.textContent = '';
@@ -897,7 +907,7 @@
         if (!res.ok) { errEl.textContent = data.error || 'Payment error.'; btn.disabled = false; btn.textContent = 'Pay Now'; return; }
 
         const result = await stripeInstance.confirmCardPayment(data.clientSecret, {
-          payment_method: { card: cardElement }
+          payment_method: { card: cardElement, billing_details: { name: cardName } }
         });
 
         if (result.error) {
