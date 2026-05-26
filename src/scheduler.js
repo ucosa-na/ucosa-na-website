@@ -42,12 +42,29 @@ async function getUnpaidMembers(year) {
   return rows;
 }
 
-function logoHeader() {
+function duesReminderHtml(name, year, dueDate, amount, status) {
+  const statusLabel = status
+    ? status.charAt(0).toUpperCase() + status.slice(1)
+    : 'Unpaid';
   return `
-    <div style="background:#7b2152;text-align:center;padding:28px 32px">
-      <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"
-           style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
-      <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+      <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:20px;">Annual Dues Reminder</h1>
+      </div>
+      <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+        <p>Dear <strong>${name}</strong>,</p>
+        <p>This is a friendly reminder that your <strong>${year} annual dues</strong> are due on <strong>${dueDate}</strong>.</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <tbody>
+            <tr><td style="padding:10px 16px;font-weight:600;color:#555;width:140px;">Due Date</td><td style="padding:10px 16px;">${dueDate}</td></tr>
+            <tr style="background:#f4f4f4;"><td style="padding:10px 16px;font-weight:600;color:#555;">Amount</td><td style="padding:10px 16px;">${amount}</td></tr>
+            <tr><td style="padding:10px 16px;font-weight:600;color:#555;">Status</td><td style="padding:10px 16px;">${statusLabel}</td></tr>
+            <tr style="background:#f4f4f4;"><td style="padding:10px 16px;font-weight:600;color:#555;">Payment Info</td><td style="padding:10px 16px;">Zelle to &mdash; ucosa.northamerica@gmail.com</td></tr>
+          </tbody>
+        </table>
+        <p><em>If you've already made your payment, please ignore this message &mdash; and thank you!</em></p>
+        <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+      </div>
     </div>`;
 }
 
@@ -116,24 +133,8 @@ async function sendAdvanceReminders() {
     // Email
     sendEmail({
       to:      m.email,
-      subject: `UCOSA-NA — Annual Dues Reminder: Due ${dueDate}`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
-          ${logoHeader()}
-          <div style="background:#fdf6ec;padding:32px">
-            <h2 style="color:#7b2152;margin-top:0">Annual Dues Reminder</h2>
-            <p>Dear <strong>${m.full_name}</strong>,</p>
-            <p>This is a friendly reminder that your <strong>${year} annual dues</strong> are due in <strong>30 days</strong>.</p>
-            <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
-              <p style="margin:0"><strong>Due Date:</strong> ${dueDate}</p>
-              <p style="margin:8px 0 0"><strong>Amount:</strong> ${amountFmt}</p>
-              ${m.status ? `<p style="margin:8px 0 0"><strong>Status:</strong> ${m.status.charAt(0).toUpperCase() + m.status.slice(1)}</p>` : ''}
-              <p style="margin:8px 0 0"><strong>Payment Info:</strong> Zelle to — ucosa.northamerica@gmail.com</p>
-            </div>
-            <p><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
-            <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
-          </div>
-        </div>`,
+      subject: `Annual Dues Reminder`,
+      html:    duesReminderHtml(m.full_name, year, dueDate, amountFmt, m.status),
     }).catch(err => log.error(`Scheduler: advance reminder email failed for ${m.email}: ${err.message}`));
 
     // SMS
@@ -172,24 +173,8 @@ async function sendDueDateReminders() {
     // Email
     sendEmail({
       to:      m.email,
-      subject: `UCOSA-NA — Annual Dues Due Today (${dueDate})`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
-          ${logoHeader()}
-          <div style="background:#fdf6ec;padding:32px">
-            <h2 style="color:#7b2152;margin-top:0">Annual Dues Are Due Today</h2>
-            <p>Dear <strong>${m.full_name}</strong>,</p>
-            <p>Your <strong>${year} annual dues</strong> are due <strong>today, ${dueDate}</strong>.</p>
-            <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
-              <p style="margin:0"><strong>Due Date:</strong> ${dueDate}</p>
-              <p style="margin:8px 0 0"><strong>Amount:</strong> ${amountFmt}</p>
-              ${m.status ? `<p style="margin:8px 0 0"><strong>Status:</strong> ${m.status.charAt(0).toUpperCase() + m.status.slice(1)}</p>` : ''}
-              <p style="margin:8px 0 0"><strong>Payment Info:</strong> Zelle to — ucosa.northamerica@gmail.com</p>
-            </div>
-            <p><em>If you've already made your payment, please ignore this message — and thank you!</em></p>
-            <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
-          </div>
-        </div>`,
+      subject: `Annual Dues Reminder`,
+      html:    duesReminderHtml(m.full_name, year, dueDate, amountFmt, m.status),
     }).catch(err => log.error(`Scheduler: due-date reminder email failed for ${m.email}: ${err.message}`));
 
     // SMS

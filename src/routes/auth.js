@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
 const log = require('../logger');
@@ -371,6 +372,101 @@ router.put('/profile', requireAuth, async (req, res) => {
     res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     console.error('Profile update error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/forgot-password — send password reset link
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, full_name, email FROM users WHERE email = $1 AND is_active = true',
+      [email.toLowerCase().trim()]
+    );
+
+    // Always respond OK to prevent email enumeration
+    if (!rows.length) return res.json({ ok: true });
+
+    const user = rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await pool.query(
+      `INSERT INTO password_reset_tokens (user_id, token, expires_at)
+       VALUES ($1, $2, $3)`,
+      [user.id, token, expiresAt]
+    );
+
+    const resetLink = `${process.env.SITE_URL || 'https://ucosa-na.org'}/reset-password.html?token=${token}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset — UCOSA-NA',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:20px;">Password Reset Request</h1>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+            <p>Dear <strong>${user.full_name}</strong>,</p>
+            <p>We received a request to reset your UCOSA-NA account password. Click the button below to set a new password:</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${resetLink}" style="background:#1a1a2e;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Reset My Password</a>
+            </div>
+            <p style="font-size:13px;color:#888;">This link expires in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`,
+    }).catch(err => log.error(`Forgot password email to ${user.email}: ${err.message}`));
+
+    res.json({ ok: true });
+  } catch (err) {
+    log.error(`Forgot password error: ${err.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/reset-password — set new password using token
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password are required.' });
+
+  if (newPassword.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  if (!/[A-Z]/.test(newPassword))
+    return res.status(400).json({ error: 'Password must contain at least one uppercase letter.' });
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword))
+    return res.status(400).json({ error: 'Password must contain at least one special character.' });
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT t.id, t.user_id, t.expires_at, t.used, u.email, u.full_name
+       FROM password_reset_tokens t
+       JOIN users u ON u.id = t.user_id
+       WHERE t.token = $1`,
+      [token]
+    );
+
+    if (!rows.length) return res.status(400).json({ error: 'Invalid or expired reset link.' });
+    const rec = rows[0];
+
+    if (rec.used) return res.status(400).json({ error: 'This reset link has already been used.' });
+    if (new Date(rec.expires_at) < new Date()) return res.status(400).json({ error: 'This reset link has expired. Please request a new one.' });
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, must_change_password = FALSE, password_expires_at = NULL WHERE id = $2',
+      [hash, rec.user_id]
+    );
+    await pool.query('UPDATE password_reset_tokens SET used = TRUE WHERE id = $1', [rec.id]);
+
+    log.info(`Password reset via token for: ${rec.email}`);
+    res.json({ ok: true });
+  } catch (err) {
+    log.error(`Reset password error: ${err.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -213,6 +213,14 @@
         <div class="form-group">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" placeholder="Enter your password" required />
+          <a href="#" class="forgot" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <div id="forgotPanel" style="display:none;background:#f0f4ff;border-radius:8px;padding:16px;margin-bottom:16px;">
+          <p style="font-size:0.875rem;color:#444;margin:0 0 10px;">Enter your email address and we'll send you a link to reset your password.</p>
+          <input type="email" id="forgotEmail" placeholder="you@example.com" style="width:100%;padding:10px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box;" />
+          <div id="forgotMsg" style="display:none;font-size:0.85rem;margin-bottom:8px;padding:8px 12px;border-radius:6px;"></div>
+          <button type="button" id="forgotBtn" style="background:#1a1a2e;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;">Send Reset Link</button>
         </div>
 
         <div id="errorMsg" style="display:none;background:#fff0f0;border:1px solid #e63946;color:#c1121f;border-radius:8px;padding:10px 14px;font-size:0.875rem;margin-bottom:12px;"></div>
@@ -251,6 +259,47 @@
           .catch(() => { /* token invalid, stay on page */ });
       }
     })();
+
+    // Forgot password toggle
+    document.getElementById('forgotLink').addEventListener('click', function (e) {
+      e.preventDefault();
+      const panel = document.getElementById('forgotPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('forgotBtn').addEventListener('click', async function () {
+      const email = document.getElementById('forgotEmail').value.trim();
+      const msg   = document.getElementById('forgotMsg');
+      const btn   = document.getElementById('forgotBtn');
+      if (!email) { showForgotMsg('Please enter your email address.', false); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      msg.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        showForgotMsg('If your email is on file, a reset link has been sent. Please check your inbox.', true);
+      } catch (err) {
+        showForgotMsg('Network error. Please try again.', false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Reset Link';
+      }
+    });
+
+    function showForgotMsg(text, success) {
+      const msg = document.getElementById('forgotMsg');
+      msg.textContent = text;
+      msg.style.background = success ? '#e8f5e9' : '#fff0f0';
+      msg.style.color = success ? '#2e7d32' : '#c1121f';
+      msg.style.border = `1px solid ${success ? '#a5d6a7' : '#e63946'}`;
+      msg.style.display = 'block';
+    }
 
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
       e.preventDefault();
