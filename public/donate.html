@@ -157,9 +157,11 @@
       margin-top: auto;
     }
     .btn-lab:hover { background: rgba(165,214,167,0.15); }
-    .act-link { color: #a5d6a7; font-weight: 600; text-decoration: underline; }
-    .act-link:hover { color: #c8e6c9; }
+    .act-link { color: #e53935; font-weight: 700; text-decoration: underline; }
+    .act-link:hover { color: #c8a96e; }
     .act-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .act-btns .btn-lab { border-color: #c8a96e; color: #c8a96e; font-weight: 700; }
+    .act-btns .btn-lab:hover { background: rgba(200,169,110,0.15); }
 
     /* RIGHT PANE */
     .pane-right {
@@ -469,11 +471,7 @@
         <div class="activities-pane">
           <h3>Ugbeka NA Development Activities At Ugbeka College:</h3>
           <ol>
-            <li>Computer Lab &mdash; <a href="/?page=computer-lab" class="act-link">View Our Computer Lab</a></li>
-            <li>Renovated Staff Quarters</li>
-            <li>Renovated Classroom Blocks</li>
-            <li>Donation of Sports Materials</li>
-            <li>Donation of Study Materials</li>
+            <li><strong><a href="/?page=computer-lab" class="act-link">View Our Computer Lab</a></strong></li>
           </ol>
           <div class="act-btns">
             <a href="/?page=dev-projects" class="btn-lab">&#127963; UCOSA Development Activities</a>
