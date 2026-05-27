@@ -1601,23 +1601,62 @@
       <!-- DONATIONS -->
       <section id="donationsSection" class="fin-section">
         <h2>&#128155; Donations</h2>
-        <p style="color:#555;font-size:15px;margin-bottom:20px;">All donations received through the public Donate Now form.</p>
-        <div id="donationsError" class="msg error"></div>
-        <table class="fin-table" id="donationsTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Amount</th>
-              <th>Stripe Ref</th>
-            </tr>
-          </thead>
-          <tbody id="donationsTbody">
-            <tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
-          </tbody>
-        </table>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">All donations received online or recorded manually.</p>
+
+        <div id="donationsError"   class="msg error"></div>
+        <div id="donationsSuccess" class="msg success"></div>
+
+        <!-- ADD RECORD FORM -->
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+          <div class="form-group" style="min-width:180px;flex:2;">
+            <label for="donorName">Name <span style="color:#e63946;">*</span></label>
+            <input type="text" id="donorName" placeholder="Full name" />
+          </div>
+          <div class="form-group" style="min-width:180px;flex:2;">
+            <label for="donorEmail">Email <span style="color:#e63946;">*</span></label>
+            <input type="email" id="donorEmail" placeholder="email@example.com" />
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label for="donorPhone">Phone</label>
+            <input type="text" id="donorPhone" placeholder="Optional" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="donorAmount">Amount ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="donorAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:170px;">
+            <label for="donorDate">Date</label>
+            <input type="date" id="donorDate" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="donationSaveBtn" onclick="saveDonation()">Add Record</button>
+        </div>
+
+        <!-- FILTER -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="text" id="donationsSearch" oninput="applyDonationsFilter()" placeholder="Search name or email…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:220px;" />
+          <span id="donationsCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="fin-table" id="donationsTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Amount</th>
+                <th>Reference</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="donationsTbody">
+              <tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
     </main>
@@ -3522,28 +3561,98 @@
       }
     }
 
+    // ── DONATIONS ─────────────────────────────────────────────────────────────
+
+    let _allDonations = [];
+
     async function loadDonations() {
       const tbody = document.getElementById('donationsTbody');
       const errEl = document.getElementById('donationsError');
+      // set default date to today
+      if (!document.getElementById('donorDate').value) {
+        document.getElementById('donorDate').value = new Date().toISOString().split('T')[0];
+      }
       try {
         const res  = await fetch('/api/admin/donations', { headers: { 'Authorization': 'Bearer ' + getToken() } });
-        const rows = await res.json();
-        if (!res.ok) { errEl.textContent = rows.error || 'Error loading donations.'; errEl.style.display='block'; return; }
-        if (!rows.length) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No donations yet.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = rows.map(d => `
-          <tr>
-            <td>${new Date(d.donated_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</td>
-            <td>${escapeHtml(d.donor_name)}</td>
-            <td>${escapeHtml(d.donor_email)}</td>
-            <td>${d.donor_phone ? escapeHtml(d.donor_phone) : '—'}</td>
-            <td style="font-weight:700;color:#2e7d32;">$${parseFloat(d.amount).toFixed(2)}</td>
-            <td style="font-size:11px;color:#aaa;">${d.stripe_payment_intent_id}</td>
-          </tr>`).join('');
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Error loading donations.'; errEl.style.display = 'block'; return; }
+        _allDonations = data;
+        applyDonationsFilter();
       } catch (err) {
         errEl.textContent = 'Failed to load donations.'; errEl.style.display = 'block';
+      }
+    }
+
+    function applyDonationsFilter() {
+      const search = (document.getElementById('donationsSearch').value || '').toLowerCase();
+      const filtered = _allDonations.filter(d =>
+        !search ||
+        (d.donor_name  || '').toLowerCase().includes(search) ||
+        (d.donor_email || '').toLowerCase().includes(search)
+      );
+      const tbody = document.getElementById('donationsTbody');
+      document.getElementById('donationsCountLabel').textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No donations found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(d => `
+        <tr>
+          <td>${new Date(d.donated_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</td>
+          <td><strong>${escapeHtml(d.donor_name)}</strong></td>
+          <td>${escapeHtml(d.donor_email)}</td>
+          <td>${d.donor_phone ? escapeHtml(d.donor_phone) : '—'}</td>
+          <td style="font-weight:700;color:#2e7d32;">$${parseFloat(d.amount).toFixed(2)}</td>
+          <td style="font-size:11px;color:#aaa;">${d.stripe_payment_intent_id.startsWith('MANUAL') ? '<em>Manual</em>' : escapeHtml(d.stripe_payment_intent_id)}</td>
+          <td><button onclick="deleteDonation(${d.id})" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;">Delete</button></td>
+        </tr>`).join('');
+    }
+
+    async function saveDonation() {
+      const errEl = document.getElementById('donationsError');
+      const sucEl = document.getElementById('donationsSuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+      const donorName  = document.getElementById('donorName').value.trim();
+      const donorEmail = document.getElementById('donorEmail').value.trim();
+      const donorPhone = document.getElementById('donorPhone').value.trim();
+      const amount     = document.getElementById('donorAmount').value;
+      const donatedAt  = document.getElementById('donorDate').value;
+
+      if (!donorName || !donorEmail || amount === '') {
+        errEl.textContent = 'Name, email, and amount are required.'; errEl.style.display = 'block'; return;
+      }
+
+      const btn = document.getElementById('donationSaveBtn');
+      btn.disabled = true;
+      try {
+        const res  = await fetch('/api/admin/donations', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ donorName, donorEmail, donorPhone: donorPhone || null, amount: parseFloat(amount), donatedAt: donatedAt || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Save failed.'; errEl.style.display = 'block'; return; }
+        sucEl.textContent = 'Donation record added.'; sucEl.style.display = 'block';
+        ['donorName','donorEmail','donorPhone','donorAmount'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('donorDate').value = new Date().toISOString().split('T')[0];
+        loadDonations();
+        setTimeout(() => { sucEl.style.display = 'none'; }, 3000);
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
+      } finally { btn.disabled = false; }
+    }
+
+    async function deleteDonation(id) {
+      if (!confirm('Delete this donation record? This cannot be undone.')) return;
+      const errEl = document.getElementById('donationsError');
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch(`/api/admin/donations/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (!res.ok) { const d = await res.json(); errEl.textContent = d.error || 'Delete failed.'; errEl.style.display = 'block'; return; }
+        loadDonations();
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
       }
     }
   </script>

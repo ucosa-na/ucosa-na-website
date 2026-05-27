@@ -1507,7 +1507,7 @@ router.delete('/special-levies/:id', finOrAdmin, async (req, res) => {
   }
 });
 
-// ── Donations (public Donate Now form) ──────────────────────────────────────
+// ── Donations ────────────────────────────────────────────────────────────────
 router.get('/donations', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await db.query(
@@ -1515,6 +1515,35 @@ router.get('/donations', finOrAdmin, async (req, res) => {
        FROM donations ORDER BY donated_at DESC`
     );
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/donations', finOrAdmin, async (req, res) => {
+  const { donorName, donorEmail, donorPhone, amount, donatedAt } = req.body;
+  if (!donorName || !donorEmail || amount === undefined) {
+    return res.status(400).json({ error: 'Name, email, and amount are required.' });
+  }
+  const ref = `MANUAL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const date = donatedAt || new Date().toISOString();
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO donations (donor_name, donor_email, donor_phone, amount, stripe_payment_intent_id, donated_at)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [donorName, donorEmail, donorPhone || null, parseFloat(amount), ref, date]
+    );
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/donations/:id', finOrAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await db.query('DELETE FROM donations WHERE id=$1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
