@@ -157,11 +157,24 @@
       margin-top: auto;
     }
     .btn-lab:hover { background: rgba(165,214,167,0.15); }
-    .act-link { color: #e53935; font-weight: 700; text-decoration: underline; }
-    .act-link:hover { color: #c8a96e; }
-    .act-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-    .act-btns .btn-lab { border-color: #c8a96e; color: #c8a96e; font-weight: 700; }
-    .act-btns .btn-lab:hover { background: rgba(200,169,110,0.15); }
+    .act-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .btn-join-style {
+      display: inline-block;
+      background: #c8a96e;
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      text-decoration: none;
+      text-align: center;
+    }
+    .btn-join-style:hover { opacity: 0.85; }
 
     /* RIGHT PANE */
     .pane-right {
@@ -470,12 +483,10 @@
         <!-- ACTIVITIES PANE -->
         <div class="activities-pane">
           <h3>Ugbeka NA Development Activities At Ugbeka College:</h3>
-          <ol>
-            <li><strong><a href="/?page=computer-lab" class="act-link">View Our Computer Lab</a></strong></li>
-          </ol>
           <div class="act-btns">
-            <a href="/?page=dev-projects" class="btn-lab">&#127963; UCOSA Development Activities</a>
-            <a href="/Video2/UCOSA%20NORTH%20AMERICA%20Computer%20Lab.mp4" target="_blank" class="btn-lab">&#127909; Student Appreciation Video</a>
+            <a href="/?page=computer-lab" class="btn-join-style">&#128187; View Our Computer Lab</a>
+            <a href="/?page=dev-projects" class="btn-join-style">&#127963; UCOSA Development Activities</a>
+            <a href="/Video2/UCOSA%20NORTH%20AMERICA%20Computer%20Lab.mp4" target="_blank" class="btn-join-style">&#127909; Student Appreciation Video</a>
           </div>
         </div>
 
