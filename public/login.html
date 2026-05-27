@@ -92,7 +92,8 @@
     }
 
     input[type="email"],
-    input[type="password"] {
+    input[type="password"],
+    input[type="text"].pw-input {
       width: 100%;
       padding: 11px 14px;
       border: 1.5px solid #dde3f0;
@@ -104,9 +105,30 @@
     }
 
     input[type="email"]:focus,
-    input[type="password"]:focus {
+    input[type="password"]:focus,
+    input[type="text"].pw-input:focus {
       border-color: #1a1a2e;
     }
+
+    .pw-wrap {
+      position: relative;
+    }
+    .pw-wrap input {
+      padding-right: 42px;
+    }
+    .pw-toggle {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px;
+      color: #888;
+      line-height: 1;
+    }
+    .pw-toggle:hover { color: #1a1a2e; }
 
     .forgot {
       display: block;
@@ -212,7 +234,15 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Enter your password" required />
+          <div class="pw-wrap">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required />
+            <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
+              <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
           <a href="#" class="forgot" id="forgotLink">Forgot password?</a>
         </div>
 
@@ -259,6 +289,17 @@
           .catch(() => { /* token invalid, stay on page */ });
       }
     })();
+
+    // Show/hide password toggle
+    document.getElementById('pwToggle').addEventListener('click', function () {
+      const input = document.getElementById('password');
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      document.getElementById('eyeIcon').innerHTML = isHidden
+        ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+        : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      this.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    });
 
     // Forgot password toggle
     document.getElementById('forgotLink').addEventListener('click', function (e) {
