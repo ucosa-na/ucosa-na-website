@@ -2679,6 +2679,12 @@
     'dev-projects'
   ]);
 
+  // Auto-navigate on load if ?page= param is present (e.g. from donate.html links)
+  document.addEventListener('DOMContentLoaded', function () {
+    const p = new URLSearchParams(window.location.search).get('page');
+    if (p && document.getElementById('page-' + p)) showPage(p, null);
+  });
+
   function showPage(id, clickedEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item:not(.nav-item-parent)').forEach(n => n.classList.remove('active'));
