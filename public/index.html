@@ -627,10 +627,13 @@
   }
 
   .hero-desc {
-    font-size: 40px;
+    font-size: clamp(11px, 1.15vw, 22px);
     color: #222222;
     line-height: 1.75;
-    max-width: 560px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
     margin-bottom: 40px;
   }
 
@@ -2011,10 +2014,7 @@
       <div class="hero-title-wrap">
         <h1 class="hero-title">Alumni United Across <em>North America</em></h1>
       </div>
-      <p class="hero-desc">
-        Former students of Ugbeka College Evboehighae, residing in the U.S. and Canada,
-        staying connected — supporting our alma mater, uplifting one another.
-      </p>
+      <p class="hero-desc">Former students of Ugbeka College Evboehighae, residing in the U.S. and Canada, staying connected — supporting our alma mater, uplifting one another.</p>
       <div class="hero-ctas">
         <button class="btn-primary" onclick="showPage('about', document.querySelectorAll('.nav-item')[1])">Learn More</button>
         <button class="btn-secondary" onclick="showPage('login', document.querySelectorAll('.nav-item')[4])">Member Login</button>
