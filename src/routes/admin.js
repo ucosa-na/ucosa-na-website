@@ -1579,7 +1579,7 @@ router.delete('/special-levies/:id', finOrAdmin, async (req, res) => {
 // ── Donations ────────────────────────────────────────────────────────────────
 router.get('/donations', finOrAdmin, async (req, res) => {
   try {
-    const { rows } = await db.query(
+    const { rows } = await pool.query(
       `SELECT id, donor_name, donor_email, donor_phone, amount, stripe_payment_intent_id, donated_at
        FROM donations ORDER BY donated_at DESC`
     );
@@ -1597,7 +1597,7 @@ router.post('/donations', finOrAdmin, async (req, res) => {
   const ref = `MANUAL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const date = donatedAt || new Date().toISOString();
   try {
-    const { rows } = await db.query(
+    const { rows } = await pool.query(
       `INSERT INTO donations (donor_name, donor_email, donor_phone, amount, stripe_payment_intent_id, donated_at)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [donorName, donorEmail, donorPhone || null, parseFloat(amount), ref, date]
@@ -1610,7 +1610,7 @@ router.post('/donations', finOrAdmin, async (req, res) => {
 
 router.delete('/donations/:id', finOrAdmin, async (req, res) => {
   try {
-    const { rowCount } = await db.query('DELETE FROM donations WHERE id=$1', [req.params.id]);
+    const { rowCount } = await pool.query('DELETE FROM donations WHERE id=$1', [req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
     res.json({ ok: true });
   } catch (err) {
