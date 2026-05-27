@@ -18,20 +18,22 @@ const ENDOW_ALLOWED    = [5000, 15000]; // $50 or $150
 // ── Member payment: create PaymentIntent (supports combined dues + endowment) ─
 router.post('/create-intent', requireAuth, async (req, res) => {
   try {
-    const { payDues, endowmentAmount } = req.body;
+    const { payDues, endowmentAmount, levyAmount } = req.body;
     const payEndow = ENDOW_ALLOWED.includes(endowmentAmount);
+    const payLevy  = Number.isInteger(levyAmount) && levyAmount >= 100;
 
-    if (!payDues && !payEndow) {
+    if (!payDues && !payEndow && !payLevy) {
       return res.status(400).json({ error: 'Select at least one payment option.' });
     }
     if (endowmentAmount && !payEndow) {
       return res.status(400).json({ error: 'Invalid endowment amount.' });
     }
 
-    const total = (payDues ? DUES_AMOUNT : 0) + (payEndow ? endowmentAmount : 0);
+    const total = (payDues ? DUES_AMOUNT : 0) + (payEndow ? endowmentAmount : 0) + (payLevy ? levyAmount : 0);
     const parts = [];
     if (payDues)  parts.push('Annual Dues ($100)');
     if (payEndow) parts.push(`Endowment Fund ($${endowmentAmount / 100})`);
+    if (payLevy)  parts.push(`Levy ($${levyAmount / 100})`);
     const description = `UCOSA-NA — ${parts.join(' + ')} — ${req.user.email}`;
 
     const intent = await getStripe().paymentIntents.create({
@@ -55,7 +57,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 // ── Member payment: confirm, record in DB, send receipt ──────────────────────
 router.post('/member-confirm', requireAuth, async (req, res) => {
   try {
-    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear } = req.body;
+    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear, levyAmount, levyYear, levyType } = req.body;
     if (!paymentIntentId) return res.status(400).json({ error: 'Missing paymentIntentId.' });
 
     const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
@@ -104,6 +106,19 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
         );
       }
       items.push({ label: `Endowment Fund (${yr})`, amount: `$${endAmt}` });
+    }
+
+    if (Number.isInteger(levyAmount) && levyAmount >= 100) {
+      const levyAmt = (levyAmount / 100).toFixed(2);
+      const yr      = levyYear || currentYear;
+      const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Donation'];
+      const type    = LEVY_TYPES.includes(levyType) ? levyType : 'Voluntary Contribution';
+      await db.query(
+        `INSERT INTO special_levies (user_id, type, year, amount, paid_date, notes, recorded_by)
+         VALUES ($1, $2, $3, $4, $5, 'Online payment via Stripe', $6)`,
+        [req.user.id, type, yr, levyAmt, today, req.user.email]
+      );
+      items.push({ label: `${type} (${yr})`, amount: `$${levyAmt}` });
     }
 
     const total = (intent.amount / 100).toFixed(2);

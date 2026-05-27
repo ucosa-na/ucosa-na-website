@@ -339,6 +339,7 @@
     .payment-section h2 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 6px; }
     .payment-section p.pay-sub { font-size: 0.88rem; color: #888; margin-bottom: 20px; }
     .pay-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    #card-levy { grid-column: 1 / -1; }
     .pay-type-card {
       border: 2px solid #e0e0e0; border-radius: 10px; padding: 18px 16px; cursor: pointer;
       transition: border-color 0.2s, background 0.2s; text-align: center;
@@ -798,6 +799,29 @@
                     <select id="endow-year" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;"></select>
                   </div>
                 </div>
+                <div class="pay-type-card" id="card-levy" onclick="togglePayType('levy')">
+                  <div class="pay-label">&#128176; Special Levy / Voluntary Contribution / Donation</div>
+                  <div class="pay-amount" id="levy-amount-display">—</div>
+                  <div class="pay-desc">Make a special levy, voluntary contribution, or general donation</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;" onclick="event.stopPropagation()">
+                    <div>
+                      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Type</label>
+                      <select id="levy-type" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;">
+                        <option value="Special Levy">Special Levy</option>
+                        <option value="Voluntary Contribution">Voluntary Contribution</option>
+                        <option value="Donation">Donation</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Amount ($)</label>
+                      <input type="number" id="levy-custom-amt" min="1" placeholder="e.g. 25" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;outline:none;" oninput="updateLevyAmt(this.value)">
+                    </div>
+                    <div>
+                      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Year</label>
+                      <select id="levy-year" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;"></select>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div id="stripe-card-wrap">
                 <div id="pay-summary"></div>
@@ -868,17 +892,24 @@
     // ── Stripe Payment ──
     const STRIPE_PK = 'pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq';
     let stripeInstance, cardElement;
-    let payDues = false, endowmentAmount = 5000; // endowment default $50
+    let payDues = false, endowmentAmount = 5000, levyAmountCents = 0;
 
     function populateYearSelects() {
       const cur = new Date().getFullYear();
       const opts = Array.from({ length: 7 }, (_, i) => cur - 3 + i)
         .map(y => `<option value="${y}"${y === cur ? ' selected' : ''}>${y}</option>`)
         .join('');
-      ['dues-year', 'endow-year'].forEach(id => {
+      ['dues-year', 'endow-year', 'levy-year'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = opts;
       });
+    }
+
+    function updateLevyAmt(val) {
+      const dollars = parseFloat(val);
+      levyAmountCents = (!isNaN(dollars) && dollars >= 1) ? Math.round(dollars * 100) : 0;
+      document.getElementById('levy-amount-display').textContent = levyAmountCents > 0 ? '$' + dollars.toFixed(2) : '—';
+      updateSummary();
     }
 
     function initStripe() {
@@ -898,11 +929,16 @@
       if (type === 'dues') {
         payDues = !payDues;
         document.getElementById('card-dues').classList.toggle('selected', payDues);
+      } else if (type === 'levy') {
+        const was = document.getElementById('card-levy').classList.contains('selected');
+        document.getElementById('card-levy').classList.toggle('selected', !was);
       } else {
-        const wasSelected = document.getElementById('card-endowment').classList.contains('selected');
-        document.getElementById('card-endowment').classList.toggle('selected', !wasSelected);
+        const was = document.getElementById('card-endowment').classList.contains('selected');
+        document.getElementById('card-endowment').classList.toggle('selected', !was);
       }
-      const anySelected = payDues || document.getElementById('card-endowment').classList.contains('selected');
+      const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
+      const levySelected  = document.getElementById('card-levy').classList.contains('selected');
+      const anySelected   = payDues || endowSelected || levySelected;
       const wrap = document.getElementById('stripe-card-wrap');
       wrap.style.display = anySelected ? 'block' : 'none';
       if (anySelected) initStripe();
@@ -920,19 +956,30 @@
 
     function updateSummary() {
       const el = document.getElementById('pay-summary');
-      const endowSelected = document.getElementById('card-endowment') && document.getElementById('card-endowment').classList.contains('selected');
-      if (!payDues && !endowSelected) { el.style.display = 'none'; return; }
+      const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
+      const levySelected  = document.getElementById('card-levy').classList.contains('selected');
+      if (!payDues && !endowSelected && !levySelected) { el.style.display = 'none'; return; }
       const parts = [];
       let total = 0;
-      if (payDues)       { parts.push('Annual Dues ($100.00)');                             total += 10000; }
+      if (payDues)       { parts.push('Annual Dues ($100.00)'); total += 10000; }
       if (endowSelected) { parts.push(`Endowment Fund ($${(endowmentAmount/100).toFixed(2)})`); total += endowmentAmount; }
+      if (levySelected && levyAmountCents > 0) {
+        const type = document.getElementById('levy-type').value;
+        parts.push(`${type} ($${(levyAmountCents/100).toFixed(2)})`);
+        total += levyAmountCents;
+      }
       el.style.display = 'block';
       el.innerHTML = `Paying <strong>$${(total/100).toFixed(2)}</strong> for: ${parts.join(' + ')}`;
     }
 
     async function submitPayment() {
       const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
-      if (!payDues && !endowSelected) return;
+      const levySelected  = document.getElementById('card-levy').classList.contains('selected');
+      if (!payDues && !endowSelected && !levySelected) return;
+      if (levySelected && levyAmountCents < 100) {
+        document.getElementById('card-errors').textContent = 'Please enter a levy/contribution amount (minimum $1).';
+        return;
+      }
       const cardName    = document.getElementById('card-name').value.trim();
       const nameErrEl   = document.getElementById('card-name-error');
       nameErrEl.textContent = '';
@@ -945,7 +992,7 @@
         const res   = await fetch('/api/payment/create-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ payDues, endowmentAmount: endowSelected ? endowmentAmount : 0 }),
+          body: JSON.stringify({ payDues, endowmentAmount: endowSelected ? endowmentAmount : 0, levyAmount: levySelected ? levyAmountCents : 0 }),
         });
         const data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Payment error.'; btn.disabled = false; btn.textContent = 'Pay Now'; return; }
@@ -964,6 +1011,8 @@
           // Confirm server-side: record in DB + send email receipt
           const duesYear  = parseInt(document.getElementById('dues-year').value, 10);
           const endowYear = parseInt(document.getElementById('endow-year').value, 10);
+          const levyYear  = parseInt(document.getElementById('levy-year').value, 10);
+          const levyType  = document.getElementById('levy-type').value;
           await fetch('/api/payment/member-confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -973,6 +1022,9 @@
               duesYear,
               endowmentAmount: endowSelected ? endowmentAmount : 0,
               endowYear,
+              levyAmount: levySelected ? levyAmountCents : 0,
+              levyYear,
+              levyType,
             }),
           });
 
