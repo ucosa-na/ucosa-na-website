@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const multer = require('multer');
 const pool = require('../db');
 const requireRole = require('../middleware/requireRole');
+const requireAuth = require('../middleware/requireAuth');
 const log = require('../logger');
 const { sendEmail } = require('../mailer');
 
@@ -1427,6 +1428,82 @@ router.get('/logs', secOrAdmin, (req, res) => {
     res.json({ lines: filtered.slice(-limit), total: filtered.length });
   } catch (err) {
     res.status(500).json({ error: 'Could not read log file' });
+  }
+});
+
+// ── SPECIAL LEVIES / VOLUNTARY CONTRIBUTIONS / DONATIONS ─────────────────────
+
+const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Donation'];
+
+// GET /api/admin/special-levies — readable by all authenticated members
+router.get('/special-levies', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT sl.id, sl.type, sl.year, sl.amount, sl.paid_date, sl.notes,
+             u.full_name AS member_name,
+             r.full_name AS recorded_by_name
+      FROM special_levies sl
+      JOIN users u ON u.id = sl.user_id
+      LEFT JOIN users r ON r.id = sl.recorded_by
+      ORDER BY sl.year DESC, sl.paid_date DESC, u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/special-levies — fin/admin only
+router.post('/special-levies', finOrAdmin, async (req, res) => {
+  const { userId, type, year, amount, paidDate, notes } = req.body;
+  if (!userId || !type || !year || amount === undefined) {
+    return res.status(400).json({ error: 'Member, type, year, and amount are required.' });
+  }
+  if (!LEVY_TYPES.includes(type)) {
+    return res.status(400).json({ error: 'Invalid type.' });
+  }
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO special_levies (user_id, type, year, amount, paid_date, notes, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id
+    `, [userId, type, year, parseFloat(amount), paidDate || null, notes || null, req.user.id]);
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/special-levies/:id — fin/admin only
+router.put('/special-levies/:id', finOrAdmin, async (req, res) => {
+  const { type, year, amount, paidDate, notes } = req.body;
+  if (!type || !year || amount === undefined) {
+    return res.status(400).json({ error: 'Type, year, and amount are required.' });
+  }
+  if (!LEVY_TYPES.includes(type)) {
+    return res.status(400).json({ error: 'Invalid type.' });
+  }
+  try {
+    const { rowCount } = await pool.query(`
+      UPDATE special_levies
+      SET type=$1, year=$2, amount=$3, paid_date=$4, notes=$5, updated_at=NOW()
+      WHERE id=$6
+    `, [type, year, parseFloat(amount), paidDate || null, notes || null, req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/special-levies/:id — fin/admin only
+router.delete('/special-levies/:id', finOrAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM special_levies WHERE id=$1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

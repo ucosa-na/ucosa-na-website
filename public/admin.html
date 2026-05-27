@@ -708,6 +708,7 @@
           <a href="#endowmentFund">Endowment Fund</a>
           <a href="#expenseRecords">Expense Records</a>
           <a href="#donationsSection">Donations</a>
+          <a href="#specialLeviesSection">Special Levies</a>
         </div>
       </div>
 
@@ -1521,6 +1522,82 @@
         <button class="btn-primary" onclick="sendInviteBroadcast()">&#128140; Send Invitations</button>
       </section>
 
+      <!-- SPECIAL LEVIES / VOLUNTARY CONTRIBUTIONS / DONATIONS -->
+      <section id="specialLeviesSection" class="fin-section">
+        <h2>&#128176; Special Levies / Voluntary Contributions / Donations</h2>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">Record and track special levies, voluntary contributions, and member donations.</p>
+
+        <div id="levyError"   class="msg error"></div>
+        <div id="levySuccess" class="msg success"></div>
+
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+          <div class="form-group" style="min-width:200px;flex:2;">
+            <label for="levyMember">Member <span style="color:#e63946;">*</span></label>
+            <select id="levyMember"><option value="">— Choose member —</option></select>
+          </div>
+          <div class="form-group" style="max-width:220px;">
+            <label for="levyType">Type <span style="color:#e63946;">*</span></label>
+            <select id="levyType">
+              <option value="">— Select type —</option>
+              <option value="Special Levy">Special Levy</option>
+              <option value="Voluntary Contribution">Voluntary Contribution</option>
+              <option value="Donation">Donation</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:110px;">
+            <label for="levyYear">Year <span style="color:#e63946;">*</span></label>
+            <input type="number" id="levyYear" placeholder="e.g. 2026" min="1990" max="2099" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="levyAmount">Amount ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="levyAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:170px;">
+            <label for="levyPaidDate">Paid Date</label>
+            <input type="date" id="levyPaidDate" />
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="levyNotes">Notes</label>
+            <input type="text" id="levyNotes" placeholder="Optional notes" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="levySaveBtn" onclick="saveSpecialLevy()">Add Record</button>
+          <button class="btn-secondary" id="levyCancelBtn" style="display:none;margin-left:10px;" onclick="cancelLevyEdit()">Cancel Edit</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:15px;font-weight:600;color:#444;">Type:</label>
+          <select id="levyTypeFilter" onchange="applyLevyFilter()" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;">
+            <option value="all">All</option>
+            <option value="Special Levy">Special Levy</option>
+            <option value="Voluntary Contribution">Voluntary Contribution</option>
+            <option value="Donation">Donation</option>
+          </select>
+          <input type="text" id="levySearch" oninput="applyLevyFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
+          <span id="levyCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="fin-table" id="levyTable">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Member</th>
+                <th>Year</th>
+                <th>Amount</th>
+                <th>Paid Date</th>
+                <th>Notes</th>
+                <th>Recorded By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="levyTbody">
+              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- DONATIONS -->
       <section id="donationsSection" class="fin-section">
         <h2>&#128155; Donations</h2>
@@ -1745,7 +1822,7 @@
 
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
-      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection'];
+      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
@@ -2450,6 +2527,7 @@
         members.map(m => `<option value="${m.id}">${escapeHtml(m.full_name)}</option>`).join('');
       document.getElementById('duesMember').innerHTML = opts;
       document.getElementById('endMember').innerHTML  = opts;
+      document.getElementById('levyMember').innerHTML = opts;
     }
 
     // ── ANNUAL DUES ───────────────────────────────────────────────────────────
@@ -3307,6 +3385,7 @@
         loadEndowment();
         loadExpenses();
         loadDonations();
+        loadSpecialLevies();
       }
 
       if (['admin', 'security-role'].includes(user.role)) {
@@ -3314,6 +3393,134 @@
         loadMeetingNotes();
       }
     })();
+
+    // ── SPECIAL LEVIES ────────────────────────────────────────────────────────
+
+    let _allLevies  = [];
+    let levyEditId  = null;
+
+    async function loadSpecialLevies() {
+      document.getElementById('levyYear').value = document.getElementById('levyYear').value || new Date().getFullYear();
+      const tbody = document.getElementById('levyTbody');
+      const errEl = document.getElementById('levyError');
+      try {
+        const res  = await fetch('/api/admin/special-levies', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Error loading records.'; errEl.style.display = 'block'; return; }
+        _allLevies = data;
+        applyLevyFilter();
+      } catch (err) {
+        errEl.textContent = 'Failed to load special levies.'; errEl.style.display = 'block';
+      }
+    }
+
+    function applyLevyFilter() {
+      const typeFilter = document.getElementById('levyTypeFilter').value;
+      const search     = (document.getElementById('levySearch').value || '').toLowerCase();
+      const filtered   = _allLevies.filter(r =>
+        (typeFilter === 'all' || r.type === typeFilter) &&
+        (!search || (r.member_name || '').toLowerCase().includes(search))
+      );
+      const tbody = document.getElementById('levyTbody');
+      document.getElementById('levyCountLabel').textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        return;
+      }
+      const typeColors = { 'Special Levy': '#7b2152', 'Voluntary Contribution': '#1565c0', 'Donation': '#2e7d32' };
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.82em;font-weight:700;color:#fff;background:${typeColors[r.type] || '#555'};">${escapeHtml(r.type)}</span></td>
+          <td><strong>${escapeHtml(r.member_name)}</strong></td>
+          <td>${r.year}</td>
+          <td style="font-weight:700;color:#2e7d32;">$${parseFloat(r.amount).toFixed(2)}</td>
+          <td>${r.paid_date ? new Date(r.paid_date).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
+          <td style="color:#555;">${escapeHtml(r.notes || '—')}</td>
+          <td style="color:#888;font-size:13px;">${escapeHtml(r.recorded_by_name || '—')}</td>
+          <td>
+            <button onclick="editSpecialLevy(${r.id})" style="background:#1565c0;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;margin-right:4px;">Edit</button>
+            <button onclick="deleteSpecialLevy(${r.id})" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;">Delete</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function saveSpecialLevy() {
+      const errEl = document.getElementById('levyError');
+      const sucEl = document.getElementById('levySuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+      const userId   = document.getElementById('levyMember').value;
+      const type     = document.getElementById('levyType').value;
+      const year     = document.getElementById('levyYear').value;
+      const amount   = document.getElementById('levyAmount').value;
+      const paidDate = document.getElementById('levyPaidDate').value;
+      const notes    = document.getElementById('levyNotes').value.trim();
+
+      if (!userId || !type || !year || amount === '') {
+        errEl.textContent = 'Member, type, year, and amount are required.'; errEl.style.display = 'block'; return;
+      }
+
+      const url    = levyEditId ? `/api/admin/special-levies/${levyEditId}` : '/api/admin/special-levies';
+      const method = levyEditId ? 'PUT' : 'POST';
+      const body   = levyEditId
+        ? { type, year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, notes }
+        : { userId: parseInt(userId), type, year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, notes };
+
+      const btn = document.getElementById('levySaveBtn');
+      btn.disabled = true;
+      try {
+        const res  = await fetch(url, { method, headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Save failed.'; errEl.style.display = 'block'; return; }
+        sucEl.textContent = levyEditId ? 'Record updated.' : 'Record added.'; sucEl.style.display = 'block';
+        cancelLevyEdit();
+        loadSpecialLevies();
+        setTimeout(() => { sucEl.style.display = 'none'; }, 3000);
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
+      } finally { btn.disabled = false; }
+    }
+
+    function editSpecialLevy(id) {
+      const r = _allLevies.find(x => x.id === id);
+      if (!r) return;
+      levyEditId = id;
+      document.getElementById('levyType').value     = r.type;
+      document.getElementById('levyYear').value     = r.year;
+      document.getElementById('levyAmount').value   = parseFloat(r.amount).toFixed(2);
+      document.getElementById('levyPaidDate').value = r.paid_date ? r.paid_date.split('T')[0] : '';
+      document.getElementById('levyNotes').value    = r.notes || '';
+      document.getElementById('levySaveBtn').textContent   = 'Update Record';
+      document.getElementById('levyCancelBtn').style.display = '';
+      document.getElementById('levyError').style.display   = 'none';
+      document.getElementById('levySuccess').style.display = 'none';
+      document.getElementById('specialLeviesSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelLevyEdit() {
+      levyEditId = null;
+      document.getElementById('levyMember').value   = '';
+      document.getElementById('levyType').value     = '';
+      document.getElementById('levyYear').value     = new Date().getFullYear();
+      document.getElementById('levyAmount').value   = '';
+      document.getElementById('levyPaidDate').value = '';
+      document.getElementById('levyNotes').value    = '';
+      document.getElementById('levySaveBtn').textContent     = 'Add Record';
+      document.getElementById('levyCancelBtn').style.display = 'none';
+    }
+
+    async function deleteSpecialLevy(id) {
+      if (!confirm('Delete this record? This cannot be undone.')) return;
+      const errEl = document.getElementById('levyError');
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch(`/api/admin/special-levies/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (!res.ok) { const d = await res.json(); errEl.textContent = d.error || 'Delete failed.'; errEl.style.display = 'block'; return; }
+        loadSpecialLevies();
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
+      }
+    }
 
     async function loadDonations() {
       const tbody = document.getElementById('donationsTbody');

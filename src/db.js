@@ -162,6 +162,21 @@ pool.query(`
   `)
 ).then(() =>
   pool.query(`
+    CREATE TABLE IF NOT EXISTS special_levies (
+      id          SERIAL PRIMARY KEY,
+      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type        TEXT NOT NULL CHECK (type IN ('Special Levy','Voluntary Contribution','Donation')),
+      year        INTEGER NOT NULL,
+      amount      NUMERIC(10,2) NOT NULL DEFAULT 0,
+      paid_date   DATE DEFAULT NULL,
+      notes       TEXT DEFAULT NULL,
+      recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at  TIMESTAMPTZ DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
+).then(() =>
+  pool.query(`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       id         SERIAL PRIMARY KEY,
       user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
