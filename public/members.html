@@ -674,7 +674,7 @@
       if (!levies || !levies.length) {
         return `<p class="fin-empty">No special levies or contributions on file yet.</p>`;
       }
-      const typeColors = { 'Special Levy': '#7b2152', 'Voluntary Contribution': '#1565c0', 'Donation': '#2e7d32' };
+      const typeColors = { 'Special Levy': '#7b2152', 'Voluntary Contribution': '#1565c0', 'Member-Donation': '#2e7d32', 'Donation': '#2e7d32' };
       const rows = levies.map(r => `
         <tr>
           <td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.82em;font-weight:700;color:#fff;background:${typeColors[r.type] || '#555'};">${r.type}</span></td>
@@ -800,16 +800,16 @@
                   </div>
                 </div>
                 <div class="pay-type-card" id="card-levy" onclick="togglePayType('levy')">
-                  <div class="pay-label">&#128176; Special Levy / Voluntary Contribution / Donation</div>
+                  <div class="pay-label">&#128176; Special Levy / Voluntary Contribution / Member-Donation</div>
                   <div class="pay-amount" id="levy-amount-display">—</div>
-                  <div class="pay-desc">Make a special levy, voluntary contribution, or general donation</div>
+                  <div class="pay-desc">Make a special levy, voluntary contribution, or member donation</div>
                   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;" onclick="event.stopPropagation()">
                     <div>
                       <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Type</label>
                       <select id="levy-type" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;">
                         <option value="Special Levy">Special Levy</option>
                         <option value="Voluntary Contribution">Voluntary Contribution</option>
-                        <option value="Donation">Donation</option>
+                        <option value="Member-Donation">Member-Donation</option>
                       </select>
                     </div>
                     <div>
@@ -862,7 +862,7 @@
 
           <!-- SPECIAL LEVIES -->
           <section id="special-levies-section">
-            <h2>&#128176; Special Levies / Voluntary Contributions / Donations</h2>
+            <h2>&#128176; Special Levies / Voluntary Contributions / Member-Donations</h2>
             <p style="color:#888;font-size:13px;margin-bottom:16px;">Read-only view. Contact the Financial Secretary to make changes.</p>
             ${buildSpecialLeviesTable(levies)}
           </section>

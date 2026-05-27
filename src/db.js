@@ -165,7 +165,7 @@ pool.query(`
     CREATE TABLE IF NOT EXISTS special_levies (
       id          SERIAL PRIMARY KEY,
       user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      type        TEXT NOT NULL CHECK (type IN ('Special Levy','Voluntary Contribution','Donation')),
+      type        TEXT NOT NULL CHECK (type IN ('Special Levy','Voluntary Contribution','Member-Donation')),
       year        INTEGER NOT NULL,
       amount      NUMERIC(10,2) NOT NULL DEFAULT 0,
       paid_date   DATE DEFAULT NULL,

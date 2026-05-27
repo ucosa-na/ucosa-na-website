@@ -1502,7 +1502,7 @@ router.get('/logs', secOrAdmin, (req, res) => {
 
 // ── SPECIAL LEVIES / VOLUNTARY CONTRIBUTIONS / DONATIONS ─────────────────────
 
-const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Donation'];
+const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Member-Donation'];
 
 // GET /api/admin/special-levies — readable by all authenticated members
 router.get('/special-levies', requireAuth, async (req, res) => {

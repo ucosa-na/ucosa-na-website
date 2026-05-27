@@ -111,7 +111,7 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
     if (Number.isInteger(levyAmount) && levyAmount >= 100) {
       const levyAmt = (levyAmount / 100).toFixed(2);
       const yr      = levyYear || currentYear;
-      const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Donation'];
+      const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Member-Donation'];
       const type    = LEVY_TYPES.includes(levyType) ? levyType : 'Voluntary Contribution';
       const noteText = levyNote ? `${levyNote} — Online payment via Stripe` : 'Online payment via Stripe';
       await db.query(
