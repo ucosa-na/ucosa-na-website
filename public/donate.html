@@ -572,11 +572,15 @@
           return;
         }
 
-        await fetch('/api/payment/donate-confirm', {
+        const confirmRes = await fetch('/api/payment/donate-confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentIntentId: result.paymentIntent.id, name, email, phone }),
         });
+        if (!confirmRes.ok) {
+          const confirmErr = await confirmRes.json().catch(() => ({}));
+          console.error('Donation confirm error:', confirmErr);
+        }
 
         document.getElementById('donateFormArea').innerHTML = `
           <div class="success-box">

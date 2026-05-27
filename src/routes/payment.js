@@ -117,7 +117,7 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
       await db.query(
         `INSERT INTO special_levies (user_id, type, year, amount, paid_date, notes, recorded_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [req.user.id, type, yr, levyAmt, today, noteText, req.user.email]
+        [req.user.id, type, yr, levyAmt, today, noteText, req.user.id]
       );
       items.push({ label: `${type} (${yr})`, amount: `$${levyAmt}` });
     }
