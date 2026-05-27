@@ -50,38 +50,21 @@
     }
     .back-link:hover { color: #fff; }
 
-    /* PAGE TITLE BANNER */
-    .page-title-banner {
-      background: #0d0d0d;
-      text-align: center;
-      padding: 32px 24px;
-      border-bottom: 3px solid #c8a96e;
-    }
-    .page-title-banner h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 58px;
-      font-weight: 700;
-      color: #c8a96e;
-      white-space: nowrap;
-      line-height: 1.1;
-      letter-spacing: 0.5px;
-    }
-
     /* MAIN */
     main {
       flex: 1;
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 40px 16px 48px;
+      padding: 0 0 48px;
     }
 
     /* TWO-PANE CARD */
     .donate-card {
       display: flex;
       width: 100%;
-      max-width: 1060px;
-      border-radius: 16px;
+      max-width: 1200px;
+      border-radius: 0 0 16px 16px;
       overflow: hidden;
       box-shadow: 0 8px 40px rgba(0,0,0,0.14);
       align-items: stretch;
@@ -92,9 +75,19 @@
       background: #1b5e20;
       color: #fff;
       padding: 52px 44px 52px;
-      flex: 0 0 52%;
+      flex: 0 0 58%;
       display: flex;
       flex-direction: column;
+    }
+    .pane-left .pane-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #c8a96e;
+      line-height: 1.2;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid rgba(200,169,110,0.35);
     }
     .pane-left .heart-icon { margin-bottom: 22px; }
 
@@ -303,15 +296,9 @@
 
     /* RESPONSIVE */
     @media (max-width: 760px) {
-      .page-title-banner h1 {
-        font-size: 32px;
-        white-space: normal;
-      }
-      .donate-card { flex-direction: column; }
-      .pane-left {
-        flex: none;
-        padding: 36px 24px 30px;
-      }
+      .donate-card { flex-direction: column; border-radius: 0 0 12px 12px; }
+      .pane-left { flex: none; padding: 36px 24px 30px; }
+      .pane-left .pane-title { font-size: 26px; }
       .pane-right { padding: 32px 20px 36px; }
     }
   </style>
@@ -329,11 +316,6 @@
     <a href="/" class="back-link">&larr; Back to Home</a>
   </header>
 
-  <!-- PAGE TITLE -->
-  <div class="page-title-banner">
-    <h1>Help Us Empower the Next Generation</h1>
-  </div>
-
   <main>
     <div class="donate-card">
 
@@ -345,6 +327,7 @@
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
           </svg>
         </div>
+        <div class="pane-title">Help Us Empower the Next Generation</div>
 
         <p>
           Back home at Ugbeka College, hundreds of bright, determined students wake up every day
