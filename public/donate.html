@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donate Now — UCOSA-NA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    header {
+      background: #1a1a2e;
+      color: white;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .header-brand img {
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+      border-radius: 7px;
+    }
+    .header-brand h1 { font-size: 1.2rem; color: #fff; }
+    .header-brand p  { font-size: 0.75rem; color: #aab4c8; }
+    .back-link {
+      color: #cdd6f4;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .back-link:hover { color: #fff; }
+
+    /* MAIN */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    /* TWO-PANE CARD */
+    .donate-card {
+      display: flex;
+      width: 100%;
+      max-width: 920px;
+      min-height: 600px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.14);
+    }
+
+    /* LEFT PANE */
+    .pane-left {
+      background: #1b5e20;
+      color: #fff;
+      padding: 52px 40px;
+      flex: 0 0 42%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .pane-left .heart-icon { margin-bottom: 20px; }
+    .pane-left h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 38px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 22px;
+    }
+    .pane-left p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #c8e6c9;
+      margin-bottom: 14px;
+    }
+    .pane-left p strong { color: #fff; }
+    .pane-left .quote {
+      font-style: italic;
+      font-size: 14px;
+      color: #a5d6a7;
+      margin: 18px 0 24px;
+    }
+    .btn-lab {
+      display: inline-block;
+      background: none;
+      border: 1.5px solid #a5d6a7;
+      color: #a5d6a7;
+      padding: 9px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      width: fit-content;
+    }
+    .btn-lab:hover { background: rgba(165,214,167,0.15); }
+
+    /* RIGHT PANE */
+    .pane-right {
+      background: #fdf6ec;
+      padding: 48px 40px 44px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .pane-right h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #7b2152;
+      margin-bottom: 26px;
+      text-align: center;
+    }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .form-group label .opt { color: #999; font-weight: 400; font-size: 13px; }
+    .form-group label .req { color: #e63946; }
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid #d0d0d0;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #333;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: #2e7d32; }
+
+    /* Amount buttons */
+    .amt-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .amt-btn {
+      padding: 8px 16px;
+      border: 2px solid #2e7d32;
+      background: #fff;
+      color: #2e7d32;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .amt-btn:hover,
+    .amt-btn.selected {
+      background: #2e7d32;
+      color: #fff;
+    }
+    .custom-amt-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .custom-amt-row span { font-size: 15px; color: #666; }
+    .custom-amt-row input {
+      width: 100px;
+      padding: 8px 10px;
+      border: 1.5px solid #d0d0d0;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+    }
+    .custom-amt-row input:focus { border-color: #2e7d32; }
+
+    /* Card element */
+    #donate-card-element {
+      border: 1.5px solid #d0d0d0;
+      border-radius: 8px;
+      padding: 12px 13px;
+      background: #fafafa;
+    }
+    #donate-card-errors {
+      color: #e63946;
+      font-size: 13px;
+      margin-top: 5px;
+      min-height: 16px;
+    }
+
+    #donateErrMsg {
+      background: #fff0f0;
+      border: 1px solid #e63946;
+      color: #c1121f;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      display: none;
+      margin-bottom: 10px;
+    }
+
+    .btn-pay {
+      width: 100%;
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: background 0.2s;
+    }
+    .btn-pay:hover    { background: #1b5e20; }
+    .btn-pay:disabled { background: #888; cursor: not-allowed; }
+
+    .secure-note {
+      text-align: center;
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 8px;
+    }
+
+    /* Success state */
+    .success-box {
+      text-align: center;
+      padding: 30px 0;
+    }
+    .success-box .check { font-size: 3.5rem; margin-bottom: 14px; }
+    .success-box h3 { color: #2e7d32; font-size: 1.3rem; margin-bottom: 10px; }
+    .success-box p  { color: #555; font-size: 0.95rem; margin-bottom: 6px; }
+
+    /* FOOTER */
+    footer {
+      background: #1a1a2e;
+      color: #aab4c8;
+      text-align: center;
+      padding: 16px 20px;
+      font-size: 0.78rem;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 680px) {
+      .donate-card { flex-direction: column; }
+      .pane-left {
+        flex: none;
+        padding: 36px 24px 30px;
+        border-radius: 0;
+      }
+      .pane-left h2 { font-size: 28px; }
+      .pane-right {
+        padding: 32px 20px 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="header-brand">
+      <img src="/logo.jpg" alt="UCOSA-NA Logo" />
+      <div>
+        <h1>UCOSA-North America</h1>
+        <p>Ugbeka College Old Students' Association</p>
+      </div>
+    </a>
+    <a href="/" class="back-link">&larr; Back to Home</a>
+  </header>
+
+  <main>
+    <div class="donate-card">
+
+      <!-- LEFT: Appeal -->
+      <div class="pane-left">
+        <div class="heart-icon">
+          <svg width="44" height="44" fill="none" stroke="#a5d6a7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+        </div>
+        <h2>Help Us Empower the Next Generation</h2>
+        <p>
+          Back home at Ugbeka College, hundreds of students are eager to learn
+          and build a future — but opportunity does not always match that eagerness.
+        </p>
+        <p>
+          Your donation directly funds our <strong>computer laboratory</strong>,
+          school supplies, and resources that open doors for the next generation
+          of students.
+        </p>
+        <p>No amount is too small. Together, we can make a lasting difference.</p>
+        <p class="quote">
+          &ldquo;The roots of education are bitter, but the fruit is sweet.&rdquo;<br>
+          &mdash; Aristotle
+        </p>
+        <a href="/?page=computer-lab" class="btn-lab">&#128187; View Our Computer Lab</a>
+      </div>
+
+      <!-- RIGHT: Form -->
+      <div class="pane-right">
+        <h1>Make a Donation</h1>
+
+        <div id="donateFormArea">
+          <div class="form-group">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="donateName" placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" id="donateEmail" placeholder="you@example.com" />
+          </div>
+          <div class="form-group">
+            <label>Phone Number <span class="opt">(optional)</span></label>
+            <input type="tel" id="donatePhone" placeholder="+1 (555) 000-0000" />
+          </div>
+          <div class="form-group">
+            <label>Donation Amount <span class="req">*</span></label>
+            <div class="amt-row">
+              <button class="amt-btn selected" onclick="selectAmt(25,  this)">$25</button>
+              <button class="amt-btn"          onclick="selectAmt(50,  this)">$50</button>
+              <button class="amt-btn"          onclick="selectAmt(100, this)">$100</button>
+              <button class="amt-btn"          onclick="selectAmt(150, this)">$150</button>
+              <button class="amt-btn"          onclick="selectAmt(200, this)">$200</button>
+            </div>
+            <div class="custom-amt-row">
+              <span>Or enter amount: $</span>
+              <input type="number" id="donateCustomAmt" min="1" placeholder="Other" oninput="setCustomAmt(this.value)" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Card Details <span class="req">*</span></label>
+            <div id="donate-card-element"></div>
+            <div id="donate-card-errors"></div>
+          </div>
+          <div id="donateErrMsg"></div>
+          <button class="btn-pay" id="donatePay" onclick="submitDonation()">Make a Payment</button>
+          <p class="secure-note">&#128274; Secured by Stripe. We never store your card details.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 UCOSA-North America. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let _stripe, _card, _amtCents = 2500;
+
+    // Init Stripe on page load
+    window.addEventListener('DOMContentLoaded', function () {
+      _stripe = Stripe('pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq');
+      const elements = _stripe.elements();
+      _card = elements.create('card', {
+        style: { base: { fontSize: '15px', color: '#1a1a2e', '::placeholder': { color: '#aaa' } } }
+      });
+      _card.mount('#donate-card-element');
+      _card.on('change', e => {
+        document.getElementById('donate-card-errors').textContent = e.error ? e.error.message : '';
+      });
+    });
+
+    function selectAmt(dollars, btn) {
+      _amtCents = dollars * 100;
+      document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('donateCustomAmt').value = '';
+    }
+
+    function setCustomAmt(val) {
+      const n = parseFloat(val);
+      if (n > 0) {
+        _amtCents = Math.round(n * 100);
+        document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('selected'));
+      }
+    }
+
+    async function submitDonation() {
+      const name  = document.getElementById('donateName').value.trim();
+      const email = document.getElementById('donateEmail').value.trim();
+      const phone = document.getElementById('donatePhone').value.trim();
+      const errEl = document.getElementById('donateErrMsg');
+      const btn   = document.getElementById('donatePay');
+
+      errEl.style.display = 'none';
+      if (!name)  { errEl.textContent = 'Please enter your name.';  errEl.style.display = 'block'; return; }
+      if (!email) { errEl.textContent = 'Please enter your email.'; errEl.style.display = 'block'; return; }
+      if (_amtCents < 100) { errEl.textContent = 'Minimum donation is $1.'; errEl.style.display = 'block'; return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Processing…';
+
+      try {
+        const res  = await fetch('/api/payment/donate-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, amount: _amtCents }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Error creating payment.';
+          errEl.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'Make a Payment';
+          return;
+        }
+
+        const result = await _stripe.confirmCardPayment(data.clientSecret, {
+          payment_method: { card: _card, billing_details: { name, email } }
+        });
+
+        if (result.error) {
+          errEl.textContent = result.error.message;
+          errEl.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'Make a Payment';
+          return;
+        }
+
+        // Record server-side and send receipt
+        await fetch('/api/payment/donate-confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId: result.paymentIntent.id, name, email, phone }),
+        });
+
+        document.getElementById('donateFormArea').innerHTML = `
+          <div class="success-box">
+            <div class="check">&#9989;</div>
+            <h3>Thank You, ${name}!</h3>
+            <p>Your donation of <strong>$${(_amtCents / 100).toFixed(2)}</strong> has been received.</p>
+            <p style="color:#888;font-size:13px;">A receipt has been sent to <strong>${email}</strong>.</p>
+            <a href="/" style="display:inline-block;margin-top:20px;background:#1a1a2e;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Back to Home</a>
+          </div>`;
+      } catch (err) {
+        errEl.textContent = 'Network error — please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Make a Payment';
+      }
+    }
+  </script>
+</body>
+</html>
