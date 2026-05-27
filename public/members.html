@@ -820,6 +820,10 @@
                       <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Year</label>
                       <select id="levy-year" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;"></select>
                     </div>
+                    <div style="grid-column:1/-1;">
+                      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Note <span style="color:#aaa;font-weight:400;">(what is this for? e.g. Kate Funeral)</span></label>
+                      <input type="text" id="levy-note" placeholder="e.g. Kate Funeral, School Building Fund…" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;outline:none;">
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1013,6 +1017,7 @@
           const endowYear = parseInt(document.getElementById('endow-year').value, 10);
           const levyYear  = parseInt(document.getElementById('levy-year').value, 10);
           const levyType  = document.getElementById('levy-type').value;
+          const levyNote  = document.getElementById('levy-note').value.trim();
           await fetch('/api/payment/member-confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -1025,6 +1030,7 @@
               levyAmount: levySelected ? levyAmountCents : 0,
               levyYear,
               levyType,
+              levyNote,
             }),
           });
 

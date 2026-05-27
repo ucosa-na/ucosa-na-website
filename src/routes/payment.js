@@ -57,7 +57,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 // ── Member payment: confirm, record in DB, send receipt ──────────────────────
 router.post('/member-confirm', requireAuth, async (req, res) => {
   try {
-    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear, levyAmount, levyYear, levyType } = req.body;
+    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear, levyAmount, levyYear, levyType, levyNote } = req.body;
     if (!paymentIntentId) return res.status(400).json({ error: 'Missing paymentIntentId.' });
 
     const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
@@ -113,10 +113,11 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
       const yr      = levyYear || currentYear;
       const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Donation'];
       const type    = LEVY_TYPES.includes(levyType) ? levyType : 'Voluntary Contribution';
+      const noteText = levyNote ? `${levyNote} — Online payment via Stripe` : 'Online payment via Stripe';
       await db.query(
         `INSERT INTO special_levies (user_id, type, year, amount, paid_date, notes, recorded_by)
-         VALUES ($1, $2, $3, $4, $5, 'Online payment via Stripe', $6)`,
-        [req.user.id, type, yr, levyAmt, today, req.user.email]
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [req.user.id, type, yr, levyAmt, today, noteText, req.user.email]
       );
       items.push({ label: `${type} (${yr})`, amount: `$${levyAmt}` });
     }
