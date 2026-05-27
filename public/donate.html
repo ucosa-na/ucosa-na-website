@@ -50,57 +50,99 @@
     }
     .back-link:hover { color: #fff; }
 
+    /* PAGE TITLE BANNER */
+    .page-title-banner {
+      background: #0d0d0d;
+      text-align: center;
+      padding: 32px 24px;
+      border-bottom: 3px solid #c8a96e;
+    }
+    .page-title-banner h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 58px;
+      font-weight: 700;
+      color: #c8a96e;
+      white-space: nowrap;
+      line-height: 1.1;
+      letter-spacing: 0.5px;
+    }
+
     /* MAIN */
     main {
       flex: 1;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 40px 16px;
+      padding: 40px 16px 48px;
     }
 
     /* TWO-PANE CARD */
     .donate-card {
       display: flex;
       width: 100%;
-      max-width: 920px;
-      min-height: 600px;
+      max-width: 1060px;
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 8px 40px rgba(0,0,0,0.14);
+      align-items: stretch;
     }
 
     /* LEFT PANE */
     .pane-left {
       background: #1b5e20;
       color: #fff;
-      padding: 52px 44px;
-      flex: 0 0 50%;
+      padding: 52px 44px 52px;
+      flex: 0 0 52%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
     }
     .pane-left .heart-icon { margin-bottom: 22px; }
-    .pane-left h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 46px;
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 24px;
-    }
+
     .pane-left p {
-      font-size: 18px;
-      line-height: 1.85;
+      font-size: 17px;
+      line-height: 1.9;
       color: #c8e6c9;
       margin-bottom: 16px;
     }
     .pane-left p strong { color: #fff; }
+
+    .pane-left .section-label {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      margin: 4px 0 10px;
+    }
+
+    .pane-left ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px;
+    }
+    .pane-left ul li {
+      font-size: 17px;
+      line-height: 1.75;
+      color: #c8e6c9;
+      padding: 4px 0 4px 20px;
+      position: relative;
+    }
+    .pane-left ul li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #a5d6a7;
+      font-size: 18px;
+    }
+
     .pane-left .quote {
       font-style: italic;
       font-size: 17px;
       color: #a5d6a7;
-      margin: 20px 0 26px;
+      border-left: 3px solid #a5d6a7;
+      padding-left: 16px;
+      margin: 20px 0 28px;
+      line-height: 1.7;
     }
+
     .btn-lab {
       display: inline-block;
       background: none;
@@ -114,6 +156,7 @@
       transition: background 0.2s;
       text-decoration: none;
       width: fit-content;
+      margin-top: auto;
     }
     .btn-lab:hover { background: rgba(165,214,167,0.15); }
 
@@ -124,7 +167,7 @@
       flex: 1;
       overflow-y: auto;
     }
-    .pane-right h1 {
+    .pane-right h2 {
       font-family: 'Cormorant Garamond', serif;
       font-size: 36px;
       font-weight: 700;
@@ -159,7 +202,6 @@
     }
     .form-group input:focus { border-color: #2e7d32; }
 
-    /* Amount buttons */
     .amt-row {
       display: flex;
       gap: 8px;
@@ -198,7 +240,6 @@
     }
     .custom-amt-row input:focus { border-color: #2e7d32; }
 
-    /* Card element */
     #donate-card-element {
       border: 1.5px solid #d0d0d0;
       border-radius: 8px;
@@ -246,11 +287,7 @@
       margin-top: 8px;
     }
 
-    /* Success state */
-    .success-box {
-      text-align: center;
-      padding: 30px 0;
-    }
+    .success-box { text-align: center; padding: 30px 0; }
     .success-box .check { font-size: 3.5rem; margin-bottom: 14px; }
     .success-box h3 { color: #2e7d32; font-size: 1.3rem; margin-bottom: 10px; }
     .success-box p  { color: #555; font-size: 0.95rem; margin-bottom: 6px; }
@@ -265,17 +302,17 @@
     }
 
     /* RESPONSIVE */
-    @media (max-width: 680px) {
+    @media (max-width: 760px) {
+      .page-title-banner h1 {
+        font-size: 32px;
+        white-space: normal;
+      }
       .donate-card { flex-direction: column; }
       .pane-left {
         flex: none;
         padding: 36px 24px 30px;
-        border-radius: 0;
       }
-      .pane-left h2 { font-size: 28px; }
-      .pane-right {
-        padding: 32px 20px 36px;
-      }
+      .pane-right { padding: 32px 20px 36px; }
     }
   </style>
 </head>
@@ -292,38 +329,73 @@
     <a href="/" class="back-link">&larr; Back to Home</a>
   </header>
 
+  <!-- PAGE TITLE -->
+  <div class="page-title-banner">
+    <h1>Help Us Empower the Next Generation</h1>
+  </div>
+
   <main>
     <div class="donate-card">
 
-      <!-- LEFT: Appeal -->
+      <!-- LEFT: Appeal Story -->
       <div class="pane-left">
         <div class="heart-icon">
-          <svg width="54" height="54" fill="none" stroke="#a5d6a7" viewBox="0 0 24 24">
+          <svg width="50" height="50" fill="none" stroke="#a5d6a7" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
           </svg>
         </div>
-        <h2>Help Us Empower the Next Generation</h2>
+
         <p>
-          Back home at Ugbeka College, hundreds of students are eager to learn
-          and build a future — but opportunity does not always match that eagerness.
+          Back home at Ugbeka College, hundreds of bright, determined students wake up every day
+          with one goal — to learn, grow, and build a better future.
         </p>
         <p>
-          Your donation directly funds our <strong>computer laboratory</strong>,
-          school supplies, and resources that open doors for the next generation
-          of students.
+          Thanks to generous support, we have already taken a major step forward by building a
+          <strong>computer laboratory</strong>. But building it was just the beginning.
         </p>
-        <p>No amount is too small. Together, we can make a lasting difference.</p>
-        <p class="quote">
+        <p>
+          To truly make a lasting impact, the lab must be maintained, upgraded, and actively used
+          to equip students with real digital skills.
+        </p>
+
+        <p class="section-label">Right now, we need support to:</p>
+        <ul>
+          <li>Maintain and upgrade the computer laboratory</li>
+          <li>Provide reliable power, internet, and learning tools</li>
+          <li>Engage qualified IT tutors to teach and guide the students</li>
+          <li>Provide essential school materials</li>
+          <li>Create an environment where students can truly thrive</li>
+        </ul>
+
+        <p>
+          These students are ready to learn. They are eager, focused, and full of potential —
+          but they need consistent access and proper guidance to thrive in today's digital world.
+        </p>
+        <p>
+          Your donation will not just support a facility — it will <strong>empower minds</strong>,
+          build skills, and open doors to opportunities that can change lives forever.
+        </p>
+        <p>
+          No amount is too small. Every contribution helps keep the lab running and ensures
+          these students are not left behind.
+        </p>
+        <p>
+          <strong>Give today</strong>, and help us turn access into impact.<br>
+          Together, we can transform knowledge into a future full of possibilities.
+        </p>
+
+        <div class="quote">
           &ldquo;The roots of education are bitter, but the fruit is sweet.&rdquo;<br>
           &mdash; Aristotle
-        </p>
+        </div>
+
         <a href="/?page=computer-lab" class="btn-lab">&#128187; View Our Computer Lab</a>
       </div>
 
       <!-- RIGHT: Form -->
       <div class="pane-right">
-        <h1>Make a Donation</h1>
+        <h2>Make a Donation</h2>
 
         <div id="donateFormArea">
           <div class="form-group">
@@ -373,7 +445,6 @@
   <script>
     let _stripe, _card, _amtCents = 2500;
 
-    // Init Stripe on page load
     window.addEventListener('DOMContentLoaded', function () {
       _stripe = Stripe('pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq');
       const elements = _stripe.elements();
@@ -441,7 +512,6 @@
           return;
         }
 
-        // Record server-side and send receipt
         await fetch('/api/payment/donate-confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
