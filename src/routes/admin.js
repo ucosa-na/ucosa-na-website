@@ -23,6 +23,39 @@ const welfareOrAdmin  = requireRole('admin', 'welfare');
 
 const router = express.Router();
 
+// ── Shared payment receipt email ──────────────────────────────────────────────
+function paymentReceiptHtml(memberName, items, ref) {
+  const total = items.reduce((sum, i) => sum + parseFloat(i.amount), 0).toFixed(2);
+  const rows = items.map(i =>
+    `<tr><td style="padding:6px 12px;">${i.label}</td><td style="padding:6px 12px;font-weight:700;color:#1b5e20;">$${parseFloat(i.amount).toFixed(2)}</td></tr>`
+  ).join('');
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+      <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:22px;">Payment Receipt</h1>
+      </div>
+      <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+        <p>Dear <strong>${memberName}</strong>,</p>
+        <p>Your payment has been recorded. Here is your receipt:</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <thead><tr style="background:#1a1a2e;color:#fff;">
+            <th style="padding:10px 12px;text-align:left;">Description</th>
+            <th style="padding:10px 12px;text-align:left;">Amount</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr style="border-top:2px solid #eee;">
+            <td style="padding:10px 12px;font-weight:700;">Total</td>
+            <td style="padding:10px 12px;font-weight:700;color:#1b5e20;">$${total}</td>
+          </tr></tfoot>
+        </table>
+        <p style="font-size:13px;color:#888;">Reference: ${ref}</p>
+        <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+        <p style="margin-top:20px;">Thank you for your continued support of UCOSA-NA and Ugbeka College.</p>
+        <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+      </div>
+    </div>`;
+}
+
 // ── AUDIT HELPER ──────────────────────────────────────────────────────────────
 async function logAudit(performedById, performedByName, action, entityType, entityId, entityName, details) {
   try {
@@ -830,8 +863,17 @@ router.post('/dues', finOrAdmin, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `, [userId, year, amount || 0, paidDate || null, paymentMethod || null,
         status || 'unpaid', notes || null, req.user.id]);
-    const { rows: member } = await pool.query('SELECT full_name FROM users WHERE id = $1', [userId]);
+    const { rows: member } = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [userId]);
     await logAudit(req.user.id, req.user.email, 'DUES_CREATED', 'DUES', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'unpaid' });
+    if ((status || 'unpaid') === 'paid' && member[0]?.email) {
+      sendEmail({
+        to: member[0].email,
+        subject: `Payment Receipt — Annual Dues ${year} — UCOSA-NA`,
+        html: paymentReceiptHtml(member[0].full_name,
+          [{ label: `Annual Dues (${year})`, amount: amount || 0 }],
+          `DUES-${rows[0].id}`)
+      }).catch(() => {});
+    }
     res.status(201).json({ message: 'Dues record added', id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -843,7 +885,7 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
   const { year, amount, paidDate, paymentMethod, status, notes } = req.body;
   try {
     const { rows: before } = await pool.query(`
-      SELECT d.year, d.amount, d.status, u.full_name FROM annual_dues d
+      SELECT d.year, d.amount, d.status, u.full_name, u.email FROM annual_dues d
       JOIN users u ON u.id = d.user_id WHERE d.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE annual_dues SET year=$1, amount=$2, paid_date=$3, payment_method=$4,
@@ -853,6 +895,15 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
     if (before.length) {
       await logAudit(req.user.id, req.user.email, 'DUES_UPDATED', 'DUES', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
+      if (status === 'paid' && before[0].email) {
+        sendEmail({
+          to: before[0].email,
+          subject: `Payment Receipt — Annual Dues ${year} — UCOSA-NA`,
+          html: paymentReceiptHtml(before[0].full_name,
+            [{ label: `Annual Dues (${year})`, amount: amount || 0 }],
+            `DUES-${req.params.id}`)
+        }).catch(() => {});
+      }
     }
     res.json({ message: 'Dues record updated' });
   } catch (err) {
@@ -906,8 +957,17 @@ router.post('/endowment', finOrAdmin, async (req, res) => {
       INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes, recorded_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `, [userId, amount, contributionDate || null, year || null, status || 'paid', paymentMethod || null, notes || null, req.user.id]);
-    const { rows: member } = await pool.query('SELECT full_name FROM users WHERE id = $1', [userId]);
+    const { rows: member } = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [userId]);
     await logAudit(req.user.id, req.user.email, 'ENDOWMENT_CREATED', 'ENDOWMENT', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'paid' });
+    if ((status || 'paid') === 'paid' && member[0]?.email) {
+      sendEmail({
+        to: member[0].email,
+        subject: `Payment Receipt — Endowment Fund ${year || ''} — UCOSA-NA`,
+        html: paymentReceiptHtml(member[0].full_name,
+          [{ label: `Endowment Fund${year ? ` (${year})` : ''}`, amount: amount || 0 }],
+          `ENDOW-${rows[0].id}`)
+      }).catch(() => {});
+    }
     res.status(201).json({ message: 'Endowment record added', id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -920,7 +980,7 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
   if (amount === undefined || amount === null || amount === '') return res.status(400).json({ error: 'Amount is required' });
   try {
     const { rows: before } = await pool.query(`
-      SELECT e.amount, e.status, u.full_name FROM endowment_fund e
+      SELECT e.amount, e.year, e.status, u.full_name, u.email FROM endowment_fund e
       JOIN users u ON u.id = e.user_id WHERE e.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE endowment_fund
@@ -931,6 +991,15 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
     if (before.length) {
       await logAudit(req.user.id, req.user.email, 'ENDOWMENT_UPDATED', 'ENDOWMENT', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
+      if (status === 'paid' && before[0].email) {
+        sendEmail({
+          to: before[0].email,
+          subject: `Payment Receipt — Endowment Fund ${year || ''} — UCOSA-NA`,
+          html: paymentReceiptHtml(before[0].full_name,
+            [{ label: `Endowment Fund${year ? ` (${year})` : ''}`, amount: amount || 0 }],
+            `ENDOW-${req.params.id}`)
+        }).catch(() => {});
+      }
     }
     res.json({ message: 'Endowment record updated' });
   } catch (err) {
