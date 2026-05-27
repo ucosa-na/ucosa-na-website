@@ -157,6 +157,9 @@
       margin-top: auto;
     }
     .btn-lab:hover { background: rgba(165,214,167,0.15); }
+    .act-link { color: #a5d6a7; font-weight: 600; text-decoration: underline; }
+    .act-link:hover { color: #c8e6c9; }
+    .act-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 
     /* RIGHT PANE */
     .pane-right {
@@ -418,7 +421,6 @@
           &mdash; Aristotle
         </div>
 
-        <a href="/?page=computer-lab" class="btn-lab">&#128187; View Our Computer Lab</a>
       </div>
 
       <!-- RIGHT: Form -->
@@ -467,12 +469,16 @@
         <div class="activities-pane">
           <h3>Ugbeka NA Development Activities At Ugbeka College:</h3>
           <ol>
-            <li>Computer Lab</li>
+            <li>Computer Lab &mdash; <a href="/?page=computer-lab" class="act-link">View Our Computer Lab</a></li>
             <li>Renovated Staff Quarters</li>
             <li>Renovated Classroom Blocks</li>
             <li>Donation of Sports Materials</li>
             <li>Donation of Study Materials</li>
           </ol>
+          <div class="act-btns">
+            <a href="/?page=dev-projects" class="btn-lab">&#127963; UCOSA Development Activities</a>
+            <a href="/Video2/UCOSA%20NORTH%20AMERICA%20Computer%20Lab.mp4" target="_blank" class="btn-lab">&#127909; Student Appreciation Video</a>
+          </div>
         </div>
 
         </div><!-- end pane-right-inner -->
