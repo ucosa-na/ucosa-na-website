@@ -52,7 +52,7 @@ function buildHtml(fullName) {
 
       <p>We are reaching out because you are part of something that does not fade with time — the bond of fellowship forged at Ugbeka College. That connection is exactly why <strong>UCOSA-North America</strong> exists: <em>Alumni United Across North America</em>, staying connected, supporting our alma mater, and uplifting one another.</p>
 
-      <p>A lot has happened since you were last active with us. We have grown, we have organized, and we are proud to say — <strong>we now have a home online.</strong> We warmly invite you to visit us at:</p>
+      <p>We have come a long way from our humble beginnings. We have grown, we have organized, and we are proud to say — <strong>we now have a home online.</strong> We warmly invite you to visit us at:</p>
 
       <p style="text-align:center;font-size:18px;font-weight:700;color:#7b2152;">
         <a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a>

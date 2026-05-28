@@ -1246,7 +1246,7 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
     <p>Dear <strong>${fullName}</strong>,</p>
     <p>We hope this message finds you well.</p>
     <p>We are reaching out because you are part of something that does not fade with time — the bond of fellowship forged at Ugbeka College. That connection is exactly why <strong>UCOSA-North America</strong> exists: <em>Alumni United Across North America</em>, staying connected, supporting our alma mater, and uplifting one another.</p>
-    <p>A lot has happened since you were last active with us. We have grown, we have organized, and we are proud to say — <strong>we now have a home online.</strong> We warmly invite you to visit us at:</p>
+    <p>We have come a long way from our humble beginnings. We have grown, we have organized, and we are proud to say — <strong>we now have a home online.</strong> We warmly invite you to visit us at:</p>
     <p style="text-align:center;font-size:18px;font-weight:700;color:#7b2152"><a href="https://ucosa-na.org" style="color:#7b2152">www.ucosa-na.org</a></p>
     <p>We are a not-for-profit, non-political, charitable, and voluntary association of Ugbeka College alumni residing in the United States and Canada. We meet via <strong>Zoom video conferencing on the last Sunday of every month</strong>, so no matter where you are in North America, you can join from any internet-connected device.</p>
     <p>Our goals remain the same as the values we all share:</p>
