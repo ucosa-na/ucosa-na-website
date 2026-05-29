@@ -108,9 +108,15 @@ async function sendSMS(to, body) {
     try {
       const { Vonage } = require('@vonage/server-sdk');
       const vonage = new Vonage({ apiKey: vonageKey, apiSecret: vonageSecret });
-      await vonage.sms.send({ to, from: vonageFrom, text: body });
-      log.info(`SMS sent via Vonage to ${to}`);
-      return true;
+      const result = await vonage.sms.send({ to, from: vonageFrom, text: body });
+      const msg = result?.messages?.[0];
+      const status = msg?.status;
+      if (status === '0') {
+        log.info(`SMS sent via Vonage to ${to}`);
+        return true;
+      } else {
+        log.warn(`Vonage SMS rejected for ${to}: status=${status} error="${msg?.['error-text']}" — trying Twilio`);
+      }
     } catch (err) {
       log.warn(`Vonage SMS failed for ${to}: ${err.message} — trying Twilio`);
     }
