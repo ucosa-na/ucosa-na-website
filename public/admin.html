@@ -679,6 +679,7 @@
         </div>
         <div class="sidebar-group-items open" id="groupAdminItems">
           <a href="#testEmail">Test Email</a>
+          <a href="#testSms">Test SMS</a>
           <a href="#siteMaintenance">Site Maintenance</a>
           <a href="#auditLog">Audit Log</a>
         </div>
@@ -842,6 +843,22 @@
             <input type="email" id="testEmailAddr" placeholder="you@example.com" style="width:100%;padding:11px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:20px;outline:none;"/>
           </div>
           <button class="btn-primary" id="testEmailBtn" onclick="sendTestEmail()" style="white-space:nowrap;">Send Test Email</button>
+        </div>
+      </section>
+
+      <section id="testSms">
+        <h2>&#128241; Test SMS Delivery</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:16px;">
+          Send a test SMS to verify that Twilio (or Vonage fallback) is configured correctly on the server.
+        </p>
+        <div id="testSmsError" class="msg error"></div>
+        <div id="testSmsSuccess" class="msg success"></div>
+        <div style="display:flex;gap:12px;align-items:flex-end;">
+          <div style="flex:1;">
+            <label for="testSmsPhone" style="font-size:19px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Recipient Phone Number</label>
+            <input type="tel" id="testSmsPhone" placeholder="+12015551234" style="width:100%;padding:11px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:20px;outline:none;"/>
+          </div>
+          <button class="btn-primary" id="testSmsBtn" onclick="sendTestSms()" style="white-space:nowrap;">Send Test SMS</button>
         </div>
       </section>
 
@@ -2492,6 +2509,31 @@
           '<span class="text-red">&#9679; Not Running</span>';
         document.getElementById('maint-app-status').className = 'text-red';
         document.getElementById('maint-app-status').textContent = '● Not Running';
+      }
+    }
+
+    async function sendTestSms() {
+      const to    = document.getElementById('testSmsPhone').value.trim();
+      const errEl = document.getElementById('testSmsError');
+      const okEl  = document.getElementById('testSmsSuccess');
+      const btn   = document.getElementById('testSmsBtn');
+      errEl.style.display = 'none';
+      okEl.style.display  = 'none';
+      if (!to) { errEl.textContent = 'Enter a recipient phone number.'; errEl.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/test-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ to }),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; }
+        else          { okEl.textContent  = data.message;            okEl.style.display  = 'block'; }
+      } catch {
+        errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send Test SMS';
       }
     }
 

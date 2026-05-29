@@ -305,6 +305,22 @@ router.post('/users', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/test-sms — send a test SMS to verify Twilio/Vonage config
+router.post('/test-sms', adminOnly, async (req, res) => {
+  const { to } = req.body;
+  if (!to) return res.status(400).json({ error: 'Recipient phone number required' });
+  try {
+    const sent = await sendSMS(to, 'This is a test SMS from the UCOSA-NA admin panel. If you received this, SMS delivery is working correctly.');
+    if (sent) {
+      res.json({ message: `Test SMS sent to ${to}` });
+    } else {
+      res.status(500).json({ error: 'SMS failed — check that Twilio or Vonage credentials are set in /opt/ucosa-na/.env on the server.' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/test-email — send a test email to verify SMTP config
 router.post('/test-email', adminOnly, async (req, res) => {
   const { to } = req.body;
