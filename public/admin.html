@@ -1294,6 +1294,8 @@
           </select>
           <input type="text" id="duesMemberSearch" oninput="applyDuesYearFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
           <span id="duesCountLabel" style="font-size:14px;color:#888;"></span>
+          <button onclick="downloadDuesPDF()" style="background:#1a1a2e;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#11015; PDF</button>
+          <button onclick="copyDuesWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
           <button onclick="sendAllDuesReminders()" style="margin-left:auto;background:#7b2152;color:white;border:none;border-radius:8px;padding:7px 18px;font-size:14px;font-weight:600;cursor:pointer;">&#128680; Send All Reminders</button>
         </div>
         <div class="table-wrap">
@@ -1378,6 +1380,8 @@
           </select>
           <input type="text" id="endMemberSearch" oninput="applyEndowFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
           <span id="endCountLabel" style="font-size:14px;color:#888;"></span>
+          <button onclick="downloadEndowPDF()" style="background:#1a1a2e;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#11015; PDF</button>
+          <button onclick="copyEndowWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
         </div>
         <div class="table-wrap">
           <table class="fin-table">
@@ -2692,6 +2696,85 @@
       tfoot.innerHTML = `<tr class="fin-total"><td colspan="2">Total</td><td>$${total.toFixed(2)}</td><td colspan="5"></td></tr>`;
     }
 
+    function getFilteredDues() {
+      const rows      = window._allDues || [];
+      const filterVal = (document.getElementById('duesYearFilter')?.value || '').trim();
+      const statusVal = document.getElementById('duesStatusFilter')?.value || 'all';
+      const searchVal = (document.getElementById('duesMemberSearch')?.value || '').toLowerCase().trim();
+      let f = rows;
+      if (filterVal) f = f.filter(r => String(r.year) === filterVal);
+      if (statusVal !== 'all') f = f.filter(r => (r.status || 'unpaid') === statusVal);
+      if (searchVal) f = f.filter(r => (r.full_name || '').toLowerCase().includes(searchVal));
+      return f;
+    }
+
+    function buildPrintWindow(title, headers, rows, total) {
+      const headerRow = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+      const bodyRows  = rows.map(cols => `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+      const w = window.open('', '_blank');
+      w.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
+        <style>
+          body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
+          h2{color:#1a1a2e;margin-bottom:4px;}
+          p{color:#888;font-size:12px;margin-bottom:14px;}
+          table{border-collapse:collapse;width:100%;}
+          th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
+          td{padding:7px 10px;border-bottom:1px solid #eee;font-size:12px;}
+          tr:nth-child(even){background:#f8f8f8;}
+          tfoot td{font-weight:700;background:#f0f4ff;border-top:2px solid #1a1a2e;}
+          @media print{button{display:none;}}
+        </style></head><body>
+        <h2>UCOSA-NA — ${title}</h2>
+        <p>Generated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+        <table>
+          <thead>${headerRow}</thead>
+          <tbody>${bodyRows}</tbody>
+          <tfoot><tr><td colspan="${headers.length - 2}"><strong>Total</strong></td><td colspan="2"><strong>$${total}</strong></td></tr></tfoot>
+        </table>
+        <script>window.onload=function(){window.print();}<\/script>
+        </body></html>`);
+      w.document.close();
+    }
+
+    function downloadDuesPDF() {
+      const f = getFilteredDues();
+      if (!f.length) { alert('No records to export.'); return; }
+      const year   = document.getElementById('duesYearFilter')?.value || 'All Years';
+      const status = document.getElementById('duesStatusFilter')?.value || 'all';
+      const title  = `Annual Dues — ${year} — ${status === 'all' ? 'All Statuses' : status.charAt(0).toUpperCase()+status.slice(1)}`;
+      const total  = f.reduce((s,r) => s + (r.amount != null ? parseFloat(r.amount) : 0), 0).toFixed(2);
+      buildPrintWindow(title,
+        ['Member', 'Year', 'Amount', 'Status', 'Paid Date', 'Method'],
+        f.map(r => [
+          escapeHtml(r.full_name),
+          r.year || '—',
+          r.amount != null ? '$'+parseFloat(r.amount).toFixed(2) : '—',
+          (r.status || 'unpaid').toUpperCase(),
+          r.paid_date ? r.paid_date.slice(0,10) : '—',
+          escapeHtml(r.payment_method || '—'),
+        ]), total);
+    }
+
+    function copyDuesWhatsApp() {
+      const f = getFilteredDues();
+      if (!f.length) { alert('No records to copy.'); return; }
+      const year   = document.getElementById('duesYearFilter')?.value || 'All Years';
+      const status = document.getElementById('duesStatusFilter')?.value || 'all';
+      const total  = f.reduce((s,r) => s + (r.amount != null ? parseFloat(r.amount) : 0), 0).toFixed(2);
+      const lines  = [
+        `*UCOSA-NA — Annual Dues Report*`,
+        `*Year:* ${year}   *Status:* ${status === 'all' ? 'All' : status.toUpperCase()}`,
+        `*Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
+        ``,
+        ...f.map((r,i) => `${i+1}. ${r.full_name} | ${r.year} | ${r.amount != null ? '$'+parseFloat(r.amount).toFixed(2) : '—'} | *${(r.status||'unpaid').toUpperCase()}* | ${r.paid_date ? r.paid_date.slice(0,10) : 'Not paid'}`),
+        ``,
+        `*Total: $${total}*  (${f.length} records)`,
+      ];
+      navigator.clipboard.writeText(lines.join('\n'))
+        .then(() => alert('Copied! Paste directly into WhatsApp.'))
+        .catch(() => alert('Copy failed — please try again.'));
+    }
+
     async function saveDues() {
       const errEl = document.getElementById('duesError');
       const okEl  = document.getElementById('duesSuccess');
@@ -2819,6 +2902,57 @@
 
       const total = filtered.reduce((s, r) => s + parseFloat(r.amount), 0);
       tfoot.innerHTML = `<tr class="fin-total"><td>Total</td><td></td><td>$${total.toFixed(2)}</td><td colspan="6"></td></tr>`;
+    }
+
+    function getFilteredEndow() {
+      const rows      = window._allEndow || [];
+      const yearVal   = (document.getElementById('endYearFilter')?.value || '').trim();
+      const statusVal = document.getElementById('endStatusFilter')?.value || 'all';
+      const searchVal = (document.getElementById('endMemberSearch')?.value || '').toLowerCase().trim();
+      let f = rows;
+      if (yearVal) f = f.filter(r => String(r.year) === yearVal);
+      if (statusVal !== 'all') f = f.filter(r => (r.status || '').toLowerCase() === statusVal);
+      if (searchVal) f = f.filter(r => (r.full_name || '').toLowerCase().includes(searchVal));
+      return f;
+    }
+
+    function downloadEndowPDF() {
+      const f = getFilteredEndow();
+      if (!f.length) { alert('No records to export.'); return; }
+      const year   = document.getElementById('endYearFilter')?.value || 'All Years';
+      const status = document.getElementById('endStatusFilter')?.value || 'all';
+      const title  = `Endowment Fund — ${year} — ${status === 'all' ? 'All Statuses' : status.charAt(0).toUpperCase()+status.slice(1)}`;
+      const total  = f.reduce((s,r) => s + parseFloat(r.amount), 0).toFixed(2);
+      buildPrintWindow(title,
+        ['Member', 'Year', 'Amount', 'Status', 'Date', 'Method'],
+        f.map(r => [
+          escapeHtml(r.full_name),
+          r.year || '—',
+          '$'+parseFloat(r.amount).toFixed(2),
+          (r.status || 'pending').toUpperCase(),
+          r.contribution_date ? r.contribution_date.slice(0,10) : '—',
+          escapeHtml(r.payment_method || '—'),
+        ]), total);
+    }
+
+    function copyEndowWhatsApp() {
+      const f = getFilteredEndow();
+      if (!f.length) { alert('No records to copy.'); return; }
+      const year   = document.getElementById('endYearFilter')?.value || 'All Years';
+      const status = document.getElementById('endStatusFilter')?.value || 'all';
+      const total  = f.reduce((s,r) => s + parseFloat(r.amount), 0).toFixed(2);
+      const lines  = [
+        `*UCOSA-NA — Endowment Fund Report*`,
+        `*Year:* ${year}   *Status:* ${status === 'all' ? 'All' : status.toUpperCase()}`,
+        `*Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
+        ``,
+        ...f.map((r,i) => `${i+1}. ${r.full_name} | ${r.year} | $${parseFloat(r.amount).toFixed(2)} | *${(r.status||'pending').toUpperCase()}* | ${r.contribution_date ? r.contribution_date.slice(0,10) : 'Not paid'}`),
+        ``,
+        `*Total: $${total}*  (${f.length} records)`,
+      ];
+      navigator.clipboard.writeText(lines.join('\n'))
+        .then(() => alert('Copied! Paste directly into WhatsApp.'))
+        .catch(() => alert('Copy failed — please try again.'));
     }
 
     async function saveEndowment() {
