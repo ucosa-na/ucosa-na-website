@@ -98,20 +98,32 @@ function duesReminderHtml(name, year, dueDate, amount, status) {
     </div>`;
 }
 
-// ── TWILIO SMS HELPER ─────────────────────────────────────────────────────────
-function getTwilioClient() {
+// ── SMS HELPER — tries Vonage first, falls back to Twilio ─────────────────────
+async function sendSMS(to, body) {
+  // ── Try Vonage first ──
+  const vonageKey    = process.env.VONAGE_API_KEY;
+  const vonageSecret = process.env.VONAGE_API_SECRET;
+  const vonageFrom   = process.env.VONAGE_PHONE_NUMBER || 'UCOSA-NA';
+  if (vonageKey && vonageSecret) {
+    try {
+      const { Vonage } = require('@vonage/server-sdk');
+      const vonage = new Vonage({ apiKey: vonageKey, apiSecret: vonageSecret });
+      await vonage.sms.send({ to, from: vonageFrom, text: body });
+      log.info(`SMS sent via Vonage to ${to}`);
+      return true;
+    } catch (err) {
+      log.warn(`Vonage SMS failed for ${to}: ${err.message} — trying Twilio`);
+    }
+  }
+
+  // ── Fall back to Twilio ──
   const sid   = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  if (!sid || !token) return null;
-  return require('twilio')(sid, token);
-}
-
-async function sendSMS(to, body) {
-  const client = getTwilioClient();
-  if (!client) { log.warn('SMS skipped: Twilio not configured'); return false; }
-  const from = process.env.TWILIO_PHONE_NUMBER;
+  const from  = process.env.TWILIO_PHONE_NUMBER;
+  if (!sid || !token) { log.warn('SMS skipped: neither Vonage nor Twilio configured'); return false; }
   if (!from) { log.warn('SMS skipped: TWILIO_PHONE_NUMBER not set'); return false; }
-  await client.messages.create({ to, from, body });
+  await require('twilio')(sid, token).messages.create({ to, from, body });
+  log.info(`SMS sent via Twilio to ${to}`);
   return true;
 }
 
