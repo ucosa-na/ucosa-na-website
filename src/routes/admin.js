@@ -68,11 +68,15 @@ async function sendPaymentNotification(memberName, memberEmail, memberPhone, des
       to: memberEmail,
       subject: `Payment Receipt — ${description} — UCOSA-NA`,
       html: paymentReceiptHtml(memberName, [{ label: description, amount: parseFloat(amount) }], refStr),
-    }).catch(() => {});
+    }).then(() => log.info(`Payment receipt email sent to ${memberEmail} for ${description}`))
+      .catch(err => log.error(`Payment receipt email failed for ${memberEmail}: ${err.message}`));
+  } else {
+    log.warn(`Payment notification skipped — no email on record for ${memberName}`);
   }
 
   if (memberPhone) {
-    sendSMS(memberPhone, smsText).catch(() => {});
+    sendSMS(memberPhone, smsText)
+      .catch(err => log.error(`Payment SMS failed for ${memberPhone}: ${err.message}`));
   }
 }
 
