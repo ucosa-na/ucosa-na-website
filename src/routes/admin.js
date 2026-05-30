@@ -57,29 +57,17 @@ function paymentReceiptHtml(memberName, items, ref) {
 }
 
 // ── Payment notification — email + SMS ────────────────────────────────────────
-async function sendPaymentNotification(memberName, memberEmail, memberPhone, description, amount, method) {
-  const amtFmt = `$${parseFloat(amount).toFixed(2)}`;
+async function sendPaymentNotification(memberName, memberEmail, memberPhone, description, amount, method, ref) {
+  const amtFmt    = `$${parseFloat(amount).toFixed(2)}`;
   const methodStr = method ? ` made through ${method}` : '';
-  const smsText = `Dear ${memberName}, Thank you for your payment of ${amtFmt} for ${description}${methodStr}. Your payment has been entered into the system. — UCOSA-NA`;
+  const refStr    = ref || `ADMIN-${Date.now()}`;
+  const smsText   = `Dear ${memberName}, Thank you for your payment of ${amtFmt} for ${description}${methodStr}. Your payment has been entered into the system. — UCOSA-NA`;
 
   if (memberEmail) {
     sendEmail({
       to: memberEmail,
-      subject: `Payment Confirmation — ${description} — UCOSA-NA`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
-          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
-            <h1 style="color:#fff;margin:0;font-size:22px;">Payment Confirmation</h1>
-          </div>
-          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
-            <p>Dear <strong>${memberName}</strong>,</p>
-            <p>Thank you for your payment of <strong style="color:#1b5e20;">${amtFmt}</strong> for <strong>${description}</strong>${methodStr}.</p>
-            <p>Your payment has been entered into the system.</p>
-            <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
-            <p style="margin-top:20px;">Thank you for your continued support of UCOSA-NA and Ugbeka College.</p>
-            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
-          </div>
-        </div>`,
+      subject: `Payment Receipt — ${description} — UCOSA-NA`,
+      html: paymentReceiptHtml(memberName, [{ label: description, amount: parseFloat(amount) }], refStr),
     }).catch(() => {});
   }
 
@@ -937,7 +925,7 @@ router.post('/dues', finOrAdmin, async (req, res) => {
     const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
     await logAudit(req.user.id, req.user.email, 'DUES_CREATED', 'DUES', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'unpaid' });
     if ((status || 'unpaid') === 'paid' && member[0]) {
-      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod);
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod, `DUES-${rows[0].id}`);
     }
     res.status(201).json({ message: 'Dues record added', id: rows[0].id });
   } catch (err) {
@@ -962,7 +950,7 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
       await logAudit(req.user.id, req.user.email, 'DUES_UPDATED', 'DUES', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
       if (status === 'paid') {
-        sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod);
+        sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod, `DUES-${req.params.id}`);
       }
     }
     res.json({ message: 'Dues record updated' });
@@ -1020,7 +1008,7 @@ router.post('/endowment', finOrAdmin, async (req, res) => {
     const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
     await logAudit(req.user.id, req.user.email, 'ENDOWMENT_CREATED', 'ENDOWMENT', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'paid' });
     if ((status || 'paid') === 'paid' && member[0]) {
-      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod);
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod, `ENDOW-${rows[0].id}`);
     }
     res.status(201).json({ message: 'Endowment record added', id: rows[0].id });
   } catch (err) {
@@ -1047,7 +1035,7 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
       await logAudit(req.user.id, req.user.email, 'ENDOWMENT_UPDATED', 'ENDOWMENT', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
       if (status === 'paid') {
-        sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod);
+        sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod, `ENDOW-${req.params.id}`);
       }
     }
     res.json({ message: 'Endowment record updated' });
@@ -1588,7 +1576,7 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
     `, [userId, type, year, parseFloat(amount), paidDate || null, notes || null, req.user.id]);
     const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
     if (member[0]) {
-      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `${type} (${year})`, parseFloat(amount), null);
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `${type} (${year})`, parseFloat(amount), null, `LEVY-${rows[0].id}`);
     }
     res.json({ ok: true, id: rows[0].id });
   } catch (err) {
@@ -1617,7 +1605,7 @@ router.put('/special-levies/:id', finOrAdmin, async (req, res) => {
     `, [type, year, parseFloat(amount), paidDate || null, notes || null, req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
     if (before[0]) {
-      sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `${type} (${year})`, parseFloat(amount), null);
+      sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `${type} (${year})`, parseFloat(amount), null, `LEVY-${req.params.id}`);
     }
     res.json({ ok: true });
   } catch (err) {
