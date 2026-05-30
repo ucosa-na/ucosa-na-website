@@ -56,6 +56,38 @@ function paymentReceiptHtml(memberName, items, ref) {
     </div>`;
 }
 
+// ── Payment notification — email + SMS ────────────────────────────────────────
+async function sendPaymentNotification(memberName, memberEmail, memberPhone, description, amount, method) {
+  const amtFmt = `$${parseFloat(amount).toFixed(2)}`;
+  const methodStr = method ? ` made through ${method}` : '';
+  const smsText = `Dear ${memberName}, Thank you for your payment of ${amtFmt} for ${description}${methodStr}. Your payment has been entered into the system. — UCOSA-NA`;
+
+  if (memberEmail) {
+    sendEmail({
+      to: memberEmail,
+      subject: `Payment Confirmation — ${description} — UCOSA-NA`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:22px;">Payment Confirmation</h1>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+            <p>Dear <strong>${memberName}</strong>,</p>
+            <p>Thank you for your payment of <strong style="color:#1b5e20;">${amtFmt}</strong> for <strong>${description}</strong>${methodStr}.</p>
+            <p>Your payment has been entered into the system.</p>
+            <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+            <p style="margin-top:20px;">Thank you for your continued support of UCOSA-NA and Ugbeka College.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`,
+    }).catch(() => {});
+  }
+
+  if (memberPhone) {
+    sendSMS(memberPhone, smsText).catch(() => {});
+  }
+}
+
 // ── AUDIT HELPER ──────────────────────────────────────────────────────────────
 async function logAudit(performedById, performedByName, action, entityType, entityId, entityName, details) {
   try {
@@ -902,16 +934,10 @@ router.post('/dues', finOrAdmin, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `, [userId, year, amount || 0, paidDate || null, paymentMethod || null,
         status || 'unpaid', notes || null, req.user.id]);
-    const { rows: member } = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [userId]);
+    const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
     await logAudit(req.user.id, req.user.email, 'DUES_CREATED', 'DUES', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'unpaid' });
-    if ((status || 'unpaid') === 'paid' && member[0]?.email) {
-      sendEmail({
-        to: member[0].email,
-        subject: `Payment Receipt — Annual Dues ${year} — UCOSA-NA`,
-        html: paymentReceiptHtml(member[0].full_name,
-          [{ label: `Annual Dues (${year})`, amount: amount || 0 }],
-          `DUES-${rows[0].id}`)
-      }).catch(() => {});
+    if ((status || 'unpaid') === 'paid' && member[0]) {
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod);
     }
     res.status(201).json({ message: 'Dues record added', id: rows[0].id });
   } catch (err) {
@@ -924,8 +950,9 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
   const { year, amount, paidDate, paymentMethod, status, notes } = req.body;
   try {
     const { rows: before } = await pool.query(`
-      SELECT d.year, d.amount, d.status, u.full_name, u.email FROM annual_dues d
-      JOIN users u ON u.id = d.user_id WHERE d.id = $1`, [req.params.id]);
+      SELECT d.year, d.amount, d.status, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM annual_dues d JOIN users u ON u.id = d.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id WHERE d.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE annual_dues SET year=$1, amount=$2, paid_date=$3, payment_method=$4,
         status=$5, notes=$6, updated_at=NOW(), updated_by=$7, recorded_by=$7 WHERE id=$8
@@ -934,14 +961,8 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
     if (before.length) {
       await logAudit(req.user.id, req.user.email, 'DUES_UPDATED', 'DUES', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
-      if (status === 'paid' && before[0].email) {
-        sendEmail({
-          to: before[0].email,
-          subject: `Payment Receipt — Annual Dues ${year} — UCOSA-NA`,
-          html: paymentReceiptHtml(before[0].full_name,
-            [{ label: `Annual Dues (${year})`, amount: amount || 0 }],
-            `DUES-${req.params.id}`)
-        }).catch(() => {});
+      if (status === 'paid') {
+        sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod);
       }
     }
     res.json({ message: 'Dues record updated' });
@@ -996,16 +1017,10 @@ router.post('/endowment', finOrAdmin, async (req, res) => {
       INSERT INTO endowment_fund (user_id, amount, contribution_date, year, status, payment_method, notes, recorded_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `, [userId, amount, contributionDate || null, year || null, status || 'paid', paymentMethod || null, notes || null, req.user.id]);
-    const { rows: member } = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [userId]);
+    const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
     await logAudit(req.user.id, req.user.email, 'ENDOWMENT_CREATED', 'ENDOWMENT', rows[0].id, member[0]?.full_name, { year, amount, status: status || 'paid' });
-    if ((status || 'paid') === 'paid' && member[0]?.email) {
-      sendEmail({
-        to: member[0].email,
-        subject: `Payment Receipt — Endowment Fund ${year || ''} — UCOSA-NA`,
-        html: paymentReceiptHtml(member[0].full_name,
-          [{ label: `Endowment Fund${year ? ` (${year})` : ''}`, amount: amount || 0 }],
-          `ENDOW-${rows[0].id}`)
-      }).catch(() => {});
+    if ((status || 'paid') === 'paid' && member[0]) {
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod);
     }
     res.status(201).json({ message: 'Endowment record added', id: rows[0].id });
   } catch (err) {
@@ -1019,8 +1034,9 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
   if (amount === undefined || amount === null || amount === '') return res.status(400).json({ error: 'Amount is required' });
   try {
     const { rows: before } = await pool.query(`
-      SELECT e.amount, e.year, e.status, u.full_name, u.email FROM endowment_fund e
-      JOIN users u ON u.id = e.user_id WHERE e.id = $1`, [req.params.id]);
+      SELECT e.amount, e.year, e.status, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM endowment_fund e JOIN users u ON u.id = e.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id WHERE e.id = $1`, [req.params.id]);
     await pool.query(`
       UPDATE endowment_fund
       SET amount=$1, year=$2, status=$3, contribution_date=$4, payment_method=$5, notes=$6,
@@ -1030,14 +1046,8 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
     if (before.length) {
       await logAudit(req.user.id, req.user.email, 'ENDOWMENT_UPDATED', 'ENDOWMENT', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
-      if (status === 'paid' && before[0].email) {
-        sendEmail({
-          to: before[0].email,
-          subject: `Payment Receipt — Endowment Fund ${year || ''} — UCOSA-NA`,
-          html: paymentReceiptHtml(before[0].full_name,
-            [{ label: `Endowment Fund${year ? ` (${year})` : ''}`, amount: amount || 0 }],
-            `ENDOW-${req.params.id}`)
-        }).catch(() => {});
+      if (status === 'paid') {
+        sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod);
       }
     }
     res.json({ message: 'Endowment record updated' });
@@ -1576,6 +1586,10 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
     `, [userId, type, year, parseFloat(amount), paidDate || null, notes || null, req.user.id]);
+    const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
+    if (member[0]) {
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `${type} (${year})`, parseFloat(amount), null);
+    }
     res.json({ ok: true, id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1592,12 +1606,19 @@ router.put('/special-levies/:id', finOrAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid type.' });
   }
   try {
+    const { rows: before } = await pool.query(`
+      SELECT sl.user_id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM special_levies sl JOIN users u ON u.id = sl.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id WHERE sl.id = $1`, [req.params.id]);
     const { rowCount } = await pool.query(`
       UPDATE special_levies
       SET type=$1, year=$2, amount=$3, paid_date=$4, notes=$5, updated_at=NOW()
       WHERE id=$6
     `, [type, year, parseFloat(amount), paidDate || null, notes || null, req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    if (before[0]) {
+      sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `${type} (${year})`, parseFloat(amount), null);
+    }
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
