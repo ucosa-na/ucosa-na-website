@@ -125,8 +125,15 @@ function duesReminderHtml(name, year, dueDate, amount, status) {
 // ── SMS HELPER — tries Twilio first, falls back to Vonage ─────────────────────
 function normalizePhone(raw) {
   if (!raw) return null;
+  const s = String(raw).trim();
+  // Detect scientific notation (e.g. "2.35E+12") — Excel mangles long phone numbers this way.
+  // Precision is already lost; we cannot recover the original digits.
+  if (/^[+\-]?[\d.]+[eE][+\-]?\d+$/.test(s)) {
+    log.warn(`Phone number stored as scientific notation ("${s}") — original digits lost; skipping SMS`);
+    return null;
+  }
   // Strip everything except digits and leading +
-  let digits = raw.replace(/[^\d+]/g, '');
+  let digits = s.replace(/[^\d+]/g, '');
   // Ensure E.164: must start with +
   if (!digits.startsWith('+')) digits = '+' + digits;
   // Must be at least 10 digits after the +
@@ -481,7 +488,10 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
     const firstName     = col(row, 'first_name');
     const lastName      = col(row, 'last_name');
     const email         = col(row, 'email').toLowerCase();
-    const phone         = col(row, 'phone');
+    const rawPhone      = col(row, 'phone');
+    // Detect Excel scientific-notation damage (e.g. 2348023374853 → "2.35E+12")
+    const phoneIsCorrupt = rawPhone && /^[+\-]?[\d.]+[eE][+\-]?\d+$/.test(rawPhone.trim());
+    const phone         = phoneIsCorrupt ? null : (rawPhone || null);
     const address       = col(row, 'address');
     const yearJoined    = col(row, 'year_joined');
     const gradYear      = col(row, 'graduation_year');
@@ -570,7 +580,8 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
       }).then(() => log.info(`Bulk welcome email sent to ${email}`))
         .catch(e => log.error(`Bulk welcome email failed for ${email}: ${e.message}`));
 
-      created.push({ row: i + 1, name: fullName, email, smsSent });
+      created.push({ row: i + 1, name: fullName, email, smsSent,
+        ...(phoneIsCorrupt ? { warning: `Phone "${rawPhone}" was in scientific notation (Excel damage) — cleared. Please update manually.` } : {}) });
 
     } catch (err) {
       log.error(`Bulk import row ${i + 1} error: ${err.message}`);
