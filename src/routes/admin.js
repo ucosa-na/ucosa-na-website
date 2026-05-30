@@ -123,7 +123,21 @@ function duesReminderHtml(name, year, dueDate, amount, status) {
 }
 
 // ── SMS HELPER — tries Twilio first, falls back to Vonage ─────────────────────
+function normalizePhone(raw) {
+  if (!raw) return null;
+  // Strip everything except digits and leading +
+  let digits = raw.replace(/[^\d+]/g, '');
+  // Ensure E.164: must start with +
+  if (!digits.startsWith('+')) digits = '+' + digits;
+  // Must be at least 10 digits after the +
+  if (digits.replace(/\D/g, '').length < 10) return null;
+  return digits;
+}
+
 async function sendSMS(to, body) {
+  const normalizedTo = normalizePhone(to);
+  if (!normalizedTo) { log.warn(`SMS skipped — invalid phone number: "${to}"`); return false; }
+  to = normalizedTo;
   // ── Try Twilio first ──
   const sid   = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
