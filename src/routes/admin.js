@@ -1679,6 +1679,7 @@ router.post('/donations', finOrAdmin, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [donorName, donorEmail, donorPhone || null, parseFloat(amount), ref, date]
     );
+    sendPaymentNotification(donorName, donorEmail, donorPhone || null, 'Member-Donation', amount, 'Manual Entry', ref);
     res.json({ ok: true, id: rows[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
