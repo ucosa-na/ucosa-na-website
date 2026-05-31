@@ -978,7 +978,7 @@ router.put('/dues/:id', finOrAdmin, async (req, res) => {
     if (before.length) {
       await logAudit(req.user.id, req.user.email, 'DUES_UPDATED', 'DUES', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
-      if (status === 'paid') {
+      if (status === 'paid' && before[0].status !== 'paid') {
         sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Annual Dues (${year})`, amount || 0, paymentMethod, `DUES-${req.params.id}`);
       }
     }
@@ -1063,7 +1063,7 @@ router.put('/endowment/:id', finOrAdmin, async (req, res) => {
     if (before.length) {
       await logAudit(req.user.id, req.user.email, 'ENDOWMENT_UPDATED', 'ENDOWMENT', parseInt(req.params.id), before[0].full_name,
         { year, amount, status, prev_status: before[0].status, prev_amount: before[0].amount });
-      if (status === 'paid') {
+      if (status === 'paid' && before[0].status !== 'paid') {
         sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `Endowment Fund${year ? ` (${year})` : ''}`, amount || 0, paymentMethod, `ENDOW-${req.params.id}`);
       }
     }
