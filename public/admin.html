@@ -1637,7 +1637,7 @@
           </div>
           <div class="form-group" style="max-width:180px;">
             <label for="levyRecType">Type <span style="color:#e63946;">*</span></label>
-            <select id="levyRecType">
+            <select id="levyRecType" onchange="onLevyTypeChange()">
               <option value="">— Select —</option>
               <option value="Convention">Convention</option>
               <option value="Calendar">Calendar</option>
@@ -3820,6 +3820,17 @@
 
     // ── SPECIAL LEVY RECORDS ──────────────────────────────────────────────────
 
+    function onLevyTypeChange() {
+      const type  = document.getElementById('levyRecType').value;
+      const input = document.getElementById('levyRecAmount');
+      const noLevy = type === 'Calendar' || type === 'Magazine';
+      input.disabled = noLevy;
+      input.value    = noLevy ? '0' : (input.disabled === false && input.value === '0' ? '' : input.value);
+      input.style.background = noLevy ? '#f0f0f0' : '';
+      input.style.color      = noLevy ? '#aaa'    : '';
+      input.style.cursor     = noLevy ? 'not-allowed' : '';
+    }
+
     let _allLevyRecs  = [];
     let levyRecEditId = null;
 
@@ -3911,6 +3922,7 @@
       levyRecEditId = id;
       document.getElementById('levyRecYear').value     = year;
       document.getElementById('levyRecType').value     = levyType;
+      onLevyTypeChange();
       document.getElementById('levyRecAmount').value   = levyAmount;
       document.getElementById('levyRecAdvert').value   = advertAmount;
       document.getElementById('levyRecPaidDate').value = paidDate;
@@ -3927,6 +3939,7 @@
       document.getElementById('levyRecYear').value   = new Date().getFullYear();
       document.getElementById('levyRecType').value   = '';
       document.getElementById('levyRecStatus').value = 'paid';
+      onLevyTypeChange(); // reset levy amount field state
       document.getElementById('levyRecSaveBtn').textContent     = 'Add Special Levy Record';
       document.getElementById('levyRecCancelBtn').style.display = 'none';
     }
