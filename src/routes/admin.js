@@ -1653,6 +1653,87 @@ router.delete('/special-levies/:id', finOrAdmin, async (req, res) => {
   }
 });
 
+// ── SPECIAL LEVY RECORDS (Convention / Calendar / Magazine) ──────────────────
+
+const LEVY_RECORD_TYPES = ['Convention', 'Calendar', 'Magazine'];
+
+router.get('/levy-records', finOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT sl.id, sl.year, sl.levy_type, sl.levy_amount, sl.advert_amount,
+             sl.paid_date, sl.status, sl.notes, sl.created_at,
+             u.full_name AS member_name, u.id AS user_id,
+             rb.full_name AS recorded_by_name
+      FROM special_levy_records sl
+      JOIN users u ON u.id = sl.user_id
+      LEFT JOIN users rb ON rb.id = sl.recorded_by
+      ORDER BY sl.year DESC, u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/levy-records', finOrAdmin, async (req, res) => {
+  const { userId, year, levyType, levyAmount, advertAmount, paidDate, status, notes } = req.body;
+  if (!userId || !year || !levyType) return res.status(400).json({ error: 'Member, year, and type are required.' });
+  if (!LEVY_RECORD_TYPES.includes(levyType)) return res.status(400).json({ error: `Type must be one of: ${LEVY_RECORD_TYPES.join(', ')}` });
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO special_levy_records (user_id, year, levy_type, levy_amount, advert_amount, paid_date, status, notes, recorded_by)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id
+    `, [userId, year, levyType, parseFloat(levyAmount)||0, parseFloat(advertAmount)||0, paidDate||null, status||'unpaid', notes||null, req.user.id]);
+    const { rows: member } = await pool.query(
+      `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id=u.id WHERE u.id=$1`, [userId]);
+    if ((status||'unpaid') === 'paid' && member[0]) {
+      const total = (parseFloat(levyAmount)||0) + (parseFloat(advertAmount)||0);
+      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone,
+        `Special Levy — ${levyType} (${year})`, total, null, `LEVY-${rows[0].id}`);
+    }
+    res.status(201).json({ message: 'Record added', id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/levy-records/:id', finOrAdmin, async (req, res) => {
+  const { year, levyType, levyAmount, advertAmount, paidDate, status, notes } = req.body;
+  if (!year || !levyType) return res.status(400).json({ error: 'Year and type are required.' });
+  try {
+    const { rows: before } = await pool.query(`
+      SELECT sl.status, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM special_levy_records sl JOIN users u ON u.id = sl.user_id
+      LEFT JOIN member_profiles p ON p.user_id=u.id WHERE sl.id=$1`, [req.params.id]);
+    const { rowCount } = await pool.query(`
+      UPDATE special_levy_records
+      SET year=$1, levy_type=$2, levy_amount=$3, advert_amount=$4,
+          paid_date=$5, status=$6, notes=$7, updated_at=NOW(), recorded_by=$8
+      WHERE id=$9
+    `, [year, levyType, parseFloat(levyAmount)||0, parseFloat(advertAmount)||0,
+        paidDate||null, status||'unpaid', notes||null, req.user.id, req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    if (before.length && status === 'paid' && before[0].status !== 'paid') {
+      const total = (parseFloat(levyAmount)||0) + (parseFloat(advertAmount)||0);
+      sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone,
+        `Special Levy — ${levyType} (${year})`, total, null, `LEVY-${req.params.id}`);
+    }
+    res.json({ message: 'Record updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/levy-records/:id', finOrAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM special_levy_records WHERE id=$1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Donations ────────────────────────────────────────────────────────────────
 router.get('/donations', finOrAdmin, async (req, res) => {
   try {

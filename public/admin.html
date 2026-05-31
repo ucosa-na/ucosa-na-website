@@ -709,7 +709,8 @@
           <a href="#endowmentFund">Endowment Fund</a>
           <a href="#expenseRecords">Expense Records</a>
           <a href="#donationsSection">Donations</a>
-          <a href="#specialLeviesSection">Special Levies</a>
+          <a href="#specialLeviesSection">Members-Donations</a>
+          <a href="#levyRecordsSection">Special Levy</a>
         </div>
       </div>
 
@@ -1543,10 +1544,10 @@
         <button class="btn-primary" onclick="sendInviteBroadcast()">&#128140; Send Invitations</button>
       </section>
 
-      <!-- SPECIAL LEVIES / VOLUNTARY CONTRIBUTIONS / MEMBER-DONATIONS -->
+      <!-- MEMBERS-DONATIONS -->
       <section id="specialLeviesSection" class="fin-section">
-        <h2>&#128176; Special Levies / Voluntary Contributions / Member-Donations</h2>
-        <p style="color:#555;font-size:15px;margin-bottom:20px;">Record and track special levies, voluntary contributions, and member donations.</p>
+        <h2>&#128176; Members-Donations</h2>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">Record and track voluntary contributions and member donations.</p>
 
         <div id="levyError"   class="msg error"></div>
         <div id="levySuccess" class="msg success"></div>
@@ -1615,6 +1616,86 @@
             <tbody id="levyTbody">
               <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
             </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SPECIAL LEVY RECORDS -->
+      <section id="levyRecordsSection" class="fin-section">
+        <h2>&#128203; Special Levy</h2>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">Record Convention, Calendar, and Magazine levies for members.</p>
+
+        <div id="levyRecError"   class="msg error"></div>
+        <div id="levyRecSuccess" class="msg success"></div>
+
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <div class="form-group" style="min-width:200px;flex:2;">
+            <label for="levyRecMember">Member <span style="color:#e63946;">*</span></label>
+            <select id="levyRecMember"><option value="">— Choose member —</option></select>
+          </div>
+          <div class="form-group" style="max-width:110px;">
+            <label for="levyRecYear">Year <span style="color:#e63946;">*</span></label>
+            <input type="number" id="levyRecYear" placeholder="2025" min="2000" max="2099" />
+          </div>
+          <div class="form-group" style="max-width:180px;">
+            <label for="levyRecType">Type <span style="color:#e63946;">*</span></label>
+            <select id="levyRecType">
+              <option value="">— Select —</option>
+              <option value="Convention">Convention</option>
+              <option value="Calendar">Calendar</option>
+              <option value="Magazine">Magazine</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="levyRecAmount">Levy Amount ($)</label>
+            <input type="number" id="levyRecAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="levyRecAdvert">Advert Amount ($)</label>
+            <input type="number" id="levyRecAdvert" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label for="levyRecPaidDate">Paid Date</label>
+            <input type="date" id="levyRecPaidDate" />
+          </div>
+          <div class="form-group" style="max-width:130px;">
+            <label for="levyRecStatus">Status</label>
+            <select id="levyRecStatus">
+              <option value="unpaid">Unpaid</option>
+              <option value="partial">Partial</option>
+              <option value="paid" selected>Paid</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="levyRecNotes">Notes</label>
+            <input type="text" id="levyRecNotes" placeholder="Optional notes" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="levyRecSaveBtn" onclick="saveLevyRecord()">Add Special Levy Record</button>
+          <button id="levyRecCancelBtn" onclick="cancelLevyRecEdit()" style="display:none;margin-left:10px;padding:9px 18px;border:1.5px solid #ccc;border-radius:8px;background:white;cursor:pointer;font-size:15px;">Cancel</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Year</th>
+                <th>Type</th>
+                <th>Levy ($)</th>
+                <th>Advert ($)</th>
+                <th>Paid Date</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Recorded By</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="levyRecTableBody">
+              <tr><td colspan="10" style="text-align:center;color:#aaa;font-style:italic;">Loading…</td></tr>
+            </tbody>
+            <tfoot id="levyRecTableFoot"></tfoot>
           </table>
         </div>
       </section>
@@ -1882,7 +1963,7 @@
 
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
-      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection'];
+      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
@@ -2610,9 +2691,10 @@
     function populateMemberSelect(members) {
       const opts = '<option value="">— Choose member —</option>' +
         members.map(m => `<option value="${m.id}">${escapeHtml(m.full_name)}</option>`).join('');
-      document.getElementById('duesMember').innerHTML = opts;
-      document.getElementById('endMember').innerHTML  = opts;
-      document.getElementById('levyMember').innerHTML = opts;
+      document.getElementById('duesMember').innerHTML    = opts;
+      document.getElementById('endMember').innerHTML     = opts;
+      document.getElementById('levyMember').innerHTML    = opts;
+      document.getElementById('levyRecMember').innerHTML = opts;
     }
 
     // ── ANNUAL DUES ───────────────────────────────────────────────────────────
@@ -3601,6 +3683,7 @@
         loadExpenses();
         loadDonations();
         loadSpecialLevies();
+        loadLevyRecords();
       }
 
       if (['admin', 'security-role'].includes(user.role)) {
@@ -3735,6 +3818,130 @@
       } catch (err) {
         errEl.textContent = 'Network error.'; errEl.style.display = 'block';
       }
+    }
+
+    // ── SPECIAL LEVY RECORDS ──────────────────────────────────────────────────
+
+    let _allLevyRecs  = [];
+    let levyRecEditId = null;
+
+    async function loadLevyRecords() {
+      const errEl = document.getElementById('levyRecError');
+      try {
+        const res  = await fetch('/api/admin/levy-records', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Error loading records.'; errEl.style.display = 'block'; return; }
+        _allLevyRecs = data;
+        renderLevyRecords();
+      } catch { errEl.textContent = 'Failed to load records.'; errEl.style.display = 'block'; }
+    }
+
+    function renderLevyRecords() {
+      const tbody = document.getElementById('levyRecTableBody');
+      const tfoot = document.getElementById('levyRecTableFoot');
+      const rows  = _allLevyRecs;
+      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#aaa;font-style:italic;">No records yet.</td></tr>'; tfoot.innerHTML = ''; return; }
+      const typeColors = { 'Convention': '#7b2152', 'Calendar': '#1565c0', 'Magazine': '#2e7d32' };
+      tbody.innerHTML = rows.map(r => {
+        const statusBadge = r.status === 'paid'
+          ? '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">Paid</span>'
+          : r.status === 'partial'
+          ? '<span style="background:#fff8e1;color:#f57f17;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">Partial</span>'
+          : '<span style="background:#fce4ec;color:#b71c1c;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">Unpaid</span>';
+        const typeColor = typeColors[r.levy_type] || '#555';
+        return `<tr>
+          <td><strong>${escapeHtml(r.member_name)}</strong></td>
+          <td>${r.year}</td>
+          <td><span style="color:${typeColor};font-weight:600;">${escapeHtml(r.levy_type)}</span></td>
+          <td>$${parseFloat(r.levy_amount||0).toFixed(2)}</td>
+          <td>$${parseFloat(r.advert_amount||0).toFixed(2)}</td>
+          <td>${r.paid_date ? r.paid_date.slice(0,10) : '—'}</td>
+          <td>${statusBadge}</td>
+          <td style="color:#666;">${escapeHtml(r.notes||'')}</td>
+          <td style="color:#555;">${escapeHtml(r.recorded_by_name||'—')}</td>
+          <td>
+            <button class="btn-sm" onclick="openLevyRecEdit(${r.id},${r.year},'${escapeHtml(r.levy_type)}',${parseFloat(r.levy_amount||0).toFixed(2)},${parseFloat(r.advert_amount||0).toFixed(2)},'${r.paid_date?r.paid_date.slice(0,10):''}','${r.status}','${escapeHtml(r.notes||'')}')">Edit</button>
+            <button class="btn-sm btn-danger" onclick="deleteLevyRecord(${r.id})">Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+      const totalLevy   = rows.reduce((s,r) => s + parseFloat(r.levy_amount||0), 0).toFixed(2);
+      const totalAdvert = rows.reduce((s,r) => s + parseFloat(r.advert_amount||0), 0).toFixed(2);
+      tfoot.innerHTML = `<tr style="font-weight:700;background:#f4f0ea;">
+        <td colspan="3">Total (${rows.length} records)</td>
+        <td>$${totalLevy}</td><td>$${totalAdvert}</td><td colspan="5"></td>
+      </tr>`;
+    }
+
+    async function saveLevyRecord() {
+      const errEl = document.getElementById('levyRecError');
+      const sucEl = document.getElementById('levyRecSuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+      const userId   = document.getElementById('levyRecMember').value;
+      const year     = document.getElementById('levyRecYear').value;
+      const levyType = document.getElementById('levyRecType').value;
+      if (!userId)   { errEl.textContent = 'Please select a member.'; errEl.style.display = 'block'; return; }
+      if (!year)     { errEl.textContent = 'Year is required.'; errEl.style.display = 'block'; return; }
+      if (!levyType) { errEl.textContent = 'Please select a type.'; errEl.style.display = 'block'; return; }
+      const body = {
+        userId:       parseInt(userId),
+        year:         parseInt(year),
+        levyType,
+        levyAmount:   parseFloat(document.getElementById('levyRecAmount').value)||0,
+        advertAmount: parseFloat(document.getElementById('levyRecAdvert').value)||0,
+        paidDate:     document.getElementById('levyRecPaidDate').value||null,
+        status:       document.getElementById('levyRecStatus').value||'unpaid',
+        notes:        document.getElementById('levyRecNotes').value.trim()||null,
+      };
+      const btn = document.getElementById('levyRecSaveBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const url    = levyRecEditId ? `/api/admin/levy-records/${levyRecEditId}` : '/api/admin/levy-records';
+      const method = levyRecEditId ? 'PUT' : 'POST';
+      try {
+        const res  = await fetch(url, { method, headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Save failed.'; errEl.style.display = 'block'; return; }
+        sucEl.textContent = levyRecEditId ? 'Record updated.' : 'Record added.'; sucEl.style.display = 'block';
+        cancelLevyRecEdit();
+        loadLevyRecords();
+        setTimeout(() => { sucEl.style.display = 'none'; }, 3000);
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+      finally { btn.disabled = false; btn.textContent = levyRecEditId ? 'Update Record' : 'Add Special Levy Record'; }
+    }
+
+    function openLevyRecEdit(id, year, levyType, levyAmount, advertAmount, paidDate, status, notes) {
+      levyRecEditId = id;
+      document.getElementById('levyRecYear').value     = year;
+      document.getElementById('levyRecType').value     = levyType;
+      document.getElementById('levyRecAmount').value   = levyAmount;
+      document.getElementById('levyRecAdvert').value   = advertAmount;
+      document.getElementById('levyRecPaidDate').value = paidDate;
+      document.getElementById('levyRecStatus').value   = status||'unpaid';
+      document.getElementById('levyRecNotes').value    = notes;
+      document.getElementById('levyRecSaveBtn').textContent     = 'Update Record';
+      document.getElementById('levyRecCancelBtn').style.display = 'inline-block';
+      document.getElementById('levyRecordsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelLevyRecEdit() {
+      levyRecEditId = null;
+      ['levyRecMember','levyRecAmount','levyRecAdvert','levyRecPaidDate','levyRecNotes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('levyRecYear').value   = new Date().getFullYear();
+      document.getElementById('levyRecType').value   = '';
+      document.getElementById('levyRecStatus').value = 'paid';
+      document.getElementById('levyRecSaveBtn').textContent     = 'Add Special Levy Record';
+      document.getElementById('levyRecCancelBtn').style.display = 'none';
+    }
+
+    async function deleteLevyRecord(id) {
+      if (!confirm('Delete this record? This cannot be undone.')) return;
+      const errEl = document.getElementById('levyRecError');
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch(`/api/admin/levy-records/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (!res.ok) { const d = await res.json(); errEl.textContent = d.error||'Delete failed.'; errEl.style.display = 'block'; return; }
+        loadLevyRecords();
+      } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
     }
 
     // ── DONATIONS ─────────────────────────────────────────────────────────────

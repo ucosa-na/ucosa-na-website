@@ -177,6 +177,23 @@ pool.query(`
   `)
 ).then(() =>
   pool.query(`
+    CREATE TABLE IF NOT EXISTS special_levy_records (
+      id            SERIAL PRIMARY KEY,
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year          INTEGER NOT NULL,
+      levy_type     TEXT NOT NULL CHECK (levy_type IN ('Convention','Calendar','Magazine')),
+      levy_amount   NUMERIC(10,2) NOT NULL DEFAULT 0,
+      advert_amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+      paid_date     DATE,
+      status        TEXT NOT NULL DEFAULT 'unpaid' CHECK (status IN ('paid','unpaid','partial')),
+      notes         TEXT,
+      recorded_by   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at    TIMESTAMPTZ DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
+).then(() =>
+  pool.query(`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       id         SERIAL PRIMARY KEY,
       user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
