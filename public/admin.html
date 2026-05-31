@@ -1267,9 +1267,9 @@
           <div class="form-group" style="max-width:130px;">
             <label for="duesStatus">Status</label>
             <select id="duesStatus">
-              <option value="unpaid" selected>Unpaid</option>
+              <option value="unpaid">Unpaid</option>
               <option value="partial">Partial</option>
-              <option value="paid">Paid</option>
+              <option value="paid" selected>Paid</option>
             </select>
           </div>
           <div class="form-group" style="flex:2;min-width:180px;">
@@ -2828,7 +2828,7 @@
       duesEditId = null;
       ['duesMember','duesAmount','duesPaidDate','duesMethod','duesNotes'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('duesYear').value   = new Date().getFullYear();
-      document.getElementById('duesStatus').value = 'unpaid';
+      document.getElementById('duesStatus').value = 'paid';
       document.getElementById('duesSaveBtn').textContent     = 'Add Dues Record';
       document.getElementById('duesCancelBtn').style.display = 'none';
     }
