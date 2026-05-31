@@ -80,6 +80,35 @@ async function sendPaymentNotification(memberName, memberEmail, memberPhone, des
   }
 }
 
+// ── Special Levy notification — separate line items for levy + advert ─────────
+function sendLevyNotification(memberName, memberEmail, memberPhone, levyType, year, levyAmt, advertAmt, ref) {
+  const total = levyAmt + advertAmt;
+  const items = [];
+  if (levyAmt > 0)   items.push({ label: `${levyType} Levy (${year})`, amount: levyAmt });
+  if (advertAmt > 0) items.push({ label: `Advert (${year})`,           amount: advertAmt });
+  if (!items.length) items.push({ label: `${levyType} Levy (${year})`, amount: 0 });
+
+  const smsParts = [];
+  if (levyAmt > 0)   smsParts.push(`${levyType} Levy: $${levyAmt.toFixed(2)}`);
+  if (advertAmt > 0) smsParts.push(`Advert: $${advertAmt.toFixed(2)}`);
+  const smsText = `Dear ${memberName}, Thank you. Payment received — ${smsParts.join(', ')}. Total: $${total.toFixed(2)}. — UCOSA-NA`;
+
+  if (memberEmail) {
+    sendEmail({
+      to: memberEmail,
+      subject: `Payment Receipt — ${levyType} Levy (${year}) — UCOSA-NA`,
+      html: paymentReceiptHtml(memberName, items, ref),
+    }).then(() => log.info(`Levy receipt email sent to ${memberEmail}`))
+      .catch(err => log.error(`Levy receipt email failed for ${memberEmail}: ${err.message}`));
+  } else {
+    log.warn(`Levy notification skipped — no email for ${memberName}`);
+  }
+  if (memberPhone) {
+    sendSMS(memberPhone, smsText)
+      .catch(err => log.error(`Levy SMS failed for ${memberPhone}: ${err.message}`));
+  }
+}
+
 // ── AUDIT HELPER ──────────────────────────────────────────────────────────────
 async function logAudit(performedById, performedByName, action, entityType, entityId, entityName, details) {
   try {
@@ -1687,9 +1716,8 @@ router.post('/levy-records', finOrAdmin, async (req, res) => {
     const { rows: member } = await pool.query(
       `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id=u.id WHERE u.id=$1`, [userId]);
     if ((status||'unpaid') === 'paid' && member[0]) {
-      const total = (parseFloat(levyAmount)||0) + (parseFloat(advertAmount)||0);
-      sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone,
-        `Special Levy — ${levyType} (${year})`, total, null, `LEVY-${rows[0].id}`);
+      sendLevyNotification(member[0].full_name, member[0].email, member[0].phone,
+        levyType, year, parseFloat(levyAmount)||0, parseFloat(advertAmount)||0, `LEVY-${rows[0].id}`);
     }
     res.status(201).json({ message: 'Record added', id: rows[0].id });
   } catch (err) {
@@ -1714,9 +1742,8 @@ router.put('/levy-records/:id', finOrAdmin, async (req, res) => {
         paidDate||null, status||'unpaid', notes||null, req.user.id, req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
     if (before.length && status === 'paid' && before[0].status !== 'paid') {
-      const total = (parseFloat(levyAmount)||0) + (parseFloat(advertAmount)||0);
-      sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone,
-        `Special Levy — ${levyType} (${year})`, total, null, `LEVY-${req.params.id}`);
+      sendLevyNotification(before[0].full_name, before[0].email, before[0].phone,
+        levyType, year, parseFloat(levyAmount)||0, parseFloat(advertAmount)||0, `LEVY-${req.params.id}`);
     }
     res.json({ message: 'Record updated' });
   } catch (err) {
