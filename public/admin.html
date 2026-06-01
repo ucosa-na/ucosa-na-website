@@ -1970,10 +1970,18 @@
       return localStorage.getItem('ucosa_token');
     }
 
+    // Parse a DATE-only string (YYYY-MM-DD) as local time, not UTC.
+    // new Date("2026-04-16") is parsed as UTC midnight → wrong day in US timezones.
+    function parseDate(str) {
+      if (!str) return null;
+      const m = String(str).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(str);
+    }
+
     function formatDate(dateStr) {
       if (!dateStr) return 'N/A';
       try {
-        return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        return parseDate(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
       } catch { return dateStr; }
     }
 
@@ -3621,7 +3629,7 @@
           return;
         }
         const rows = data.map(n => {
-          const date = new Date(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          const date = parseDate(n.meeting_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
           const fn   = n.original_name.replace(/'/g, "\\'");
           return `<tr>
             <td style="padding:11px 14px;border-bottom:1px solid #f0f0f0;color:#444;">${date}</td>
@@ -3857,7 +3865,7 @@
           <td><strong>${escapeHtml(r.member_name)}</strong></td>
           <td>${r.year}</td>
           <td style="font-weight:700;color:#2e7d32;">$${parseFloat(r.amount).toFixed(2)}</td>
-          <td>${r.paid_date ? new Date(r.paid_date).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
+          <td>${r.paid_date ? parseDate(r.paid_date).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
           <td style="color:#555;">${escapeHtml(r.notes || '—')}</td>
           <td style="color:#888;font-size:13px;">${escapeHtml(r.recorded_by_name || '—')}</td>
           <td>
