@@ -6,6 +6,9 @@ const PDFDocument = require('pdfkit');
 const pool     = require('../db');
 const requireAuth = require('../middleware/requireAuth');
 const requireRole = require('../middleware/requireRole');
+const { sendEmail } = require('../mailer');
+const { sendSMS }   = require('../sms');
+const log = require('../logger');
 
 const router    = express.Router();
 const upload    = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -60,6 +63,95 @@ async function docxToPdf(buffer, title) {
 
     doc.end();
   });
+}
+
+const PORTAL_URL = 'https://ucosa-na.org/members.html';
+
+/** Fire-and-forget: email + SMS all active members about newly uploaded minutes. */
+async function notifyAllMembers(noteId, title, meetingDate) {
+  let members;
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.full_name, u.email, COALESCE(mp.phone, u.phone) AS phone
+       FROM users u
+       LEFT JOIN member_profiles mp ON mp.user_id = u.id
+       WHERE u.is_active = TRUE AND u.email IS NOT NULL`
+    );
+    members = rows;
+  } catch (err) {
+    log.error('Meeting notes notify: failed to fetch members:', err.message);
+    return;
+  }
+
+  // Format meeting date for display (YYYY-MM-DD → "Month DD, YYYY")
+  const [y, m, d] = String(meetingDate).slice(0, 10).split('-');
+  const displayDate = new Date(+y, +m - 1, +d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const subject = `Meeting Minutes Available: ${title}`;
+  const smsBody = `UCOSA-NA: The minutes for "${title}" (${displayDate}) are now available. Log in at ${PORTAL_URL} to read them. Please review before the next meeting.`;
+
+  let emailOk = 0, emailFail = 0, smsOk = 0, smsFail = 0;
+
+  for (const member of members) {
+    const firstName = (member.full_name || '').split(' ')[0] || 'Member';
+
+    // ── Email ──
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+        <div style="background:#1a1a2e;padding:18px 24px;border-radius:10px 10px 0 0;">
+          <h2 style="color:#fff;margin:0;font-size:20px;">UCOSA-NA &mdash; Meeting Minutes Available</h2>
+        </div>
+        <div style="border:1px solid #dde3f0;border-top:none;border-radius:0 0 10px 10px;padding:24px;">
+          <p style="font-size:16px;color:#333;">Dear ${firstName},</p>
+          <p style="font-size:15px;color:#333;">
+            The minutes for our meeting have been uploaded and are now ready for your review.
+          </p>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+            <tr>
+              <td style="padding:8px 12px;background:#f4f6fb;font-weight:700;color:#1a1a2e;border-radius:6px 0 0 6px;width:40%;">Title</td>
+              <td style="padding:8px 12px;background:#f4f6fb;color:#333;border-radius:0 6px 6px 0;">${title}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;font-weight:700;color:#1a1a2e;">Meeting Date</td>
+              <td style="padding:8px 12px;color:#333;">${displayDate}</td>
+            </tr>
+          </table>
+          <p style="font-size:15px;color:#333;">
+            We encourage all members to read the minutes <strong>before our next meeting</strong> so we can make the most of our time together.
+          </p>
+          <div style="text-align:center;margin:24px 0;">
+            <a href="${PORTAL_URL}" style="background:#1a1a2e;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:700;">
+              View Meeting Minutes
+            </a>
+          </div>
+          <p style="font-size:13px;color:#888;margin-top:24px;">
+            Log in to the members portal and navigate to the <strong>Meeting Notes</strong> section to open the document.
+          </p>
+          <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
+          <p style="font-size:12px;color:#aaa;text-align:center;">UCOSA-North America &mdash; Members Portal</p>
+        </div>
+      </div>`;
+
+    try {
+      await sendEmail({
+        to: member.email,
+        subject,
+        html,
+      });
+      emailOk++;
+    } catch (err) {
+      emailFail++;
+      log.warn(`Meeting notes email failed for ${member.email}: ${err.message}`);
+    }
+
+    // ── SMS ──
+    if (member.phone) {
+      const ok = await sendSMS(member.phone, smsBody);
+      ok ? smsOk++ : smsFail++;
+    }
+  }
+
+  log.info(`Meeting notes notifications: email ${emailOk}ok/${emailFail}fail, SMS ${smsOk}ok/${smsFail}fail`);
 }
 
 // GET /api/meeting-notes — list all (auth required)
@@ -154,6 +246,8 @@ router.post('/', secOrAdmin, upload.single('file'), async (req, res) => {
       [title, meeting_date, originalName, mimeType, fileBuffer, req.user.id]
     );
     await logAudit(req.user.id, req.user.email, 'MEETING_NOTE_UPLOADED', 'MEETING_NOTE', rows[0].id, title, { meeting_date, file: originalName });
+    // Notify all members in the background — do not block the upload response
+    notifyAllMembers(rows[0].id, title, meeting_date).catch(err => log.error('notifyAllMembers error:', err.message));
     res.status(201).json({ message: 'Meeting notes uploaded.', id: rows[0].id });
   } catch (err) {
     console.error('Upload meeting notes error:', err.message);
