@@ -83,68 +83,46 @@ async function notifyAllMembers(noteId, title, meetingDate) {
     return;
   }
 
-  // Format meeting date for display (YYYY-MM-DD → "Month DD, YYYY")
-  const [y, m, d] = String(meetingDate).slice(0, 10).split('-');
-  const displayDate = new Date(+y, +m - 1, +d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  // Format meeting date (YYYY-MM-DD → "Month DD, YYYY") without UTC shift
+  const [y, mo, d] = String(meetingDate).slice(0, 10).split('-');
+  const displayDate = new Date(+y, +mo - 1, +d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const subject = `Meeting Minutes Available: ${title}`;
-  const smsBody = `UCOSA-NA: The minutes for "${title}" (${displayDate}) are now available. Log in at ${PORTAL_URL} to read them. Please review before the next meeting.`;
+  const subject = `Meeting Minutes Now Available — ${title}`;
+  const smsBody = `UCOSA-NA: The minutes of the meeting held on ${displayDate} have been uploaded to the UCOSA-NA website. Log in at ${PORTAL_URL} to read them. Please review the minutes before our next meeting.`;
 
   let emailOk = 0, emailFail = 0, smsOk = 0, smsFail = 0;
 
   for (const member of members) {
-    const firstName = (member.full_name || '').split(' ')[0] || 'Member';
+    const name = member.full_name || 'Member';
 
-    // ── Email ──
     const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-        <div style="background:#1a1a2e;padding:18px 24px;border-radius:10px 10px 0 0;">
-          <h2 style="color:#fff;margin:0;font-size:20px;">UCOSA-NA &mdash; Meeting Minutes Available</h2>
-        </div>
-        <div style="border:1px solid #dde3f0;border-top:none;border-radius:0 0 10px 10px;padding:24px;">
-          <p style="font-size:16px;color:#333;">Dear ${firstName},</p>
-          <p style="font-size:15px;color:#333;">
-            The minutes for our meeting have been uploaded and are now ready for your review.
-          </p>
-          <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-            <tr>
-              <td style="padding:8px 12px;background:#f4f6fb;font-weight:700;color:#1a1a2e;border-radius:6px 0 0 6px;width:40%;">Title</td>
-              <td style="padding:8px 12px;background:#f4f6fb;color:#333;border-radius:0 6px 6px 0;">${title}</td>
-            </tr>
-            <tr>
-              <td style="padding:8px 12px;font-weight:700;color:#1a1a2e;">Meeting Date</td>
-              <td style="padding:8px 12px;color:#333;">${displayDate}</td>
-            </tr>
-          </table>
-          <p style="font-size:15px;color:#333;">
-            We encourage all members to read the minutes <strong>before our next meeting</strong> so we can make the most of our time together.
-          </p>
-          <div style="text-align:center;margin:24px 0;">
-            <a href="${PORTAL_URL}" style="background:#1a1a2e;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:700;">
-              View Meeting Minutes
-            </a>
-          </div>
-          <p style="font-size:13px;color:#888;margin-top:24px;">
-            Log in to the members portal and navigate to the <strong>Meeting Notes</strong> section to open the document.
-          </p>
-          <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
-          <p style="font-size:12px;color:#aaa;text-align:center;">UCOSA-North America &mdash; Members Portal</p>
-        </div>
-      </div>`;
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+      <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:20px;">Meeting Minutes Available</h1>
+      </div>
+      <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+        <p>Dear <strong>${name}</strong>,</p>
+        <p>The meeting minutes of the meeting held on <strong>${displayDate}</strong> have been uploaded to the UCOSA-NA website.</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <tbody>
+            <tr><td style="padding:10px 16px;font-weight:600;color:#555;width:140px;">Title</td><td style="padding:10px 16px;">${title}</td></tr>
+            <tr style="background:#f4f4f4;"><td style="padding:10px 16px;font-weight:600;color:#555;">Meeting Date</td><td style="padding:10px 16px;">${displayDate}</td></tr>
+            <tr><td style="padding:10px 16px;font-weight:600;color:#555;">Where</td><td style="padding:10px 16px;"><a href="${PORTAL_URL}" style="color:#1a1a2e;font-weight:700;">Members Portal &rarr; Meeting Notes</a></td></tr>
+          </tbody>
+        </table>
+        <p>We encourage all members to read the minutes <strong>before our next meeting</strong> so we can make the most of our time together.</p>
+        <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+      </div>
+    </div>`;
 
     try {
-      await sendEmail({
-        to: member.email,
-        subject,
-        html,
-      });
+      await sendEmail({ to: member.email, subject, html });
       emailOk++;
     } catch (err) {
       emailFail++;
       log.warn(`Meeting notes email failed for ${member.email}: ${err.message}`);
     }
 
-    // ── SMS ──
     if (member.phone) {
       const ok = await sendSMS(member.phone, smsBody);
       ok ? smsOk++ : smsFail++;
