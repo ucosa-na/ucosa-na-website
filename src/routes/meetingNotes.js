@@ -192,11 +192,15 @@ async function serveFile(req, res) {
 
 // POST /api/meeting-notes — upload (admin/security-role)
 // Auto-converts .docx files to PDF before storing.
+// Title is auto-generated as "UCOSA-NA Meeting Minutes – <date>" if not supplied.
 router.post('/', secOrAdmin, upload.single('file'), async (req, res) => {
-  const { title, meeting_date } = req.body;
-  if (!title || !meeting_date || !req.file) {
-    return res.status(400).json({ error: 'Title, date, and file are required.' });
+  const { meeting_date } = req.body;
+  if (!meeting_date || !req.file) {
+    return res.status(400).json({ error: 'Meeting date and file are required.' });
   }
+  const [y, mo, d] = String(meeting_date).slice(0, 10).split('-');
+  const displayDate = new Date(+y, +mo - 1, +d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const title = req.body.title?.trim() || `UCOSA-NA Meeting Minutes \u2013 ${displayDate}`;
 
   let fileBuffer   = req.file.buffer;
   let mimeType     = req.file.mimetype;

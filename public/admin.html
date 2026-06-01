@@ -971,17 +971,11 @@
 
         <div style="background:#f8f9fc;border-radius:10px;padding:20px;margin-bottom:24px;border:1px solid #e8ecf4;">
           <h3 style="font-size:25px;font-weight:700;color:#333;margin:0 0 14px;">Upload New Minutes</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div>
-              <label style="font-size:19px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Meeting Title *</label>
-              <input type="text" id="mnTitle" placeholder="e.g. March 2026 General Meeting"
-                style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:20px;"/>
-            </div>
-            <div>
-              <label style="font-size:19px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Meeting Date *</label>
-              <input type="date" id="mnDate"
-                style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:20px;"/>
-            </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:19px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Meeting Date *</label>
+            <input type="date" id="mnDate" oninput="updateMnTitlePreview()"
+              style="width:260px;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:20px;"/>
+            <p id="mnTitlePreview" style="margin:6px 0 0;font-size:15px;color:#888;font-style:italic;"></p>
           </div>
           <div style="margin-bottom:14px;">
             <label style="font-size:19px;font-weight:600;color:#555;display:block;margin-bottom:5px;">File (PDF or Word) *</label>
@@ -3659,9 +3653,20 @@
       }
     }
 
+    function mnAutoTitle(dateVal) {
+      if (!dateVal) return '';
+      const [y, m, d] = dateVal.split('-');
+      const disp = new Date(+y, +m - 1, +d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return `UCOSA-NA Meeting Minutes \u2013 ${disp}`;
+    }
+
+    function updateMnTitlePreview() {
+      const prev = document.getElementById('mnTitlePreview');
+      if (prev) prev.textContent = mnAutoTitle(document.getElementById('mnDate').value) || '';
+    }
+
     async function uploadMeetingNotes() {
       const token  = getToken();
-      const title  = document.getElementById('mnTitle').value.trim();
       const date   = document.getElementById('mnDate').value;
       const file   = document.getElementById('mnFile').files[0];
       const errEl  = document.getElementById('mnUploadError');
@@ -3669,11 +3674,12 @@
       const btn    = document.getElementById('mnUploadBtn');
       errEl.style.display = 'none';
       okEl.style.display  = 'none';
-      if (!title || !date || !file) {
-        errEl.textContent = 'Please fill in all fields and choose a file.';
+      if (!date || !file) {
+        errEl.textContent = 'Please select a meeting date and choose a file.';
         errEl.style.display = 'block';
         return;
       }
+      const title = mnAutoTitle(date);
       btn.disabled = true; btn.textContent = 'Uploading…';
       const form = new FormData();
       form.append('title', title);
@@ -3685,9 +3691,9 @@
         if (res.ok) {
           okEl.textContent = '✓ Meeting notes uploaded successfully.';
           okEl.style.display = 'block';
-          document.getElementById('mnTitle').value = '';
           document.getElementById('mnDate').value  = '';
           document.getElementById('mnFile').value  = '';
+          updateMnTitlePreview();
           loadMeetingNotes();
         } else {
           errEl.textContent = data.error || 'Upload failed.';
