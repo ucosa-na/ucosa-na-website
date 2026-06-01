@@ -254,7 +254,7 @@ async function seedEndowmentForMember(userId, memberSinceYear, recordedById) {
 
 // POST /api/admin/users — create a member and send welcome email
 router.post('/users', secOrAdmin, async (req, res) => {
-  const { firstName, lastName, email, address, phone, yearJoined, graduationYear, role } = req.body;
+  const { title, firstName, lastName, email, address, phone, altPhone, yearJoined, graduationYear, role } = req.body;
   if (!firstName || !lastName || !email || !phone) {
     return res.status(400).json({ error: 'First name, last name, email, and phone number are required' });
   }
@@ -290,9 +290,9 @@ router.post('/users', secOrAdmin, async (req, res) => {
     const userId = inserted[0].id;
 
     await pool.query(
-      `INSERT INTO member_profiles (user_id, first_name, last_name, address, phone, year_joined, graduation_year)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [userId, firstName.trim(), lastName.trim(), address || null, phone || null,
+      `INSERT INTO member_profiles (user_id, title, first_name, last_name, address, phone, alt_phone, year_joined, graduation_year)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [userId, title || null, firstName.trim(), lastName.trim(), address || null, phone || null, altPhone || null,
        yearJoined ? parseInt(yearJoined) : null, graduationYear ? parseInt(graduationYear) : null]
     );
 
@@ -439,7 +439,7 @@ router.get('/users', anyPriv, async (req, res) => {
       SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.is_active, u.is_locked, u.created_at, u.last_login,
              COALESCE(p.first_name, split_part(u.full_name, ' ', 1))  AS first_name,
              COALESCE(p.last_name,  NULLIF(substring(u.full_name FROM position(' ' IN u.full_name) + 1), '')) AS last_name,
-             p.address, p.phone, p.year_joined, p.graduation_year
+             p.title, p.address, p.phone, p.alt_phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
       WHERE u.id != 1
@@ -457,8 +457,9 @@ router.get('/users/export-csv', secOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.full_name, u.email, u.role,
-             p.first_name, p.last_name,
+             p.title, p.first_name, p.last_name,
              COALESCE(p.phone, u.phone) AS phone,
+             p.alt_phone,
              COALESCE(p.address, u.address) AS address,
              p.year_joined, p.graduation_year,
              u.is_active, u.is_locked, u.created_at, u.last_login
@@ -468,7 +469,7 @@ router.get('/users/export-csv', secOrAdmin, async (req, res) => {
       ORDER BY u.full_name ASC
     `);
 
-    const headers = ['full_name','email','role','first_name','last_name','phone','address','year_joined','graduation_year','is_active','is_locked','created_at','last_login'];
+    const headers = ['full_name','email','role','title','first_name','last_name','phone','alt_phone','address','year_joined','graduation_year','is_active','is_locked','created_at','last_login'];
     const escape  = v => v == null ? '' : `"${String(v).replace(/"/g, '""')}"`;
     const csv     = [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h])).join(','))].join('\r\n');
 
@@ -517,10 +518,12 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
     const firstName     = col(row, 'first_name');
     const lastName      = col(row, 'last_name');
     const email         = col(row, 'email').toLowerCase();
+    const title         = col(row, 'title') || null;
     const rawPhone      = col(row, 'phone');
     // Detect Excel scientific-notation damage (e.g. 2348023374853 → "2.35E+12")
     const phoneIsCorrupt = rawPhone && /^[+\-]?[\d.]+[eE][+\-]?\d+$/.test(rawPhone.trim());
     const phone         = phoneIsCorrupt ? null : (rawPhone || null);
+    const altPhone      = col(row, 'alt_phone') || null;
     const address       = col(row, 'address');
     const yearJoined    = col(row, 'year_joined');
     const gradYear      = col(row, 'graduation_year');
@@ -550,8 +553,8 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
       const userId = inserted[0].id;
 
       await pool.query(
-        `INSERT INTO member_profiles (user_id, first_name, last_name, address, phone, year_joined, graduation_year) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [userId, firstName, lastName, address || null, phone || null,
+        `INSERT INTO member_profiles (user_id, title, first_name, last_name, address, phone, alt_phone, year_joined, graduation_year) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [userId, title, firstName, lastName, address || null, phone || null, altPhone,
          yearJoined ? parseInt(yearJoined) : null, gradYear ? parseInt(gradYear) : null]
       );
 
@@ -629,7 +632,9 @@ router.get('/welfare/members', welfareOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.full_name, u.email,
-             COALESCE(p.phone, u.phone) AS phone
+             p.title,
+             COALESCE(p.phone, u.phone) AS phone,
+             p.alt_phone
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
       WHERE u.id != 1
@@ -644,7 +649,7 @@ router.get('/welfare/members', welfareOrAdmin, async (req, res) => {
 
 // PUT /api/admin/users/:id — update member info
 router.put('/users/:id', secOrAdmin, async (req, res) => {
-  const { firstName, lastName, email, address, phone, yearJoined, graduationYear } = req.body;
+  const { title, firstName, lastName, email, address, phone, altPhone, yearJoined, graduationYear } = req.body;
   if (!firstName || !lastName || !email) {
     return res.status(400).json({ error: 'First name, last name, and email are required' });
   }
@@ -663,12 +668,12 @@ router.put('/users/:id', secOrAdmin, async (req, res) => {
       [fullName, emailVal, address || null, phone || null, req.user.id, req.params.id]
     );
     await pool.query(`
-      INSERT INTO member_profiles (user_id, first_name, last_name, address, phone, year_joined, graduation_year)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO member_profiles (user_id, title, first_name, last_name, address, phone, alt_phone, year_joined, graduation_year)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (user_id) DO UPDATE SET
-        first_name=$2, last_name=$3, address=$4, phone=$5,
-        year_joined=$6, graduation_year=$7, updated_at=NOW()
-    `, [req.params.id, firstName.trim(), lastName.trim(), address || null, phone || null,
+        title=$2, first_name=$3, last_name=$4, address=$5, phone=$6, alt_phone=$7,
+        year_joined=$8, graduation_year=$9, updated_at=NOW()
+    `, [req.params.id, title || null, firstName.trim(), lastName.trim(), address || null, phone || null, altPhone || null,
         yearJoined ? parseInt(yearJoined) : null, graduationYear ? parseInt(graduationYear) : null]);
     await logAudit(req.user.id, req.user.email, 'MEMBER_UPDATED', 'MEMBER', parseInt(req.params.id), fullName, { email: emailVal, address, phone, yearJoined, graduationYear });
     res.json({ message: 'Member updated' });

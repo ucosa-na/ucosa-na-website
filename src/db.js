@@ -120,6 +120,10 @@ pool.query(`
 ).then(() =>
   pool.query(`ALTER TABLE endowment_fund ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL;`)
 ).then(() =>
+  pool.query(`ALTER TABLE member_profiles ADD COLUMN IF NOT EXISTS title TEXT DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE member_profiles ADD COLUMN IF NOT EXISTS alt_phone TEXT DEFAULT NULL;`)
+).then(() =>
   pool.query(`
     CREATE TABLE IF NOT EXISTS expense_records (
       id           SERIAL PRIMARY KEY,

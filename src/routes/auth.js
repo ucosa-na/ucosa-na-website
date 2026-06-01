@@ -330,7 +330,7 @@ router.get('/me', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.full_name, u.email, u.role, u.must_change_password,
-             p.first_name, p.last_name, p.address, p.phone, p.year_joined, p.graduation_year
+             p.title, p.first_name, p.last_name, p.address, p.phone, p.alt_phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
       WHERE u.id = $1
@@ -340,6 +340,7 @@ router.get('/me', requireAuth, async (req, res) => {
     res.json({
       id: user.id,
       fullName: user.full_name,
+      title: user.title || '',
       firstName: user.first_name || '',
       lastName: user.last_name || '',
       email: user.email,
@@ -347,6 +348,7 @@ router.get('/me', requireAuth, async (req, res) => {
       mustChangePassword: user.must_change_password,
       address: user.address || '',
       phone: user.phone || '',
+      altPhone: user.alt_phone || '',
       yearJoined: user.year_joined || '',
       graduationYear: user.graduation_year || '',
     });
@@ -358,17 +360,17 @@ router.get('/me', requireAuth, async (req, res) => {
 
 // PUT /api/auth/profile — update contact info
 router.put('/profile', requireAuth, async (req, res) => {
-  const { address, phone } = req.body;
+  const { address, phone, altPhone } = req.body;
   try {
     await pool.query(
       'UPDATE users SET address = $1, phone = $2 WHERE id = $3',
       [address || null, phone || null, req.user.id]
     );
     await pool.query(`
-      INSERT INTO member_profiles (user_id, address, phone)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (user_id) DO UPDATE SET address = EXCLUDED.address, phone = EXCLUDED.phone, updated_at = NOW()
-    `, [req.user.id, address || null, phone || null]);
+      INSERT INTO member_profiles (user_id, address, phone, alt_phone)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id) DO UPDATE SET address = EXCLUDED.address, phone = EXCLUDED.phone, alt_phone = EXCLUDED.alt_phone, updated_at = NOW()
+    `, [req.user.id, address || null, phone || null, altPhone || null]);
     res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     console.error('Profile update error:', err.message);

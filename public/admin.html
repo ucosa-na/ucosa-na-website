@@ -782,6 +782,20 @@
 
         <form id="createForm">
           <div class="form-row">
+            <div class="form-group" style="max-width:160px;">
+              <label for="createTitle">Title</label>
+              <select id="createTitle" style="width:100%;padding:11px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:20px;outline:none;background:white;">
+                <option value="">— None —</option>
+                <option>Mr</option>
+                <option>Mrs</option>
+                <option>Ms</option>
+                <option>Dr</option>
+                <option>JP</option>
+                <option>Deacon</option>
+                <option>Deaconess</option>
+                <option>Pst</option>
+              </select>
+            </div>
             <div class="form-group">
               <label for="firstName">First Name <span style="color:#e63946;">*</span></label>
               <input type="text" id="firstName" placeholder="e.g. John" required />
@@ -799,6 +813,10 @@
             <div class="form-group">
               <label for="phone">Phone Number <span style="color:#e63946;">*</span></label>
               <input type="text" id="phone" placeholder="e.g. +1 416 555 0100" required />
+            </div>
+            <div class="form-group">
+              <label for="altPhone">Alt. Phone</label>
+              <input type="text" id="altPhone" placeholder="e.g. +1 416 555 0200" />
             </div>
             <div class="form-group" style="flex:2;">
               <label for="address">Address</label>
@@ -1824,6 +1842,20 @@
       <div id="editSuccess" class="msg success"></div>
       <input type="hidden" id="editUserId" />
       <div class="form-row">
+        <div class="form-group" style="max-width:160px;">
+          <label for="editTitle">Title</label>
+          <select id="editTitle" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;background:white;">
+            <option value="">— None —</option>
+            <option>Mr</option>
+            <option>Mrs</option>
+            <option>Ms</option>
+            <option>Dr</option>
+            <option>JP</option>
+            <option>Deacon</option>
+            <option>Deaconess</option>
+            <option>Pst</option>
+          </select>
+        </div>
         <div class="form-group">
           <label for="editFirstName">First Name <span style="color:#e63946;">*</span></label>
           <input type="text" id="editFirstName" />
@@ -1841,6 +1873,10 @@
         <div class="form-group">
           <label for="editPhone">Phone</label>
           <input type="text" id="editPhone" />
+        </div>
+        <div class="form-group">
+          <label for="editAltPhone">Alt. Phone</label>
+          <input type="text" id="editAltPhone" />
         </div>
       </div>
       <div class="form-group">
@@ -2157,20 +2193,22 @@
       }
       tbody.innerHTML = filtered.map((m, i) => `<tr>
         <td>${i + 1}</td>
-        <td><strong>${m.full_name || '—'}</strong></td>
-        <td>${m.phone || '—'}</td>
-        <td>${m.email || '—'}</td>
+        <td><strong>${m.title ? escapeHtml(m.title) + ' ' : ''}${escapeHtml(m.full_name || '—')}</strong></td>
+        <td>${escapeHtml(m.phone || '—')}${m.alt_phone ? '<br><span style="font-size:12px;color:#888;">Alt: ' + escapeHtml(m.alt_phone) + '</span>' : ''}</td>
+        <td>${escapeHtml(m.email || '—')}</td>
       </tr>`).join('');
     }
 
     function downloadWelfareCSV() {
       const members = window._welfareMembers || [];
       if (!members.length) { alert('No member data to download.'); return; }
-      const header = ['#', 'Full Name', 'Phone', 'Email'];
+      const header = ['#', 'Title', 'Full Name', 'Phone', 'Alt. Phone', 'Email'];
       const rows = members.map((m, i) => [
         i + 1,
+        `"${(m.title    || '').replace(/"/g, '""')}"`,
         `"${(m.full_name || '').replace(/"/g, '""')}"`,
         `"${(m.phone    || '').replace(/"/g, '""')}"`,
+        `"${(m.alt_phone || '').replace(/"/g, '""')}"`,
         `"${(m.email    || '').replace(/"/g, '""')}"`,
       ].join(','));
       const csv = [header.join(','), ...rows].join('\r\n');
@@ -2356,10 +2394,10 @@
       tbody.innerHTML = filtered.map((m, i) => `
         <tr>
           <td style="color:#999;">${i + 1}</td>
-          <td><strong>${escapeHtml(m.first_name || '')}</strong></td>
+          <td><strong>${m.title ? escapeHtml(m.title) + ' ' : ''}${escapeHtml(m.first_name || '')}</strong></td>
           <td><strong>${escapeHtml(m.last_name || m.full_name || '')}</strong></td>
           <td>${escapeHtml(m.email)}</td>
-          <td>${escapeHtml(m.phone || '—')}</td>
+          <td>${escapeHtml(m.phone || '—')}${m.alt_phone ? '<br><span style="font-size:11px;color:#888;">Alt: ' + escapeHtml(m.alt_phone) + '</span>' : ''}</td>
           <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(m.address || '')}">${escapeHtml(m.address || '—')}</td>
           <td>${m.year_joined || '—'}</td>
           <td>${m.graduation_year || '—'}</td>
@@ -2391,7 +2429,7 @@
           <td><span class="badge ${m.must_change_password ? 'yes' : 'no'}">${m.must_change_password ? 'Yes' : 'No'}</span></td>
           <td>
             ${canEdit ? `
-              <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
+              <button class="btn-sm" onclick="openEditModal(${m.id},'${escapeHtml(m.title||'').replace(/'/g,"\\'")}','${escapeHtml(m.first_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.last_name||'').replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}','${escapeHtml(m.phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.alt_phone||'').replace(/'/g,"\\'")}','${escapeHtml(m.address||'').replace(/'/g,"\\'")}',${m.year_joined||'null'},${m.graduation_year||'null'})">Edit</button>
               <button class="btn-sm" style="background:#e67e22;color:white;" onclick="resetPassword(${m.id},'${escapeHtml(m.full_name).replace(/'/g,"\\'")}','${escapeHtml(m.email).replace(/'/g,"\\'")}')">Reset PW</button>
               <button class="btn-sm" style="background:${m.is_active !== false ? '#dc2626' : '#16a34a'};color:white;"
                 onclick="toggleStatus(${m.id}, ${m.is_active !== false}, '${escapeHtml(m.full_name).replace(/'/g,"\\'")}')">
@@ -2492,10 +2530,12 @@
     document.getElementById('createForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
+      const title          = document.getElementById('createTitle').value;
       const firstName      = document.getElementById('firstName').value.trim();
       const lastName       = document.getElementById('lastName').value.trim();
       const email          = document.getElementById('email').value.trim();
       const phone          = document.getElementById('phone').value.trim();
+      const altPhone       = document.getElementById('altPhone').value.trim();
       const address        = document.getElementById('address').value.trim();
       const yearJoined     = document.getElementById('yearJoined').value;
       const graduationYear = document.getElementById('graduationYear').value;
@@ -2517,7 +2557,7 @@
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + getToken(),
           },
-          body: JSON.stringify({ firstName, lastName, email, phone, address, yearJoined, graduationYear, role }),
+          body: JSON.stringify({ title, firstName, lastName, email, phone, altPhone, address, yearJoined, graduationYear, role }),
         });
 
         const data = await res.json();
@@ -3223,12 +3263,14 @@
 
     // ── EDIT MEMBER MODAL ────────────────────────────────────────────────────
 
-    function openEditModal(id, firstName, lastName, email, phone, address, yearJoined, gradYear) {
+    function openEditModal(id, title, firstName, lastName, email, phone, altPhone, address, yearJoined, gradYear) {
       document.getElementById('editUserId').value     = id;
+      document.getElementById('editTitle').value      = title || '';
       document.getElementById('editFirstName').value  = firstName;
       document.getElementById('editLastName').value   = lastName;
       document.getElementById('editEmail').value      = email;
       document.getElementById('editPhone').value      = phone;
+      document.getElementById('editAltPhone').value   = altPhone || '';
       document.getElementById('editAddress').value    = address;
       document.getElementById('editYearJoined').value = yearJoined || '';
       document.getElementById('editGradYear').value   = gradYear   || '';
@@ -3249,10 +3291,12 @@
       errEl.style.display = 'none'; okEl.style.display = 'none';
 
       const body = {
+        title:          document.getElementById('editTitle').value || null,
         firstName:      document.getElementById('editFirstName').value.trim(),
         lastName:       document.getElementById('editLastName').value.trim(),
         email:          document.getElementById('editEmail').value.trim(),
         phone:          document.getElementById('editPhone').value.trim() || null,
+        altPhone:       document.getElementById('editAltPhone').value.trim() || null,
         address:        document.getElementById('editAddress').value.trim() || null,
         yearJoined:     document.getElementById('editYearJoined').value || null,
         graduationYear: document.getElementById('editGradYear').value   || null,

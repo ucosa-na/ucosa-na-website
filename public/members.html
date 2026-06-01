@@ -460,8 +460,9 @@
     function showEditForm(user) {
       document.getElementById('editForm').style.display = 'block';
       document.getElementById('editBtn').style.display = 'none';
-      document.getElementById('editAddress').value = user.address || '';
-      document.getElementById('editPhone').value   = user.phone   || '';
+      document.getElementById('editAddress').value  = user.address  || '';
+      document.getElementById('editPhone').value    = user.phone    || '';
+      document.getElementById('editAltPhone').value = user.altPhone || '';
     }
 
     function hideEditForm() {
@@ -471,16 +472,18 @@
 
     async function saveProfile(userId) {
       const token   = localStorage.getItem('ucosa_token');
-      const address = document.getElementById('editAddress').value.trim();
-      const phone   = document.getElementById('editPhone').value.trim();
+      const address  = document.getElementById('editAddress').value.trim();
+      const phone    = document.getElementById('editPhone').value.trim();
+      const altPhone = document.getElementById('editAltPhone').value.trim();
       const res = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, phone })
+        body: JSON.stringify({ address, phone, altPhone })
       });
       if (res.ok) {
-        document.getElementById('fieldAddress').textContent = address || '—';
-        document.getElementById('fieldPhone').textContent   = phone   || '—';
+        document.getElementById('fieldAddress').textContent  = address  || '—';
+        document.getElementById('fieldPhone').textContent    = phone    || '—';
+        document.getElementById('fieldAltPhone').textContent = altPhone || '—';
         hideEditForm();
       }
     }
@@ -755,14 +758,19 @@
                 <span class="val" id="fieldPhone">${user.phone || '—'}</span>
               </div>
               <div class="profile-field">
+                <span class="lbl">Alt. Phone</span>
+                <span class="val" id="fieldAltPhone">${user.altPhone || '—'}</span>
+              </div>
+              <div class="profile-field">
                 <span class="lbl">Member Since</span>
                 <span class="val">${user.yearJoined || '—'}</span>
               </div>
             </div>
             <button class="profile-edit-btn" id="editBtn" onclick="showEditForm(${JSON.stringify(user).replace(/"/g,'&quot;')})">&#9998; Edit Contact Info</button>
             <div class="edit-form" id="editForm">
-              <input id="editAddress" type="text" placeholder="Address" />
-              <input id="editPhone"   type="text" placeholder="Phone number" />
+              <input id="editAddress"  type="text" placeholder="Address" />
+              <input id="editPhone"    type="text" placeholder="Phone number" />
+              <input id="editAltPhone" type="text" placeholder="Alt. Phone number" />
               <div class="edit-actions" style="justify-content:center;">
                 <button class="btn-save" onclick="saveProfile(${user.id})">Save</button>
                 <button class="btn-cancel" onclick="hideEditForm()">Cancel</button>
