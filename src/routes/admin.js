@@ -1809,4 +1809,34 @@ router.delete('/donations/:id', finOrAdmin, async (req, res) => {
   }
 });
 
+// ── Email Failures ──────────────────────────────────────────────────────────
+router.get('/email-failures', adminOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, to_address, subject, error_msg, created_at FROM email_failures ORDER BY created_at DESC LIMIT 200'
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/email-failures/:id', adminOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM email_failures WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/email-failures', adminOnly, async (req, res) => {
+  try {
+    await pool.query('TRUNCATE email_failures');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

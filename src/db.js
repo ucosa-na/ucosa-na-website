@@ -198,6 +198,16 @@ pool.query(`
   `)
 ).then(() =>
   pool.query(`
+    CREATE TABLE IF NOT EXISTS email_failures (
+      id          SERIAL PRIMARY KEY,
+      to_address  TEXT NOT NULL,
+      subject     TEXT,
+      error_msg   TEXT,
+      created_at  TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
+).then(() =>
+  pool.query(`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       id         SERIAL PRIMARY KEY,
       user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

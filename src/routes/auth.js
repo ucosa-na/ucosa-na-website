@@ -189,12 +189,10 @@ router.post('/login', async (req, res) => {
 
       if (entry && entry.lockedUntil) {
         // Just got locked on this attempt
-        if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
         getLocation(req.ip).then(loc => sendMemberFailedLoginAlert(user, req.ip, loc));
         return res.status(429).json({ error: `After ${MAX_ATTEMPTS} failed attempts, please wait 10 minutes and try again.` });
       }
 
-      if (user.role === 'admin') sendAdminLoginAlert('failed', user.email, req.ip);
       getLocation(req.ip).then(loc => sendMemberFailedLoginAlert(user, req.ip, loc));
 
       return res.status(401).json({
@@ -220,7 +218,6 @@ router.post('/login', async (req, res) => {
        VALUES ('LOGIN_SUCCESS', 'AUTH', $1, $2, $1, $2, $3)`,
       [user.id, user.full_name || user.email, JSON.stringify({ email: user.email, role: user.role, ip: req.ip })]
     ).catch(() => {});
-    if (user.role === 'admin') sendAdminLoginAlert('success', user.email, req.ip);
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, mustChangePassword: user.must_change_password },

@@ -1,6 +1,8 @@
 // Sends email via SendGrid HTTP API (port 443) — works on DigitalOcean
 // which blocks all outbound SMTP (25, 465, 587).
 
+const pool = require('./db');
+
 async function sendEmail({ from, to, subject, html, replyTo }) {
   const apiKey = process.env.SENDGRID_API_KEY;
   const sender = from || `"UCOSA-NA" <${process.env.EMAIL_USER}>`;
@@ -30,7 +32,13 @@ async function sendEmail({ from, to, subject, html, replyTo }) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`SendGrid ${res.status}: ${text}`);
+    const errMsg = `SendGrid ${res.status}: ${text}`;
+    // Store failure in DB for admin review
+    pool.query(
+      'INSERT INTO email_failures (to_address, subject, error_msg) VALUES ($1, $2, $3)',
+      [to, subject || null, errMsg]
+    ).catch(() => {});
+    throw new Error(errMsg);
   }
 }
 

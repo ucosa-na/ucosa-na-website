@@ -682,6 +682,7 @@
           <a href="#testSms">Test SMS</a>
           <a href="#siteMaintenance">Site Maintenance</a>
           <a href="#auditLog">Audit Log</a>
+          <a href="#emailFailuresSection">Email Failures</a>
         </div>
       </div>
 
@@ -1207,6 +1208,38 @@
             </thead>
             <tbody id="auditTableBody">
               <tr class="empty-row"><td colspan="6">Loading audit log…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- EMAIL FAILURES -->
+      <section id="emailFailuresSection">
+        <h2>&#9993; Email Failures</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:16px;">
+          Emails that failed to send via SendGrid — review and follow up manually if needed.
+        </p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <button onclick="loadEmailFailures()"
+            style="padding:8px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:17px;font-weight:600;cursor:pointer;">&#8635; Refresh</button>
+          <button onclick="clearEmailFailures()"
+            style="padding:8px 16px;background:#c0392b;color:white;border:none;border-radius:8px;font-size:17px;font-weight:600;cursor:pointer;">&#128465; Clear All</button>
+          <span id="emailFailCount" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div id="emailFailMsg" class="msg error" style="margin-bottom:10px;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>To</th>
+                <th>Subject</th>
+                <th>Error</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="emailFailTableBody">
+              <tr class="empty-row"><td colspan="5">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1998,7 +2031,7 @@
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection'];
-      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog'];
+      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog', 'emailFailuresSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
@@ -2150,6 +2183,55 @@
           <td style="font-size:13px;color:#555;max-width:260px;">${details || '—'}</td>
         </tr>`;
       }).join('');
+    }
+
+    // ── EMAIL FAILURES ────────────────────────────────────────────────────────
+    async function loadEmailFailures() {
+      const tbody = document.getElementById('emailFailTableBody');
+      if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Loading…</td></tr>`;
+      try {
+        const res = await fetch('/api/admin/email-failures', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (!res.ok) { if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="5" style="color:#e63946;">Error loading failures (${res.status})</td></tr>`; return; }
+        const rows = await res.json();
+        const countEl = document.getElementById('emailFailCount');
+        if (countEl) countEl.textContent = `${rows.length} record${rows.length !== 1 ? 's' : ''}`;
+        if (!tbody) return;
+        if (!rows.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No email failures recorded.</td></tr>`; return; }
+        tbody.innerHTML = rows.map(r => {
+          const ts = new Date(r.created_at);
+          const dateStr = ts.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+          const timeStr = ts.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+          return `<tr>
+            <td style="white-space:nowrap;font-size:14px;"><strong>${dateStr}</strong><br><span style="color:#888;font-size:12px;">${timeStr}</span></td>
+            <td style="font-size:14px;">${escapeHtml(r.to_address || '—')}</td>
+            <td style="font-size:14px;">${escapeHtml(r.subject || '—')}</td>
+            <td style="font-size:13px;color:#c0392b;max-width:280px;">${escapeHtml(r.error_msg || '—')}</td>
+            <td><button onclick="deleteEmailFailure(${r.id})" style="padding:4px 10px;background:#e63946;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Delete</button></td>
+          </tr>`;
+        }).join('');
+      } catch (err) {
+        if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="5" style="color:#e63946;">Network error: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    async function deleteEmailFailure(id) {
+      if (!confirm('Delete this failure record?')) return;
+      try {
+        const res = await fetch(`/api/admin/email-failures/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (res.ok) loadEmailFailures();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function clearEmailFailures() {
+      if (!confirm('Clear ALL email failure records? This cannot be undone.')) return;
+      try {
+        const res = await fetch('/api/admin/email-failures', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (res.ok) loadEmailFailures();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
     }
 
     // ── WELFARE MEMBER DIRECTORY ──────────────────────────────────────────────
@@ -3717,6 +3799,7 @@
         fetchMetrics();
         setInterval(fetchMetrics, 10000);
         loadAuditLog();
+        loadEmailFailures();
       }
 
       if (['admin', 'fin-role'].includes(user.role)) {
