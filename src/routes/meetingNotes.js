@@ -98,7 +98,9 @@ async function notifyAllMembers(noteId, title, meetingDate) {
     const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
       <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
-        <h1 style="color:#fff;margin:0;font-size:20px;">Meeting Minutes Available</h1>
+        <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+        <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+        <h1 style="color:#fff;margin:8px 0 0;font-size:20px;">Meeting Minutes Available</h1>
       </div>
       <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
         <p>Dear <strong>${name}</strong>,</p>
