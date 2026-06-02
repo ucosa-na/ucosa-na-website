@@ -26,9 +26,14 @@ async function sendSMS(to, body) {
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from  = process.env.TWILIO_PHONE_NUMBER;
   if (sid && token && from) {
+    // Use alphanumeric sender ID for international numbers (+234, etc.)
+    // US 10DLC numbers cannot route outside US/Canada.
+    const isNanp   = to.startsWith('+1');
+    const alphaSender = process.env.TWILIO_ALPHA_SENDER;
+    const senderId = (!isNanp && alphaSender) ? alphaSender : from;
     try {
-      await require('twilio')(sid, token).messages.create({ to, from, body });
-      log.info(`SMS sent via Twilio to ${to}`);
+      await require('twilio')(sid, token).messages.create({ to, from: senderId, body });
+      log.info(`SMS sent via Twilio to ${to} (sender: ${senderId})`);
       return true;
     } catch (err) {
       log.warn(`Twilio SMS failed for ${to}: ${err.message} — trying Vonage`);
