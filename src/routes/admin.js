@@ -260,15 +260,15 @@ router.post('/users', secOrAdmin, async (req, res) => {
     let smsSent = false;
     if (phone) {
       try {
-        await sendSMS(phone,
+        smsSent = await sendSMS(phone,
           `Welcome to UCOSA-NA, ${fullName}!\n` +
           `Login: https://ucosa-na.org\n` +
           `Email: ${emailVal}\n` +
           `Temp password: ${tempPassword}\n` +
           `This password expires in 48 hours. Please change it on first login.`
         );
-        smsSent = true;
-        log.info(`Welcome SMS sent to ${phone} for ${fullName}`);
+        if (smsSent) log.info(`Welcome SMS sent to ${phone} for ${fullName}`);
+        else log.warn(`Welcome SMS failed for ${phone} (${fullName}): both Twilio and Vonage rejected`);
       } catch (err) {
         log.error(`Welcome SMS failed for ${phone} (${fullName}): ${err.message}`);
       }
