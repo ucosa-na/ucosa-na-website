@@ -601,13 +601,14 @@
 
   #page-welcome {
     position: relative;
-    background: url("/convention-banner.jpg") center top / cover no-repeat;
+    overflow: hidden;
   }
   #page-welcome::before {
     content: "";
     position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.85);
+    inset: -20px;
+    background: url("/convention-banner.jpg") center top / cover no-repeat;
+    filter: blur(6px);
     z-index: 0;
     pointer-events: none;
   }
