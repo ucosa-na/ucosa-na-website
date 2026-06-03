@@ -599,25 +599,27 @@
   }
   .donate-amt-btn.selected, .donate-amt-btn:hover { background: #2e7d32; color: white; }
 
+  #page-welcome {
+    position: relative;
+    background: url("/convention-banner.jpg") center top / cover no-repeat;
+  }
+  #page-welcome::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.72);
+    z-index: 0;
+    pointer-events: none;
+  }
+  #page-welcome > * {
+    position: relative;
+    z-index: 1;
+  }
   .welcome-hero {
     position: relative;
     padding: 64px 0 56px;
     margin-bottom: 56px;
     width: 100%;
-    background: url("/convention-banner.jpg") center center / cover no-repeat;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .welcome-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.45);
-    border-radius: 12px;
-  }
-  .welcome-hero > * {
-    position: relative;
-    z-index: 1;
   }
 
   .hero-title {
