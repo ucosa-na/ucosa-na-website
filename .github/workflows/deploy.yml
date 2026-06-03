@@ -110,6 +110,9 @@ jobs:
             grep -q "^TWILIO_PHONE_NUMBER=" /opt/ucosa-na/.env \
               && sed -i "s|^TWILIO_PHONE_NUMBER=.*|TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}|" /opt/ucosa-na/.env \
               || echo "TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}" >> /opt/ucosa-na/.env
+            grep -q "^TWILIO_ALPHA_SENDER=" /opt/ucosa-na/.env \
+              && sed -i "s|^TWILIO_ALPHA_SENDER=.*|TWILIO_ALPHA_SENDER=${{ secrets.TWILIO_ALPHA_SENDER }}|" /opt/ucosa-na/.env \
+              || echo "TWILIO_ALPHA_SENDER=${{ secrets.TWILIO_ALPHA_SENDER }}" >> /opt/ucosa-na/.env
             grep -q "^VONAGE_API_KEY=" /opt/ucosa-na/.env \
               && sed -i "s|^VONAGE_API_KEY=.*|VONAGE_API_KEY=${{ secrets.VONAGE_API_KEY }}|" /opt/ucosa-na/.env \
               || echo "VONAGE_API_KEY=${{ secrets.VONAGE_API_KEY }}" >> /opt/ucosa-na/.env
