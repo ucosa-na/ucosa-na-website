@@ -601,7 +601,19 @@
 
   #page-welcome {
     position: relative;
-    background: linear-gradient(160deg, #c9dff0 0%, #a8cce0 30%, #b8d8e8 55%, #d6e8f2 75%, #e8f0f5 100%);
+    overflow: hidden;
+  }
+  #page-welcome::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    background: url("/convention-banner.jpg") center center / cover no-repeat;
+    z-index: 0;
+    pointer-events: none;
+  }
+  #page-welcome > * {
+    position: relative;
+    z-index: 1;
   }
   .welcome-hero {
     position: relative;
