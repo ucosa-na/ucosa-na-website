@@ -1715,6 +1715,13 @@
     .stats-bar      { grid-template-columns: 1fr 1fr; max-width: 100%; }
     .stat-item      { padding: 16px 12px; }
     .stat-number    { font-size: 28px; }
+    .hero-desc      { font-size: 22px; margin-bottom: 6px; }
+    #page-welcome .hero-ctas { flex-direction: column; gap: 10px; }
+    #page-welcome .hero-ctas button,
+    #page-welcome .hero-ctas a { width: 100%; text-align: center; justify-content: center; box-sizing: border-box; }
+    #page-welcome p[style*="font-size:50px"] { font-size: 22px !important; }
+    #page-welcome .stats-bar[style*="position:absolute"] { position:static !important; max-width:100% !important; margin-bottom:12px !important; border-radius:8px !important; }
+    #misc-slideshow { width: calc(100vw - 32px) !important; height: 200px !important; bottom: 16px !important; right: 16px !important; left: 16px !important; }
 
     /* About cards */
     .about-grid     { grid-template-columns: 1fr; gap: 14px; }
@@ -1807,6 +1814,11 @@
 
     /* Computer lab grid */
     .lab-photo-grid    { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    /* Welcome hero */
+    .hero-desc         { font-size: 30px; }
+    #page-welcome p[style*="font-size:50px"] { font-size: 32px !important; }
+    #page-welcome .stats-bar[style*="position:absolute"] { max-width: 200px !important; }
+    #misc-slideshow    { width: 340px !important; height: 260px !important; bottom: 32px !important; right: 32px !important; }
   }
 
   /* ── SMALL PHONES (≤ 480px) ── */
@@ -1820,6 +1832,9 @@
     .gallery-grid   { grid-template-columns: repeat(2, 1fr); gap: 5px; }
     .members-grid   { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .page           { padding: 18px 12px; }
+    .hero-desc      { font-size: 18px; }
+    #page-welcome p[style*="font-size:50px"] { font-size: 18px !important; line-height: 1.3 !important; }
+    #misc-slideshow { display: none !important; }
   }
 
   /* FOOTER */
