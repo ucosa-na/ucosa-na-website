@@ -2037,6 +2037,56 @@
       </div>
     </div>
 
+    <!-- Bottom-right slideshow pane -->
+    <div id="misc-slideshow" style="position:fixed;bottom:24px;right:24px;width:280px;height:200px;border-radius:12px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.3);z-index:900;background:#000;">
+      <div class="misc-track" id="miscTrack">
+        <div class="misc-slide active"><img src="/misc_pictures/ClassroomBlock%20(1).jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/DSC_2965.JPG" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/IMG-20260601-WA0062.jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/IMG-20260601-WA0063.jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/President_sScholarshipRecipients2022_11202220571217_C_M_Y_K.jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/SchoolAssembly_-2022_11202220441238_C_M_Y_K%20(1).jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/schoolBlcNoTree_08092515202411.jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/schoolBlock%20(1).jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/UCEstudents%20(1).jpg" alt="UCOSA Photo"></div>
+        <div class="misc-slide"><img src="/misc_pictures/ucosa7_11592507202507.jpg" alt="UCOSA Photo"></div>
+      </div>
+      <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:5px;" id="miscDots"></div>
+    </div>
+
+    <style>
+      .misc-track { position:relative;width:100%;height:100%; }
+      .misc-slide { position:absolute;inset:0;opacity:0;transition:transform 0.6s ease,opacity 0.6s ease;transform:translateX(100%); }
+      .misc-slide.active { opacity:1;transform:translateX(0); }
+      .misc-slide.exit  { opacity:0;transform:translateX(-100%); }
+      .misc-slide img   { width:100%;height:100%;object-fit:cover;display:block; }
+      .misc-dot { width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.5);cursor:pointer;transition:background 0.2s; }
+      .misc-dot.on { background:#fff; }
+    </style>
+
+    <script>
+    (function(){
+      const slides = document.querySelectorAll('.misc-slide');
+      const dotsEl = document.getElementById('miscDots');
+      let cur = 0;
+      slides.forEach((_,i) => {
+        const d = document.createElement('div');
+        d.className = 'misc-dot' + (i===0?' on':'');
+        d.onclick = () => goTo(i);
+        dotsEl.appendChild(d);
+      });
+      function goTo(next) {
+        slides[cur].classList.remove('active');
+        slides[cur].classList.add('exit');
+        setTimeout(() => slides[cur].classList.remove('exit'), 650);
+        dotsEl.children[cur].classList.remove('on');
+        cur = next;
+        slides[cur].classList.add('active');
+        dotsEl.children[cur].classList.add('on');
+      }
+      setInterval(() => goTo((cur+1) % slides.length), 5000);
+    })();
+    </script>
   </section>
 
   <!-- ABOUT UCOSA -->
