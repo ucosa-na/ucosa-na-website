@@ -1801,6 +1801,7 @@
             <tbody id="donationsTbody">
               <tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
             </tbody>
+            <tfoot id="donationsTfoot"></tfoot>
           </table>
         </div>
       </section>
@@ -4170,6 +4171,9 @@
           <td style="font-size:11px;color:#aaa;">${d.stripe_payment_intent_id.startsWith('MANUAL') ? '<em>Manual</em>' : escapeHtml(d.stripe_payment_intent_id)}</td>
           <td><button onclick="deleteDonation(${d.id})" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;">Delete</button></td>
         </tr>`).join('');
+      const total = filtered.reduce((s, d) => s + parseFloat(d.amount || 0), 0).toFixed(2);
+      document.getElementById('donationsTfoot').innerHTML =
+        `<tr style="font-weight:700;background:#f4f0ea;"><td colspan="4">Total (${filtered.length} record${filtered.length !== 1 ? 's' : ''})</td><td style="color:#2e7d32;">$${total}</td><td colspan="2"></td></tr>`;
     }
 
     async function saveDonation() {
