@@ -1640,7 +1640,7 @@
             <option value="Member-Donation">Member-Donation</option>
           </select>
           <input type="text" id="levySearch" oninput="applyLevyFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
-          <button onclick="downloadDonationsCSV()" style="padding:6px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
+          <button onclick="downloadLevyCSV()" style="padding:6px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
           <span id="levyCountLabel" style="font-size:14px;color:#888;"></span>
         </div>
         <div class="table-wrap">
@@ -1783,6 +1783,8 @@
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
           <input type="text" id="donationsSearch" oninput="applyDonationsFilter()" placeholder="Search name or email…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:220px;" />
           <span id="donationsCountLabel" style="font-size:14px;color:#888;"></span>
+          <button onclick="downloadDonationsCSV()" style="background:#1a1a2e;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
+          <button onclick="copyDonationsWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
         </div>
 
         <div class="table-wrap">
@@ -1794,7 +1796,7 @@
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Amount</th>
-                <th>Reference</th>
+                <th>Donation Code</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -3883,7 +3885,7 @@
         </tr>`).join('');
     }
 
-    function downloadDonationsCSV() {
+    function downloadLevyCSV() {
       const typeFilter = document.getElementById('levyTypeFilter').value;
       const search     = (document.getElementById('levySearch').value || '').toLowerCase();
       const rows = _allLevies.filter(r =>
@@ -3907,8 +3909,57 @@
       const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `ucosa-members-donations-${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `ucosa-levies-${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
+    }
+
+    function downloadDonationsCSV() {
+      const search = (document.getElementById('donationsSearch').value || '').toLowerCase();
+      const rows = _allDonations.filter(d =>
+        !search ||
+        (d.donor_name  || '').toLowerCase().includes(search) ||
+        (d.donor_email || '').toLowerCase().includes(search)
+      );
+      if (!rows.length) { alert('No records to download.'); return; }
+      const headers = ['Date','Name','Email','Phone','Amount','Donation Code'];
+      const lines = [
+        headers.join(','),
+        ...rows.map(d => [
+          new Date(d.donated_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}),
+          `"${(d.donor_name  || '').replace(/"/g,'""')}"`,
+          `"${(d.donor_email || '').replace(/"/g,'""')}"`,
+          `"${(d.donor_phone || '').replace(/"/g,'""')}"`,
+          parseFloat(d.amount).toFixed(2),
+          `"${(d.stripe_payment_intent_id || '').replace(/"/g,'""')}"`,
+        ].join(','))
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ucosa-donations-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    function copyDonationsWhatsApp() {
+      const search = (document.getElementById('donationsSearch').value || '').toLowerCase();
+      const rows = _allDonations.filter(d =>
+        !search ||
+        (d.donor_name  || '').toLowerCase().includes(search) ||
+        (d.donor_email || '').toLowerCase().includes(search)
+      );
+      if (!rows.length) { alert('No records to copy.'); return; }
+      const total = rows.reduce((s, d) => s + parseFloat(d.amount || 0), 0).toFixed(2);
+      const lines = [
+        `*UCOSA-NA — Donations Report*`,
+        `*Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
+        ``,
+        ...rows.map((d, i) => `${i+1}. ${d.donor_name} | $${parseFloat(d.amount).toFixed(2)} | ${new Date(d.donated_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})} | ${d.stripe_payment_intent_id}`),
+        ``,
+        `*Total: $${total}*  (${rows.length} record${rows.length !== 1 ? 's' : ''})`,
+      ];
+      navigator.clipboard.writeText(lines.join('\n'))
+        .then(() => alert('Copied! Paste directly into WhatsApp.'))
+        .catch(() => alert('Copy failed — please try again.'));
     }
 
     async function saveSpecialLevy() {
