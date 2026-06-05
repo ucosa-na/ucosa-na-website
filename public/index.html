@@ -599,11 +599,11 @@
   }
   .donate-amt-btn.selected, .donate-amt-btn:hover { background: #2e7d32; color: white; }
 
-  #page-welcome {
+  #page-welcome, #page-about {
     position: relative;
     overflow: hidden;
   }
-  #page-welcome::before {
+  #page-welcome::before, #page-about::before {
     content: "";
     position: absolute;
     inset: -4px;
@@ -612,7 +612,7 @@
     z-index: 0;
     pointer-events: none;
   }
-  #page-welcome > * {
+  #page-welcome > *, #page-about > * {
     position: relative;
     z-index: 1;
   }
