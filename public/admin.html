@@ -3943,13 +3943,23 @@
       if (!rows.length) { alert('No records to copy.'); return; }
       const total = rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0).toFixed(2);
       const typeLabel = typeFilter === 'all' ? 'All Types' : typeFilter;
+      // Build table with padded columns
+      const col1 = Math.max(4, ...rows.map(r => (r.member_name || '').length));
+      const col2 = Math.max(4, ...rows.map(r => (r.type || '').length));
+      const pad  = (s, n) => String(s).padEnd(n, ' ');
+      const sep  = `${'-'.repeat(col1+2)}+${'-'.repeat(col2+2)}+-----------`;
       const lines = [
         `*UCOSA-NA — Members-Donations Report*`,
         `*Type:* ${typeLabel}   *Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
         ``,
-        ...rows.map((r, i) => `${i+1}. ${r.member_name} | ${r.type} | $${parseFloat(r.amount).toFixed(2)} | ${r.donation_code || '—'} | ${r.paid_date ? r.paid_date.slice(0,10) : 'Not paid'}`),
-        ``,
-        `*Total: $${total}*  (${rows.length} record${rows.length !== 1 ? 's' : ''})`,
+        `\`\`\``,
+        ` ${pad('Name',col1)} | ${pad('Type',col2)} | Amount`,
+        ` ${sep}`,
+        ...rows.map(r => ` ${pad(r.member_name||'',col1)} | ${pad(r.type||'',col2)} | $${parseFloat(r.amount).toFixed(2)}`),
+        ` ${sep}`,
+        ` ${'Total'.padEnd(col1+col2+5)} $${total}`,
+        `\`\`\``,
+        `*(${rows.length} record${rows.length !== 1 ? 's' : ''})*`,
       ];
       navigator.clipboard.writeText(lines.join('\n'))
         .then(() => alert('Copied! Paste directly into WhatsApp.'))
