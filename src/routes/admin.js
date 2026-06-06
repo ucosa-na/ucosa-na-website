@@ -1573,6 +1573,9 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
   if (!userId || !type || !year || amount === undefined) {
     return res.status(400).json({ error: 'Member, type, year, and amount are required.' });
   }
+  if (!donationCode) {
+    return res.status(400).json({ error: 'Donation Code is required.' });
+  }
   if (!LEVY_TYPES.includes(type)) {
     return res.status(400).json({ error: 'Invalid type.' });
   }

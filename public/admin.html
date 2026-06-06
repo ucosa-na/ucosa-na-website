@@ -1623,8 +1623,8 @@
             <input type="date" id="levyPaidDate" />
           </div>
           <div class="form-group" style="max-width:180px;">
-            <label for="levyDonationCode">Donation Code</label>
-            <input type="text" id="levyDonationCode" placeholder="Optional code" />
+            <label for="levyDonationCode">Donation Code <span style="color:#e63946;">*</span></label>
+            <input type="text" id="levyDonationCode" placeholder="e.g. DON-2026-001" />
           </div>
           <div class="form-group" style="flex:2;min-width:180px;">
             <label for="levyNotes">Notes</label>
@@ -1644,6 +1644,7 @@
             <option value="Member-Donation">Member-Donation</option>
           </select>
           <input type="text" id="levySearch" oninput="applyLevyFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
+          <input type="text" id="levyCodeSearch" oninput="applyLevyFilter()" placeholder="Search donation code…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
           <button onclick="downloadLevyCSV()" style="padding:6px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
           <button onclick="copyLevyWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
           <span id="levyCountLabel" style="font-size:14px;color:#888;"></span>
@@ -3865,9 +3866,11 @@
     function applyLevyFilter() {
       const typeFilter = document.getElementById('levyTypeFilter').value;
       const search     = (document.getElementById('levySearch').value || '').toLowerCase();
+      const codeSearch = (document.getElementById('levyCodeSearch').value || '').toLowerCase();
       const filtered   = _allLevies.filter(r =>
         (typeFilter === 'all' || r.type === typeFilter) &&
-        (!search || (r.member_name || '').toLowerCase().includes(search))
+        (!search     || (r.member_name   || '').toLowerCase().includes(search)) &&
+        (!codeSearch || (r.donation_code || '').toLowerCase().includes(codeSearch))
       );
       const tbody = document.getElementById('levyTbody');
       document.getElementById('levyCountLabel').textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
@@ -3900,9 +3903,11 @@
     function downloadLevyCSV() {
       const typeFilter = document.getElementById('levyTypeFilter').value;
       const search     = (document.getElementById('levySearch').value || '').toLowerCase();
+      const codeSearch = (document.getElementById('levyCodeSearch').value || '').toLowerCase();
       const rows = _allLevies.filter(r =>
         (typeFilter === 'all' || r.type === typeFilter) &&
-        (!search || (r.member_name || '').toLowerCase().includes(search))
+        (!search     || (r.member_name   || '').toLowerCase().includes(search)) &&
+        (!codeSearch || (r.donation_code || '').toLowerCase().includes(codeSearch))
       );
       if (!rows.length) { alert('No records to download.'); return; }
       const headers = ['Type','Member','Year','Amount','Paid Date','Donation Code','Notes','Recorded By'];
@@ -3929,9 +3934,11 @@
     function copyLevyWhatsApp() {
       const typeFilter = document.getElementById('levyTypeFilter').value;
       const search     = (document.getElementById('levySearch').value || '').toLowerCase();
+      const codeSearch = (document.getElementById('levyCodeSearch').value || '').toLowerCase();
       const rows = _allLevies.filter(r =>
         (typeFilter === 'all' || r.type === typeFilter) &&
-        (!search || (r.member_name || '').toLowerCase().includes(search))
+        (!search     || (r.member_name   || '').toLowerCase().includes(search)) &&
+        (!codeSearch || (r.donation_code || '').toLowerCase().includes(codeSearch))
       );
       if (!rows.length) { alert('No records to copy.'); return; }
       const total = rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0).toFixed(2);
@@ -4013,6 +4020,9 @@
 
       if (!userId || !type || !year || amount === '') {
         errEl.textContent = 'Member, type, year, and amount are required.'; errEl.style.display = 'block'; return;
+      }
+      if (!donationCode) {
+        errEl.textContent = 'Donation Code is required.'; errEl.style.display = 'block'; return;
       }
 
       const url    = levyEditId ? `/api/admin/special-levies/${levyEditId}` : '/api/admin/special-levies';
