@@ -1553,7 +1553,7 @@ const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Member-Donation']
 router.get('/special-levies', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT sl.id, sl.type, sl.year, sl.amount, sl.paid_date, sl.notes,
+      SELECT sl.id, sl.type, sl.year, sl.amount, sl.paid_date, sl.donation_code, sl.notes,
              u.full_name AS member_name,
              r.full_name AS recorded_by_name
       FROM special_levies sl
@@ -1569,7 +1569,7 @@ router.get('/special-levies', requireAuth, async (req, res) => {
 
 // POST /api/admin/special-levies — fin/admin only
 router.post('/special-levies', finOrAdmin, async (req, res) => {
-  const { userId, type, year, amount, paidDate, notes } = req.body;
+  const { userId, type, year, amount, paidDate, donationCode, notes } = req.body;
   if (!userId || !type || !year || amount === undefined) {
     return res.status(400).json({ error: 'Member, type, year, and amount are required.' });
   }
@@ -1578,10 +1578,10 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
   }
   try {
     const { rows } = await pool.query(`
-      INSERT INTO special_levies (user_id, type, year, amount, paid_date, notes, recorded_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO special_levies (user_id, type, year, amount, paid_date, donation_code, notes, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id
-    `, [userId, type, year, parseFloat(amount), paidDate || null, notes || null, req.user.id]);
+    `, [userId, type, year, parseFloat(amount), paidDate || null, donationCode || null, notes || null, req.user.id]);
     const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
     if (member[0]) {
       sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `${type} (${year})`, parseFloat(amount), null, `LEVY-${rows[0].id}`);
@@ -1594,7 +1594,7 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
 
 // PUT /api/admin/special-levies/:id — fin/admin only
 router.put('/special-levies/:id', finOrAdmin, async (req, res) => {
-  const { type, year, amount, paidDate, notes } = req.body;
+  const { type, year, amount, paidDate, donationCode, notes } = req.body;
   if (!type || !year || amount === undefined) {
     return res.status(400).json({ error: 'Type, year, and amount are required.' });
   }
@@ -1608,9 +1608,9 @@ router.put('/special-levies/:id', finOrAdmin, async (req, res) => {
       LEFT JOIN member_profiles p ON p.user_id = u.id WHERE sl.id = $1`, [req.params.id]);
     const { rowCount } = await pool.query(`
       UPDATE special_levies
-      SET type=$1, year=$2, amount=$3, paid_date=$4, notes=$5, updated_at=NOW()
-      WHERE id=$6
-    `, [type, year, parseFloat(amount), paidDate || null, notes || null, req.params.id]);
+      SET type=$1, year=$2, amount=$3, paid_date=$4, donation_code=$5, notes=$6, updated_at=NOW()
+      WHERE id=$7
+    `, [type, year, parseFloat(amount), paidDate || null, donationCode || null, notes || null, req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
     if (before[0]) {
       sendPaymentNotification(before[0].full_name, before[0].email, before[0].phone, `${type} (${year})`, parseFloat(amount), null, `LEVY-${req.params.id}`);

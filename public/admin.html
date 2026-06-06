@@ -1622,6 +1622,10 @@
             <label for="levyPaidDate">Paid Date</label>
             <input type="date" id="levyPaidDate" />
           </div>
+          <div class="form-group" style="max-width:180px;">
+            <label for="levyDonationCode">Donation Code</label>
+            <input type="text" id="levyDonationCode" placeholder="Optional code" />
+          </div>
           <div class="form-group" style="flex:2;min-width:180px;">
             <label for="levyNotes">Notes</label>
             <input type="text" id="levyNotes" placeholder="Optional notes" />
@@ -1641,6 +1645,7 @@
           </select>
           <input type="text" id="levySearch" oninput="applyLevyFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:180px;" />
           <button onclick="downloadLevyCSV()" style="padding:6px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
+          <button onclick="copyLevyWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
           <span id="levyCountLabel" style="font-size:14px;color:#888;"></span>
         </div>
         <div class="table-wrap">
@@ -1652,14 +1657,16 @@
                 <th>Year</th>
                 <th>Amount</th>
                 <th>Paid Date</th>
+                <th>Donation Code</th>
                 <th>Notes</th>
                 <th>Recorded By</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="levyTbody">
-              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
             </tbody>
+            <tfoot id="levyTfoot"></tfoot>
           </table>
         </div>
       </section>
@@ -3865,7 +3872,8 @@
       const tbody = document.getElementById('levyTbody');
       document.getElementById('levyCountLabel').textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        document.getElementById('levyTfoot').innerHTML = '';
         return;
       }
       const typeColors = { 'Special Levy': '#7b2152', 'Voluntary Contribution': '#1565c0', 'Member-Donation': '#2e7d32', 'Donation': '#2e7d32' };
@@ -3876,6 +3884,7 @@
           <td>${r.year}</td>
           <td style="font-weight:700;color:#2e7d32;">$${parseFloat(r.amount).toFixed(2)}</td>
           <td>${r.paid_date ? parseDate(r.paid_date).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
+          <td style="font-size:13px;color:#555;">${escapeHtml(r.donation_code || '—')}</td>
           <td style="color:#555;">${escapeHtml(r.notes || '—')}</td>
           <td style="color:#888;font-size:13px;">${escapeHtml(r.recorded_by_name || '—')}</td>
           <td>
@@ -3883,6 +3892,9 @@
             <button onclick="deleteSpecialLevy(${r.id})" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;">Delete</button>
           </td>
         </tr>`).join('');
+      const total = filtered.reduce((s, r) => s + parseFloat(r.amount || 0), 0).toFixed(2);
+      document.getElementById('levyTfoot').innerHTML =
+        `<tr style="font-weight:700;background:#f4f0ea;"><td colspan="3">Total (${filtered.length} record${filtered.length !== 1 ? 's' : ''})</td><td style="color:#2e7d32;">$${total}</td><td colspan="5"></td></tr>`;
     }
 
     function downloadLevyCSV() {
@@ -3893,7 +3905,7 @@
         (!search || (r.member_name || '').toLowerCase().includes(search))
       );
       if (!rows.length) { alert('No records to download.'); return; }
-      const headers = ['Type','Member','Year','Amount','Paid Date','Notes','Recorded By'];
+      const headers = ['Type','Member','Year','Amount','Paid Date','Donation Code','Notes','Recorded By'];
       const lines = [
         headers.join(','),
         ...rows.map(r => [
@@ -3902,6 +3914,7 @@
           r.year || '',
           r.amount != null ? parseFloat(r.amount).toFixed(2) : '',
           r.paid_date ? r.paid_date.slice(0,10) : '',
+          `"${(r.donation_code || '').replace(/"/g,'""')}"`,
           `"${(r.notes || '').replace(/"/g,'""')}"`,
           `"${(r.recorded_by_name || '').replace(/"/g,'""')}"`,
         ].join(','))
@@ -3909,8 +3922,31 @@
       const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `ucosa-levies-${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `ucosa-members-donations-${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
+    }
+
+    function copyLevyWhatsApp() {
+      const typeFilter = document.getElementById('levyTypeFilter').value;
+      const search     = (document.getElementById('levySearch').value || '').toLowerCase();
+      const rows = _allLevies.filter(r =>
+        (typeFilter === 'all' || r.type === typeFilter) &&
+        (!search || (r.member_name || '').toLowerCase().includes(search))
+      );
+      if (!rows.length) { alert('No records to copy.'); return; }
+      const total = rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0).toFixed(2);
+      const typeLabel = typeFilter === 'all' ? 'All Types' : typeFilter;
+      const lines = [
+        `*UCOSA-NA — Members-Donations Report*`,
+        `*Type:* ${typeLabel}   *Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
+        ``,
+        ...rows.map((r, i) => `${i+1}. ${r.member_name} | ${r.type} | $${parseFloat(r.amount).toFixed(2)} | ${r.year}${r.donation_code ? ' | ' + r.donation_code : ''} | ${r.paid_date ? r.paid_date.slice(0,10) : 'Not paid'}`),
+        ``,
+        `*Total: $${total}*  (${rows.length} record${rows.length !== 1 ? 's' : ''})`,
+      ];
+      navigator.clipboard.writeText(lines.join('\n'))
+        .then(() => alert('Copied! Paste directly into WhatsApp.'))
+        .catch(() => alert('Copy failed — please try again.'));
     }
 
     function downloadDonationsCSV() {
@@ -3971,8 +4007,9 @@
       const type     = document.getElementById('levyType').value;
       const year     = document.getElementById('levyYear').value;
       const amount   = document.getElementById('levyAmount').value;
-      const paidDate = document.getElementById('levyPaidDate').value;
-      const notes    = document.getElementById('levyNotes').value.trim();
+      const paidDate     = document.getElementById('levyPaidDate').value;
+      const donationCode = document.getElementById('levyDonationCode').value.trim();
+      const notes        = document.getElementById('levyNotes').value.trim();
 
       if (!userId || !type || !year || amount === '') {
         errEl.textContent = 'Member, type, year, and amount are required.'; errEl.style.display = 'block'; return;
@@ -3981,8 +4018,8 @@
       const url    = levyEditId ? `/api/admin/special-levies/${levyEditId}` : '/api/admin/special-levies';
       const method = levyEditId ? 'PUT' : 'POST';
       const body   = levyEditId
-        ? { type, year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, notes }
-        : { userId: parseInt(userId), type, year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, notes };
+        ? { type, year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, donationCode: donationCode || null, notes }
+        : { userId: parseInt(userId), type, year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, donationCode: donationCode || null, notes };
 
       const btn = document.getElementById('levySaveBtn');
       btn.disabled = true;
@@ -4003,11 +4040,12 @@
       const r = _allLevies.find(x => x.id === id);
       if (!r) return;
       levyEditId = id;
-      document.getElementById('levyType').value     = r.type;
-      document.getElementById('levyYear').value     = r.year;
-      document.getElementById('levyAmount').value   = parseFloat(r.amount).toFixed(2);
-      document.getElementById('levyPaidDate').value = r.paid_date ? r.paid_date.split('T')[0] : '';
-      document.getElementById('levyNotes').value    = r.notes || '';
+      document.getElementById('levyType').value         = r.type;
+      document.getElementById('levyYear').value         = r.year;
+      document.getElementById('levyAmount').value       = parseFloat(r.amount).toFixed(2);
+      document.getElementById('levyPaidDate').value     = r.paid_date ? r.paid_date.split('T')[0] : '';
+      document.getElementById('levyDonationCode').value = r.donation_code || '';
+      document.getElementById('levyNotes').value        = r.notes || '';
       document.getElementById('levySaveBtn').textContent   = 'Update Record';
       document.getElementById('levyCancelBtn').style.display = '';
       document.getElementById('levyError').style.display   = 'none';
@@ -4017,12 +4055,13 @@
 
     function cancelLevyEdit() {
       levyEditId = null;
-      document.getElementById('levyMember').value   = '';
-      document.getElementById('levyType').value     = '';
-      document.getElementById('levyYear').value     = new Date().getFullYear();
-      document.getElementById('levyAmount').value   = '';
-      document.getElementById('levyPaidDate').value = '';
-      document.getElementById('levyNotes').value    = '';
+      document.getElementById('levyMember').value       = '';
+      document.getElementById('levyType').value         = '';
+      document.getElementById('levyYear').value         = new Date().getFullYear();
+      document.getElementById('levyAmount').value       = '';
+      document.getElementById('levyPaidDate').value     = '';
+      document.getElementById('levyDonationCode').value = '';
+      document.getElementById('levyNotes').value        = '';
       document.getElementById('levySaveBtn').textContent     = 'Add Record';
       document.getElementById('levyCancelBtn').style.display = 'none';
     }
