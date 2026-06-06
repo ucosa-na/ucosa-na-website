@@ -3947,7 +3947,7 @@
         `*UCOSA-NA — Members-Donations Report*`,
         `*Type:* ${typeLabel}   *Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
         ``,
-        ...rows.map((r, i) => `${i+1}. ${r.member_name} | ${r.type} | $${parseFloat(r.amount).toFixed(2)} | ${r.year}${r.donation_code ? ' | ' + r.donation_code : ''} | ${r.paid_date ? r.paid_date.slice(0,10) : 'Not paid'}`),
+        ...rows.map((r, i) => `${i+1}. ${r.member_name} | ${r.type} | $${parseFloat(r.amount).toFixed(2)} | ${r.donation_code || '—'} | ${r.paid_date ? r.paid_date.slice(0,10) : 'Not paid'}`),
         ``,
         `*Total: $${total}*  (${rows.length} record${rows.length !== 1 ? 's' : ''})`,
       ];
