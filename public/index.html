@@ -865,22 +865,14 @@
   .about-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0;
+    gap: 24px;
     margin-bottom: 40px;
+    background: #b8d4e8;
   }
 
   .about-card {
     background: var(--card);
     padding: 32px;
-    border-bottom: 2px solid #b8d4e8;
-  }
-
-  .about-card:last-child {
-    border-bottom: none;
-  }
-
-  .about-card:not(.full-card):nth-child(odd) {
-    border-right: 2px solid #b8d4e8;
   }
 
   .about-card h3 {
