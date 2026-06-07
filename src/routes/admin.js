@@ -1799,6 +1799,49 @@ router.delete('/email-failures', adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/admin/birthdays — list all member birthday records
+router.get('/birthdays', adminOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT mb.id, mb.user_id, mb.member_name, mb.birthday_month
+      FROM members_birthday mb
+      JOIN users u ON u.id = mb.user_id
+      WHERE u.is_active = TRUE
+      ORDER BY
+        CASE mb.birthday_month
+          WHEN 'January'   THEN 1  WHEN 'February'  THEN 2
+          WHEN 'March'     THEN 3  WHEN 'April'     THEN 4
+          WHEN 'May'       THEN 5  WHEN 'June'      THEN 6
+          WHEN 'July'      THEN 7  WHEN 'August'    THEN 8
+          WHEN 'September' THEN 9  WHEN 'October'   THEN 10
+          WHEN 'November'  THEN 11 WHEN 'December'  THEN 12
+          ELSE 13
+        END, mb.member_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/birthdays/:id — update a member's birthday month
+router.put('/birthdays/:id', adminOnly, async (req, res) => {
+  const VALID_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const { birthday_month } = req.body;
+  if (!VALID_MONTHS.includes(birthday_month)) return res.status(400).json({ error: 'Invalid month' });
+  try {
+    const { rows } = await pool.query(
+      `UPDATE members_birthday SET birthday_month = $1 WHERE id = $2 RETURNING *`,
+      [birthday_month, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Record not found' });
+    await logAudit(req.user.id, req.user.email, 'BIRTHDAY_UPDATED', 'MEMBER', rows[0].user_id, rows[0].member_name, { birthday_month });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/users/never-logged-in — members who have never logged in
 router.get('/users/never-logged-in', secOrAdmin, async (req, res) => {
   try {
