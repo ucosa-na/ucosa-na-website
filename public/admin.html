@@ -1257,11 +1257,12 @@
                 <th>#</th>
                 <th>Member Name</th>
                 <th>Birthday Month</th>
+                <th>Photo Path</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="birthdayTableBody">
-              <tr class="empty-row"><td colspan="4">Click Refresh to load…</td></tr>
+              <tr class="empty-row"><td colspan="5">Click Refresh to load…</td></tr>
             </tbody>
           </table>
         </div>
@@ -2287,16 +2288,23 @@
         : _allBirthdays;
       document.getElementById('birthdayCount').textContent = `${filtered.length} member${filtered.length !== 1 ? 's' : ''}`;
       const tbody = document.getElementById('birthdayTableBody');
-      if (!filtered.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No records found.</td></tr>'; return; }
+      if (!filtered.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No records found.</td></tr>'; return; }
       tbody.innerHTML = filtered.map((b, i) => `
         <tr id="brow-${b.id}">
           <td>${i + 1}</td>
           <td>${b.member_name || ''}</td>
           <td id="bmonth-${b.id}">${b.birthday_month || 'January'}</td>
           <td>
+            ${b.photo_url
+              ? `<img src="${b.photo_url}" alt="photo" style="width:36px;height:36px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;">`
+              : '<span style="color:#aaa;font-size:13px;">No photo</span>'}
+          </td>
+          <td style="white-space:nowrap;">
             <select id="bsel-${b.id}" style="padding:4px 8px;border-radius:6px;border:1.5px solid #dde3f0;font-size:14px;">
               ${MONTHS.map(m => `<option value="${m}"${m === b.birthday_month ? ' selected' : ''}>${m}</option>`).join('')}
             </select>
+            <input id="bphoto-${b.id}" type="text" value="${b.photo_url || ''}" placeholder="/ucosa_na_members/photo.jpg"
+              style="margin-left:6px;padding:4px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;width:220px;" />
             <button onclick="saveBirthday(${b.id})"
               style="margin-left:6px;padding:4px 12px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Save</button>
           </td>
@@ -2304,23 +2312,23 @@
     }
 
     async function saveBirthday(id) {
-      const month  = document.getElementById(`bsel-${id}`)?.value;
-      const msgEl  = document.getElementById('birthdayMsg');
+      const month    = document.getElementById(`bsel-${id}`)?.value;
+      const photoUrl = document.getElementById(`bphoto-${id}`)?.value.trim() || null;
+      const msgEl    = document.getElementById('birthdayMsg');
       msgEl.style.display = 'none';
       try {
         const res  = await fetch(`/api/admin/birthdays/${id}`, {
           method:  'PUT',
           headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ birthday_month: month })
+          body:    JSON.stringify({ birthday_month: month, photo_url: photoUrl })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to save');
-        // Update local data and cell
         const rec = _allBirthdays.find(b => b.id === id);
-        if (rec) rec.birthday_month = month;
+        if (rec) { rec.birthday_month = month; rec.photo_url = photoUrl; }
         document.getElementById(`bmonth-${id}`).textContent = month;
         msgEl.className = 'msg success';
-        msgEl.textContent = `✅ Birthday month updated for ${data.member_name}.`;
+        msgEl.textContent = `✅ Updated for ${data.member_name}.`;
         msgEl.style.display = 'block';
         setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
       } catch (err) {

@@ -190,6 +190,80 @@ async function sendDueDateReminders() {
   log.info(`Scheduler: due-date dues reminders dispatched for ${year}`);
 }
 
+// ── Monthly Birthday Email (1st of each month) ────────────────────────────────
+
+async function sendBirthdayEmails() {
+  const MONTHS = ['January','February','March','April','May','June','July',
+                  'August','September','October','November','December'];
+  const monthName = MONTHS[new Date().getMonth()];
+  log.info(`Scheduler: sending birthday emails for ${monthName}`);
+
+  let members;
+  try {
+    const { rows } = await pool.query(`
+      SELECT mb.member_name, mb.birthday_month,
+             u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM members_birthday mb
+      JOIN users u ON u.id = mb.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE mb.birthday_month = $1
+        AND u.is_active = TRUE
+    `, [monthName]);
+    members = rows;
+  } catch (err) {
+    log.error(`Scheduler: birthday query failed — ${err.message}`);
+    return;
+  }
+
+  log.info(`Scheduler: ${members.length} birthday member(s) for ${monthName}`);
+
+  for (const m of members) {
+    sendEmail({
+      to: m.email,
+      subject: `🎂 Happy Birthday, ${m.member_name}! — UCOSA-NA`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:32px;text-align:center">
+            <div style="font-size:60px;line-height:1;">🎂</div>
+            <h2 style="color:#7b2152;margin:12px 0 4px;font-size:26px;">Happy Birthday, ${m.member_name}!</h2>
+            <p style="color:#555;font-size:16px;margin:0 0 20px;">Welcome to your birthday month of <strong>${monthName}</strong>!</p>
+            <div style="background:white;border-radius:10px;padding:20px 24px;text-align:left;border-left:4px solid #c8a96e;margin-bottom:20px;">
+              <p style="margin:0 0 12px;font-size:15px;color:#333;">
+                On behalf of the entire UCOSA-NA family, we wish you a wonderful and joyful birthday month.
+                May this new year of your life bring you abundant blessings, good health, peace, and happiness.
+              </p>
+              <p style="margin:0;font-size:15px;color:#555;font-style:italic;">
+                🙏 <strong>A short prayer for you:</strong><br><br>
+                May the Lord bless you and keep you. May His face shine upon you and be gracious to you.
+                May He grant you long life, good health, and fulfilment in all you set out to do.
+                May this birthday mark the beginning of your best year yet — surrounded by love, laughter, and the warmth of family and friends.
+                Amen. 🕊️
+              </p>
+            </div>
+            <p style="color:#888;font-size:13px;margin-top:20px;">With love and warm regards,<br><strong>UCOSA-North America Executive</strong></p>
+          </div>
+        </div>
+      `,
+    }).catch(err => log.error(`Scheduler: birthday email failed for ${m.email}: ${err.message}`));
+
+    if (m.phone) {
+      sendSMS(m.phone,
+        `🎂 Happy Birthday, ${m.member_name}!\n` +
+        `Welcome to your birthday month of ${monthName}!\n\n` +
+        `On behalf of the entire UCOSA-NA family, we wish you a wonderful birthday month filled with joy, good health, and blessings.\n\n` +
+        `🙏 May God bless and keep you always. Amen.\n\n` +
+        `— UCOSA-North America`
+      ).catch(err => log.error(`Scheduler: birthday SMS failed for ${m.phone}: ${err.message}`));
+    }
+  }
+
+  log.info(`Scheduler: birthday emails dispatched for ${monthName} (${members.length} member(s))`);
+}
+
 // ── 90-Day Inactivity Reminder ────────────────────────────────────────────────
 
 async function sendInactivityReminders() {
@@ -289,6 +363,9 @@ cron.schedule('0 9 1 6 *', sendDueDateReminders, { timezone: 'America/New_York' 
 // Daily at 8:00 AM — 90-day inactivity reminder
 cron.schedule('0 8 * * *', sendInactivityReminders, { timezone: 'America/New_York' });
 
-log.info('Scheduler: jobs registered (Jan 1 populate, May 2 & June 1 dues reminders, daily 8AM inactivity check)');
+// 1st of every month at 9:00 AM — birthday emails
+cron.schedule('0 9 1 * *', sendBirthdayEmails, { timezone: 'America/New_York' });
 
-module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders };
+log.info('Scheduler: jobs registered (Jan 1 dues populate, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
+
+module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails };

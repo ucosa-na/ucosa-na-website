@@ -229,6 +229,7 @@ pool.query(`
       user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       member_name    TEXT NOT NULL,
       birthday_month TEXT NOT NULL DEFAULT 'January',
+      photo_url      TEXT DEFAULT NULL,
       UNIQUE(user_id)
     );
   `)
@@ -240,6 +241,8 @@ pool.query(`
     WHERE is_active = TRUE
     ON CONFLICT (user_id) DO NOTHING;
   `)
+).then(() =>
+  pool.query(`ALTER TABLE members_birthday ADD COLUMN IF NOT EXISTS photo_url TEXT DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
