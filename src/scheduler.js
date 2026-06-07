@@ -190,6 +190,91 @@ async function sendDueDateReminders() {
   log.info(`Scheduler: due-date dues reminders dispatched for ${year}`);
 }
 
+// ── 90-Day Inactivity Reminder ────────────────────────────────────────────────
+
+async function sendInactivityReminders() {
+  log.info('Scheduler: checking for members inactive 90+ days');
+  let members;
+  try {
+    const { rows } = await pool.query(`
+      SELECT u.id, u.full_name, u.email,
+             COALESCE(p.phone, u.phone) AS phone,
+             u.last_login
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.is_active = TRUE
+        AND u.role != 'admin'
+        AND u.last_login IS NOT NULL
+        AND u.last_login < NOW() - INTERVAL '90 days'
+        AND (
+          u.last_inactivity_reminder_at IS NULL
+          OR u.last_inactivity_reminder_at < NOW() - INTERVAL '90 days'
+        )
+      ORDER BY u.last_login ASC
+    `);
+    members = rows;
+  } catch (err) {
+    log.error(`Scheduler: inactivity reminder query failed — ${err.message}`);
+    return;
+  }
+
+  log.info(`Scheduler: ${members.length} member(s) to notify (90-day inactivity)`);
+
+  for (const m of members) {
+    const lastLoginDate = new Date(m.last_login).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Email
+    sendEmail({
+      to: m.email,
+      subject: '👋 We Miss You — Please Log In to Your UCOSA-NA Account',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+          <div style="background:#7b2152;text-align:center;padding:28px 32px">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:32px">
+            <h2 style="color:#7b2152;margin-top:0">Account Inactivity Notice</h2>
+            <p>Dear <strong>${m.full_name}</strong>,</p>
+            <p>We observed that you have not logged in to your UCOSA-NA account in <strong>90 days</strong>. Your last login was on <strong>${lastLoginDate}</strong>.</p>
+            <p>Please log in to your account to stay up to date with:</p>
+            <ul style="margin:12px 0 16px;padding-left:20px;line-height:1.8;">
+              <li>Association news and announcements</li>
+              <li>Your membership and dues status</li>
+              <li>Upcoming events and meetings</li>
+              <li>Important communications from the executive</li>
+            </ul>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="https://ucosa-na.org" style="background:#7b2152;color:#fff;text-decoration:none;padding:12px 32px;border-radius:6px;font-weight:700;font-size:16px;display:inline-block;">Log In Now</a>
+            </div>
+            <p>If you have any questions or need assistance logging in, contact us at
+              <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.
+            </p>
+            <p style="color:#888;font-size:0.85em;margin-top:24px;">— UCOSA-North America Executive</p>
+          </div>
+        </div>
+      `,
+    }).catch(err => log.error(`Scheduler: inactivity email failed for ${m.email}: ${err.message}`));
+
+    // SMS
+    if (m.phone) {
+      sendSMS(m.phone,
+        `UCOSA-NA: Hi ${m.full_name}, we observed you have not logged in to your UCOSA account in 90 days.\n` +
+        `Please log in to see what is happening and check your account status.\n` +
+        `Login: https://ucosa-na.org`
+      ).catch(err => log.error(`Scheduler: inactivity SMS failed for ${m.phone}: ${err.message}`));
+    }
+
+    // Mark reminder sent
+    pool.query(
+      `UPDATE users SET last_inactivity_reminder_at = NOW() WHERE id = $1`,
+      [m.id]
+    ).catch(err => log.error(`Scheduler: failed to update last_inactivity_reminder_at for user ${m.id}: ${err.message}`));
+  }
+
+  log.info(`Scheduler: 90-day inactivity reminders dispatched to ${members.length} member(s)`);
+}
+
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
 // January 1st at 00:01 AM — populate annual dues records for all active members
@@ -201,6 +286,9 @@ cron.schedule('0 9 2 5 *', sendAdvanceReminders, { timezone: 'America/New_York' 
 // June 1st at 9:00 AM — due date reminder
 cron.schedule('0 9 1 6 *', sendDueDateReminders, { timezone: 'America/New_York' });
 
-log.info('Scheduler: annual dues jobs registered (Jan 1 populate, May 2 & June 1 reminders at 09:00 ET)');
+// Daily at 8:00 AM — 90-day inactivity reminder
+cron.schedule('0 8 * * *', sendInactivityReminders, { timezone: 'America/New_York' });
 
-module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders };
+log.info('Scheduler: jobs registered (Jan 1 populate, May 2 & June 1 dues reminders, daily 8AM inactivity check)');
+
+module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders };

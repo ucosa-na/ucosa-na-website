@@ -220,6 +220,8 @@ pool.query(`
   `)
 ).then(() =>
   pool.query(`ALTER TABLE special_levies ADD COLUMN IF NOT EXISTS donation_code TEXT DEFAULT NULL;`)
+).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_inactivity_reminder_at TIMESTAMPTZ DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
