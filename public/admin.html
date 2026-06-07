@@ -2525,20 +2525,11 @@
     function copyUnactivatedWhatsApp() {
       if (!_unactivatedList.length) { alert('No unactivated members loaded. Click Refresh first.'); return; }
       const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-      const col1 = Math.max(4, ..._unactivatedList.map(m => (m.full_name || '').length));
-      const col2 = Math.max(5, ..._unactivatedList.map(m => (m.email || '').length));
-      const pad  = (s, n) => String(s).padEnd(n, ' ');
-      const sep  = `${'-'.repeat(col1 + 2)}+${'-'.repeat(col2 + 2)}`;
-      const header = `| ${pad('Name', col1)} | ${pad('Email', col2)} |`;
-      const rows = _unactivatedList.map((m, i) =>
-        `| ${pad(m.full_name || '', col1)} | ${pad(m.email || '', col2)} |`
-      ).join('\n');
+      const names = _unactivatedList.map((m, i) => `${i + 1}. ${m.full_name || ''}`).join('\n');
       const text =
         `*UCOSA-NA — Unactivated Members (${date})*\n` +
         `_${_unactivatedList.length} member(s) have never logged in_\n\n` +
-        '```\n' +
-        `${header}\n${sep}\n${rows}\n` +
-        '```';
+        names;
       navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! Paste in WhatsApp.'));
     }
 
