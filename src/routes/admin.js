@@ -253,6 +253,12 @@ router.post('/users', secOrAdmin, async (req, res) => {
     if (yearJoined) await seedDuesForMember(userId, yearJoined, req.user.id);
     await seedEndowmentForMember(userId, yearJoined, req.user.id);
 
+    // Seed birthday record with default month
+    await pool.query(
+      `INSERT INTO members_birthday (user_id, member_name, birthday_month) VALUES ($1, $2, 'January') ON CONFLICT (user_id) DO NOTHING`,
+      [userId, fullName]
+    );
+
     log.info(`Member created: ${fullName} (${emailVal}) by user ${req.user.id}`);
     await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email: emailVal, role: assignedRole });
 
@@ -510,6 +516,12 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
       // Seed annual dues and endowment records from year_joined through current year
       if (yearJoined) await seedDuesForMember(userId, yearJoined, req.user.id);
       await seedEndowmentForMember(userId, yearJoined, req.user.id);
+
+      // Seed birthday record with default month
+      await pool.query(
+        `INSERT INTO members_birthday (user_id, member_name, birthday_month) VALUES ($1, $2, 'January') ON CONFLICT (user_id) DO NOTHING`,
+        [userId, fullName]
+      );
 
       await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email, role, source: 'bulk-import' });
       log.info(`Bulk import: created ${fullName} (${email})`);

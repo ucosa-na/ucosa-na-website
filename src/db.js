@@ -222,6 +222,24 @@ pool.query(`
   pool.query(`ALTER TABLE special_levies ADD COLUMN IF NOT EXISTS donation_code TEXT DEFAULT NULL;`)
 ).then(() =>
   pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_inactivity_reminder_at TIMESTAMPTZ DEFAULT NULL;`)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS members_birthday (
+      id             SERIAL PRIMARY KEY,
+      user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      member_name    TEXT NOT NULL,
+      birthday_month TEXT NOT NULL DEFAULT 'January',
+      UNIQUE(user_id)
+    );
+  `)
+).then(() =>
+  pool.query(`
+    INSERT INTO members_birthday (user_id, member_name, birthday_month)
+    SELECT id, full_name, 'January'
+    FROM users
+    WHERE is_active = TRUE
+    ON CONFLICT (user_id) DO NOTHING;
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
