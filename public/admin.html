@@ -725,6 +725,7 @@
           <a href="#createMember">Create Member</a>
           <a href="#bulkImport">Bulk Import</a>
           <a href="#membersList">Member List</a>
+          <a href="#unactivatedSection">Unactivated Members</a>
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
         </div>
@@ -956,6 +957,36 @@
             </thead>
             <tbody id="membersTableBody">
               <tr class="empty-row"><td colspan="13">Loading members…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- UNACTIVATED MEMBERS -->
+      <section id="unactivatedSection">
+        <h2>&#128274; Unactivated Members (Never Logged In)</h2>
+        <p style="color:#555;font-size:16px;margin-bottom:16px;">Members whose accounts have been created but have never logged in. You can send them an activation reminder with a new temporary password.</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <button onclick="loadUnactivated()" style="padding:8px 18px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#128260; Refresh</button>
+          <button onclick="copyUnactivatedWhatsApp()" style="padding:8px 18px;background:#25D366;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#128242; WhatsApp Download</button>
+          <button onclick="sendActivationReminders()" id="sendRemindersBtn" style="padding:8px 18px;background:#c0392b;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#128231; Send Activation Reminders</button>
+          <span id="unactivatedCount" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div id="unactivatedMsg" class="msg" style="display:none;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="unactivatedTableBody">
+              <tr class="empty-row"><td colspan="6">Click Refresh to load…</td></tr>
             </tbody>
           </table>
         </div>
@@ -2043,7 +2074,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections      = ['createMember', 'bulkImport', 'membersList', 'meetingNotes', 'logViewer'];
+      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection'];
       const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog', 'emailFailuresSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
@@ -2459,6 +2490,85 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
+    // ── Unactivated Members ──────────────────────────────────────────────────
+    let _unactivatedList = [];
+
+    async function loadUnactivated() {
+      const tbody = document.getElementById('unactivatedTableBody');
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Loading…</td></tr>';
+      try {
+        const res  = await fetch('/api/admin/users/never-logged-in', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load');
+        _unactivatedList = data;
+        document.getElementById('unactivatedCount').textContent = `${data.length} member${data.length !== 1 ? 's' : ''}`;
+        if (!data.length) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="6">All members have logged in. 🎉</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.map((m, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${m.full_name || ''}</td>
+            <td>${m.email || ''}</td>
+            <td>${m.phone || '—'}</td>
+            <td>${m.role || ''}</td>
+            <td>${m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</td>
+          </tr>`).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    function copyUnactivatedWhatsApp() {
+      if (!_unactivatedList.length) { alert('No unactivated members loaded. Click Refresh first.'); return; }
+      const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+      const col1 = Math.max(4, ..._unactivatedList.map(m => (m.full_name || '').length));
+      const col2 = Math.max(5, ..._unactivatedList.map(m => (m.email || '').length));
+      const pad  = (s, n) => String(s).padEnd(n, ' ');
+      const sep  = `${'-'.repeat(col1 + 2)}+${'-'.repeat(col2 + 2)}`;
+      const header = `| ${pad('Name', col1)} | ${pad('Email', col2)} |`;
+      const rows = _unactivatedList.map((m, i) =>
+        `| ${pad(m.full_name || '', col1)} | ${pad(m.email || '', col2)} |`
+      ).join('\n');
+      const text =
+        `*UCOSA-NA — Unactivated Members (${date})*\n` +
+        `_${_unactivatedList.length} member(s) have never logged in_\n\n` +
+        '```\n' +
+        `${header}\n${sep}\n${rows}\n` +
+        '```';
+      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! Paste in WhatsApp.'));
+    }
+
+    async function sendActivationReminders() {
+      if (!_unactivatedList.length) { alert('No unactivated members loaded. Click Refresh first.'); return; }
+      if (!confirm(`Send activation reminders with new temporary passwords to ${_unactivatedList.length} member(s)?`)) return;
+      const btn    = document.getElementById('sendRemindersBtn');
+      const msgEl  = document.getElementById('unactivatedMsg');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      msgEl.style.display = 'none';
+      try {
+        const res  = await fetch('/api/admin/users/send-activation-reminders', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        msgEl.className = 'msg success';
+        msgEl.textContent = `✅ Activation reminders sent to ${data.sent} member(s). Passwords reset with 48-hour expiry.`;
+        msgEl.style.display = 'block';
+        loadUnactivated();
+      } catch (err) {
+        msgEl.className = 'msg error';
+        msgEl.textContent = `Error: ${err.message}`;
+        msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📧 Send Activation Reminders';
+      }
     }
 
     function renderMembers() {

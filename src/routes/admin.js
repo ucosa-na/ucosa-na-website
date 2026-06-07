@@ -1787,4 +1787,93 @@ router.delete('/email-failures', adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/admin/users/never-logged-in — members who have never logged in
+router.get('/users/never-logged-in', secOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT u.id, u.full_name, u.email, u.phone, u.role, u.created_at
+      FROM users u
+      WHERE u.last_login IS NULL
+        AND u.is_active = TRUE
+      ORDER BY u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/users/send-activation-reminders — reset passwords + email/SMS unactivated members
+router.post('/users/send-activation-reminders', secOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT id, full_name, email, phone
+      FROM users
+      WHERE last_login IS NULL AND is_active = TRUE
+    `);
+    if (!rows.length) return res.json({ sent: 0, message: 'No unactivated members found.' });
+
+    const results = [];
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+    for (const user of rows) {
+      const tempPassword = generatePassword();
+      const hash = await bcrypt.hash(tempPassword, 10);
+      await pool.query(
+        'UPDATE users SET password_hash=$1, must_change_password=TRUE, password_expires_at=$2 WHERE id=$3',
+        [hash, expiresAt, user.id]
+      );
+
+      // Send email
+      sendEmail({
+        to: user.email,
+        subject: '🔔 Action Required: Activate Your UCOSA-NA Account',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+            <div style="background:#7b2152;text-align:center;padding:28px 32px">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            </div>
+            <div style="background:#fdf6ec;padding:32px">
+              <h2 style="color:#7b2152;margin-top:0">Account Activation Reminder</h2>
+              <p>Dear <strong>${user.full_name}</strong>,</p>
+              <p>Your UCOSA-NA member account has been created but <strong>you have not yet logged in</strong> to activate it.</p>
+              <p>Your password has been reset. Use the temporary credentials below to log in now:</p>
+              <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+                <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.2em;letter-spacing:1px">${tempPassword}</code></p>
+                <p style="color:#c0392b;font-size:0.9em">⚠️ This password expires in <strong>48 hours</strong>. Please log in and change it before it expires.</p>
+              </div>
+              <p style="color:#7b2152"><strong>You will be asked to set a new password after logging in.</strong></p>
+              <p style="color:#888;font-size:0.85em;margin-top:24px">
+                Questions? Contact us at <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.
+              </p>
+            </div>
+          </div>
+        `,
+      }).catch(err => log.error(`Activation reminder email failed for ${user.email}: ${err.message}`));
+
+      // Send SMS if phone available
+      if (user.phone) {
+        sendSMS(user.phone,
+          `UCOSA-NA: Hi ${user.full_name}, your account has not been activated yet.\n` +
+          `Login: https://ucosa-na.org\n` +
+          `Email: ${user.email}\n` +
+          `Temp password: ${tempPassword}\n` +
+          `Expires in 48 hours. Please log in and change it.`
+        ).catch(err => log.error(`Activation reminder SMS failed for ${user.phone}: ${err.message}`));
+      }
+
+      await logAudit(req.user.id, req.user.email, 'ACTIVATION_REMINDER_SENT', 'MEMBER', user.id, user.full_name, { email: user.email });
+      results.push({ id: user.id, name: user.full_name, email: user.email });
+    }
+
+    res.json({ sent: results.length, members: results });
+  } catch (err) {
+    log.error('Activation reminders error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
