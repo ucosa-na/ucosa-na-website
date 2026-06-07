@@ -2975,6 +2975,8 @@
     // Collapse <main> so outside-main pages fill the full viewport width
     document.querySelector('main.main').classList.toggle('collapsed', OUTSIDE_MAIN_PAGES.has(id));
     document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+    const slideshow = document.getElementById('misc-slideshow');
+    if (slideshow) slideshow.style.display = (id === 'welcome') ? 'block' : 'none';
   }
 
 
