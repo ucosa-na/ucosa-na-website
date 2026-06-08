@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UCOSA-NA — Notification & Alert Reference</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; color: #222; font-size: 14px; }
+
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+
+    /* Header */
+    .doc-header { background: #7b2152; color: #fff; border-radius: 10px; padding: 28px 36px; margin-bottom: 32px; display: flex; align-items: center; gap: 20px; }
+    .doc-header img { width: 72px; height: 72px; border-radius: 50%; border: 3px solid #c8a96e; flex-shrink: 0; }
+    .doc-header-text h1 { font-size: 22px; font-weight: 700; color: #c8a96e; }
+    .doc-header-text p  { font-size: 13px; color: #f0d8e8; margin-top: 4px; }
+
+    /* Print button */
+    .print-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
+    .btn-print { padding: 8px 20px; background: #7b2152; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-print:hover { background: #6a1a44; }
+
+    /* Section headings */
+    .section-label {
+      background: #1a1a2e;
+      color: #c8a96e;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      border-radius: 6px 6px 0 0;
+      margin-top: 28px;
+    }
+
+    /* Tables */
+    .tbl-wrap { overflow-x: auto; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    thead tr { background: #f0e6f4; }
+    thead th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #7b2152; border-bottom: 2px solid #d4b8c8; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #f0f0f0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fdf6ec; }
+    td { padding: 10px 14px; vertical-align: top; font-size: 13px; line-height: 1.5; }
+    td:first-child { font-weight: 600; white-space: nowrap; }
+
+    /* Channel badges */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin: 1px 2px; white-space: nowrap; }
+    .badge-email { background: #e3f2fd; color: #1565c0; }
+    .badge-sms   { background: #e8f5e9; color: #2e7d32; }
+    .badge-auto  { background: #fff3e0; color: #e65100; }
+    .badge-manual{ background: #f3e5f5; color: #6a1a44; }
+    .badge-system{ background: #eceff1; color: #455a64; }
+
+    /* Trigger type column */
+    .trigger-auto   { color: #e65100; font-weight: 600; }
+    .trigger-manual { color: #6a1a44; font-weight: 600; }
+    .trigger-system { color: #455a64; font-weight: 600; }
+
+    /* Summary box */
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .summary-card { background: #fff; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; }
+    .summary-card .num { font-size: 28px; font-weight: 700; color: #7b2152; }
+    .summary-card .lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+    /* Footer */
+    .doc-footer { margin-top: 40px; text-align: center; font-size: 12px; color: #aaa; }
+
+    @media print {
+      body { background: #fff; }
+      .print-bar { display: none; }
+      .page-wrap { padding: 16px; }
+      .tbl-wrap { box-shadow: none; }
+      table { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <img src="/logo.jpg" alt="UCOSA-NA Logo" />
+    <div class="doc-header-text">
+      <h1>UCOSA-North America — Notification &amp; Alert Reference</h1>
+      <p>Complete list of all automated and manual email/SMS notifications sent by the ucosa-na.org system &mdash; including triggers, recipients, and delivery channels.</p>
+    </div>
+  </div>
+
+  <!-- Print button -->
+  <div class="print-bar">
+    <button class="btn-print" onclick="window.print()">&#128438; Print / Save PDF</button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="summary-card"><div class="num">24</div><div class="lbl">Total Notification Types</div></div>
+    <div class="summary-card"><div class="num">5</div><div class="lbl">Automated (Scheduled)</div></div>
+    <div class="summary-card"><div class="num">13</div><div class="lbl">Admin-Triggered</div></div>
+    <div class="summary-card"><div class="num">4</div><div class="lbl">System / Public Forms</div></div>
+    <div class="summary-card"><div class="num">2</div><div class="lbl">Channels: Email + SMS</div></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 1 — AUTOMATED / SCHEDULED
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">1 — Automated / Scheduled Notifications</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Notification Name</th>
+          <th>Trigger / Schedule</th>
+          <th>Recipients</th>
+          <th>Channel</th>
+          <th>Content Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Annual Dues Population</td>
+          <td class="trigger-auto">Jan 1 — 12:01 AM ET (Automatic)</td>
+          <td>System only (no notification sent)</td>
+          <td><span class="badge badge-system">System</span></td>
+          <td>Creates annual dues records for all active members for the new year. No email is sent — internal DB operation only.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Annual Dues 30-Day Advance Reminder</td>
+          <td class="trigger-auto">May 2 — 9:00 AM ET (Automatic)</td>
+          <td>All active members with unpaid dues for the current year</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Reminds members their annual dues ($100 USD) are due in 30 days on June 1. Includes due date, amount, status, and Zelle payment details (ucosa.northamerica@gmail.com).</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Annual Dues Due Date Reminder</td>
+          <td class="trigger-auto">Jun 1 — 9:00 AM ET (Automatic)</td>
+          <td>All active members with unpaid dues for the current year</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Final reminder that dues are due today. Same details as advance reminder. Members who already paid are excluded automatically.</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Birthday Greeting</td>
+          <td class="trigger-auto">1st of every month — 9:00 AM ET (Automatic)</td>
+          <td>All active members whose birthday month is the current month</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"Happy Birthday! Welcome to your birthday month of [Month]!" — includes a birthday message and a short prayer from the executive. Member's photo appears in the Highlights pane on the welcome page for the whole month.</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>90-Day Inactivity Reminder</td>
+          <td class="trigger-auto">Daily — 8:00 AM ET (Automatic)</td>
+          <td>Active members who have not logged in for 90+ days (and have not received this reminder in the past 90 days)</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"We observed you have not logged in to your UCOSA account in 90 days." Includes last login date, list of what they are missing, and a login button. Reminder is not repeated for another 90 days after sending.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2 — MEMBER ACCOUNT NOTIFICATIONS
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">2 — Member Account Notifications</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Notification Name</th>
+          <th>Trigger</th>
+          <th>Recipient</th>
+          <th>Channel</th>
+          <th>Content Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>6</td>
+          <td>Welcome / New Member Created</td>
+          <td class="trigger-manual">Admin creates a new member account (single or bulk import)</td>
+          <td>New member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"Welcome to UCOSA-North America!" Includes login URL (ucosa-na.org), email address, and temporary password. Password expires in 48 hours. Member must change password on first login.</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>Activation Reminder (Never Logged In)</td>
+          <td class="trigger-manual">Admin clicks "Send Activation Reminders" in the Unactivated Members panel</td>
+          <td>All active members who have never logged in (last_login is null)</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"Action Required: Your account has not been activated." A new temporary password is generated and reset. Includes login URL, email, and new temporary password expiring in 48 hours.</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td>Password Reset by Admin</td>
+          <td class="trigger-manual">Admin clicks "Reset Password" on a member's record</td>
+          <td>The affected member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"Your UCOSA-NA account password has been reset by an administrator." Includes new temporary password and login URL. Password expires in 48 hours.</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td>Password Changed Confirmation</td>
+          <td class="trigger-auto">Member successfully changes their own password</td>
+          <td>The member who changed their password</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>"Your UCOSA-NA password was successfully changed." Security confirmation with timestamp. Advises member to contact admin if they did not make this change.</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>Forgot Password — Reset Link</td>
+          <td class="trigger-auto">Member clicks "Forgot Password" on the login page</td>
+          <td>The requesting member</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>Sends a secure one-time password reset link valid for a limited time. Member clicks the link to set a new password.</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td>Failed Login Alert</td>
+          <td class="trigger-auto">Multiple failed login attempts detected</td>
+          <td>The account owner / admin</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>"Failed Login Attempt — UCOSA-NA." Security alert notifying the member of an unsuccessful login attempt on their account.</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td>Account Suspended</td>
+          <td class="trigger-manual">Admin deactivates or locks a member account</td>
+          <td>The affected member</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>"Your UCOSA-NA account has been suspended." Informs the member their account has been deactivated and advises them to contact the executive for resolution.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3 — FINANCIAL NOTIFICATIONS
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">3 — Financial Notifications</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Notification Name</th>
+          <th>Trigger</th>
+          <th>Recipient</th>
+          <th>Channel</th>
+          <th>Content Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>13</td>
+          <td>Annual Dues Payment Receipt</td>
+          <td class="trigger-manual">Admin records an annual dues payment for a member</td>
+          <td>The paying member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Itemized payment receipt showing year, amount paid, payment method, date, and transaction reference. Confirms payment was received and recorded.</td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td>Annual Dues Individual Reminder</td>
+          <td class="trigger-manual">Admin clicks "Send Reminder" on a specific member's dues record</td>
+          <td>The selected member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Personalized dues reminder for the member showing their current dues balance, due date, status, and Zelle payment instructions.</td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td>Bulk Annual Dues Reminder</td>
+          <td class="trigger-manual">Admin clicks "Send All Reminders" in the Annual Dues panel</td>
+          <td>All active members with unpaid/partial dues for the selected year</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Same as individual reminder but sent in bulk to all outstanding members at once.</td>
+        </tr>
+        <tr>
+          <td>16</td>
+          <td>Endowment Fund Payment Receipt</td>
+          <td class="trigger-manual">Admin records an endowment fund contribution for a member</td>
+          <td>The contributing member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Receipt for endowment fund contribution. Includes amount, year, payment method, and reference. Thanks the member for their contribution.</td>
+        </tr>
+        <tr>
+          <td>17</td>
+          <td>Endowment Fund Reminder</td>
+          <td class="trigger-manual">Admin sends a reminder for outstanding endowment fund contributions</td>
+          <td>The selected member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"UCOSA-NA Endowment Fund Reminder." Notifies a member of their outstanding endowment fund balance and provides payment details.</td>
+        </tr>
+        <tr>
+          <td>18</td>
+          <td>Special Levy / Member Donation Receipt</td>
+          <td class="trigger-manual">Admin records a special levy or member donation payment</td>
+          <td>The paying member</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>Payment receipt for Special Levy, Voluntary Contribution, or Member-Donation. Includes levy type, year, amount, and donation code.</td>
+        </tr>
+        <tr>
+          <td>19</td>
+          <td>Online Donation Receipt (Stripe)</td>
+          <td class="trigger-auto">Donor completes an online donation via Stripe on the Donate page</td>
+          <td>The donor (member or public)</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>"Thank You for Your Donation — UCOSA-NA." Confirms the online donation, includes amount, Stripe payment reference, and a thank-you message from the association.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 4 — BROADCAST NOTIFICATIONS
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">4 — Broadcast Notifications (Admin / PRO)</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Notification Name</th>
+          <th>Trigger</th>
+          <th>Recipients</th>
+          <th>Channel</th>
+          <th>Content Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>20</td>
+          <td>SMS Broadcast</td>
+          <td class="trigger-manual">Admin / PRO composes and sends from the SMS Broadcast panel</td>
+          <td>All active members with a phone number on file</td>
+          <td><span class="badge badge-sms">SMS</span></td>
+          <td>Free-form SMS message drafted by the admin or PRO officer. Used for urgent announcements, meeting reminders, or general association communications.</td>
+        </tr>
+        <tr>
+          <td>21</td>
+          <td>Email Broadcast</td>
+          <td class="trigger-manual">Admin / PRO composes and sends from the Email Broadcast panel</td>
+          <td>All active members</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>Free-form email with custom subject and body drafted by admin or PRO. Used for newsletters, event announcements, executive communications, or general updates.</td>
+        </tr>
+        <tr>
+          <td>22</td>
+          <td>Meeting Notes Upload Notification</td>
+          <td class="trigger-manual">Admin uploads a new meeting minutes document</td>
+          <td>All active members</td>
+          <td><span class="badge badge-email">Email</span> <span class="badge badge-sms">SMS</span></td>
+          <td>"New meeting notes have been uploaded." Notifies all members that minutes for a specific meeting date are available. Members must log in to view the document.</td>
+        </tr>
+        <tr>
+          <td>23</td>
+          <td>Invitational Broadcast Email</td>
+          <td class="trigger-manual">Admin sends an invitation email to a list of non-member email addresses</td>
+          <td>Prospective members / invitees (external recipients)</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>"We Miss You — Come Back Home to UCOSA-NA." Invitation email sent to alumni or former contacts to encourage them to join or rejoin the association.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 5 — PUBLIC FORM NOTIFICATIONS
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">5 — Public Form Notifications</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Notification Name</th>
+          <th>Trigger</th>
+          <th>Recipients</th>
+          <th>Channel</th>
+          <th>Content Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>24</td>
+          <td>Contact Form Submission</td>
+          <td class="trigger-auto">Visitor submits the Contact Us form on the website</td>
+          <td>UCOSA-NA admin email (ucosa.northamerica@gmail.com)</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>Forwards the visitor's name, email, and message to the association's admin inbox. Subject: "Contact Form: Message from [Name]".</td>
+        </tr>
+        <tr>
+          <td>25</td>
+          <td>Membership Request — Admin Notification</td>
+          <td class="trigger-auto">Visitor submits the "Request to Join UCOSA" form on the welcome page</td>
+          <td>UCOSA-NA admin email</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>Notifies the executive that a new membership request has been submitted. Includes the applicant's name, email, phone, and message.</td>
+        </tr>
+        <tr>
+          <td>26</td>
+          <td>Membership Request — Auto-Reply to Applicant</td>
+          <td class="trigger-auto">Visitor submits the "Request to Join UCOSA" form</td>
+          <td>The person who submitted the form</td>
+          <td><span class="badge badge-email">Email</span></td>
+          <td>"Thank You for Your Interest in UCOSA-North America." Acknowledges the request and informs the applicant that an executive officer will contact them to verify eligibility and complete enrolment.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 6 — DELIVERY CHANNEL REFERENCE
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">6 — Delivery Channel &amp; Configuration Reference</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Channel</th>
+          <th>Provider</th>
+          <th>Configuration</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Email</td>
+          <td>SendGrid</td>
+          <td>SENDGRID_API_KEY environment variable. Sender: ucosa.northamerica@gmail.com</td>
+          <td>Failed emails are logged in the Email Failures panel in the admin portal. Delivery to international addresses (e.g. Nigeria) is subject to ISP filtering.</td>
+        </tr>
+        <tr>
+          <td>SMS</td>
+          <td>Twilio (primary) / Vonage (fallback)</td>
+          <td>TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER. Vonage: VONAGE_API_KEY, VONAGE_API_SECRET.</td>
+          <td>SMS is sent only when a phone number is on the member's profile. The system falls back to Vonage if Twilio fails. Nigerian (+234) numbers currently require carrier-level A2P registration. Campaign SID: CM7f5b8c280c0604b3bcecb1743d5398e5 (Account Notification, In Progress). Support ticket #27367203 submitted to upgrade brand to Non-profit.</td>
+        </tr>
+        <tr>
+          <td>Online Payments</td>
+          <td>Stripe</td>
+          <td>STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET environment variables.</td>
+          <td>Used for the public Donate page only. Payment receipts are emailed automatically on successful charge via Stripe webhook.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 7 — PROCEDURES SUMMARY
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section-label">7 — Procedures: How to Trigger Each Notification Type</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Who Can Do It</th>
+          <th>Steps</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Add a new member and send welcome credentials</td>
+          <td>Admin, Security Role</td>
+          <td>Admin Portal → Create Member → fill in name, email, phone, role → Save. System automatically sends welcome email + SMS with temporary password.</td>
+        </tr>
+        <tr>
+          <td>Send activation reminders to members who never logged in</td>
+          <td>Admin, Security Role</td>
+          <td>Admin Portal → Unactivated Members → Refresh → Send Activation Reminders. System resets passwords and sends email + SMS to all listed members.</td>
+        </tr>
+        <tr>
+          <td>Reset a specific member's password</td>
+          <td>Admin, Security Role</td>
+          <td>Admin Portal → Member List → find member → Reset Password. System generates a new temporary password and emails + SMS the member.</td>
+        </tr>
+        <tr>
+          <td>Record a dues payment and send receipt</td>
+          <td>Admin, Financial Role</td>
+          <td>Admin Portal → Annual Dues → find member → Record Payment → enter amount, method, date → Save. Receipt is emailed + SMS'd automatically.</td>
+        </tr>
+        <tr>
+          <td>Send a dues reminder to one member</td>
+          <td>Admin, Financial Role</td>
+          <td>Admin Portal → Annual Dues → find member → Send Reminder. Email + SMS sent immediately.</td>
+        </tr>
+        <tr>
+          <td>Send dues reminders to all unpaid members</td>
+          <td>Admin, Financial Role</td>
+          <td>Admin Portal → Annual Dues → Send All Reminders button at the top of the section.</td>
+        </tr>
+        <tr>
+          <td>Send a broadcast message to all members</td>
+          <td>Admin, PRO Role</td>
+          <td>Admin Portal → PRO → SMS Broadcast (for SMS) or Email Broadcast (for email) → compose message → Send.</td>
+        </tr>
+        <tr>
+          <td>Notify members of new meeting notes</td>
+          <td>Admin, Security Role</td>
+          <td>Admin Portal → Meeting Notes → Upload Document → select file and set date → Upload. System automatically notifies all members by email + SMS.</td>
+        </tr>
+        <tr>
+          <td>Set a member's birthday month</td>
+          <td>Admin only</td>
+          <td>Admin Portal → Member Birthdays → find member → select month from dropdown → enter photo path (e.g. /ucosa_na_members/06-Ihaza.jpg) → Save. System will send birthday greeting on the 1st of that month and display their photo in the Highlights pane all month.</td>
+        </tr>
+        <tr>
+          <td>Send invitational emails to prospective members</td>
+          <td>Admin, PRO Role</td>
+          <td>Admin Portal → PRO → Broadcast Email (Invitational) → paste list of email addresses → compose message → Send.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-footer">
+    <p>UCOSA-North America &mdash; 138-40 231st Street, Springfield Gardens, NY 11413 &mdash; ucosa.northamerica@gmail.com</p>
+    <p style="margin-top:4px;">This document covers all notification types as of June 2026. &mdash; ucosa-na.org</p>
+  </div>
+
+</div>
+<script>
+  // Auto-set today's date in footer
+  document.querySelector('.doc-footer p:last-child').textContent =
+    'This document covers all notification types as of ' +
+    new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) +
+    '. — ucosa-na.org';
+</script>
+</body>
+</html>
