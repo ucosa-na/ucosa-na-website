@@ -1799,6 +1799,64 @@ router.delete('/email-failures', adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/admin/fund-applications — list all member fund applications
+router.get('/fund-applications', adminOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT mfa.*, u.full_name AS member_full_name, u.email AS member_email
+      FROM member_fund_applications mfa
+      JOIN users u ON u.id = mfa.user_id
+      ORDER BY mfa.submitted_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/fund-applications/:id — get single application
+router.get('/fund-applications/:id', adminOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT mfa.*, u.full_name AS member_full_name FROM member_fund_applications mfa
+       JOIN users u ON u.id = mfa.user_id WHERE mfa.id = $1`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/fund-applications/:id — update office-use fields
+router.put('/fund-applications/:id', adminOnly, async (req, res) => {
+  const { status, admin_approved, admin_comment, admin_signature, admin_date } = req.body;
+  const VALID = ['pending','approved','denied'];
+  if (status && !VALID.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  try {
+    const { rows } = await pool.query(`
+      UPDATE member_fund_applications
+      SET status           = COALESCE($1, status),
+          admin_approved   = $2,
+          admin_comment    = $3,
+          admin_signature  = $4,
+          admin_date       = $5,
+          updated_at       = NOW(),
+          updated_by       = $6
+      WHERE id = $7 RETURNING *`,
+      [status || null, admin_approved ?? null, admin_comment || null,
+       admin_signature || null, admin_date || null, req.user.id, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    await logAudit(req.user.id, req.user.email, 'FUND_APP_UPDATED', 'FUND_APPLICATION',
+      rows[0].id, rows[0].applicant_name, { status: rows[0].status });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/birthdays — list all member birthday records
 router.get('/birthdays', adminOnly, async (req, res) => {
   try {

@@ -411,6 +411,7 @@
       <a href="#endowment-section" onclick="document.getElementById('endowment-section').scrollIntoView({behavior:'smooth'})">Endowment Fund</a>
       <a href="#meeting-notes-section" onclick="document.getElementById('meeting-notes-section').scrollIntoView({behavior:'smooth'})">Meeting Notes</a>
       <a href="#special-levies-section" onclick="document.getElementById('special-levies-section').scrollIntoView({behavior:'smooth'})">Special Levies</a>
+      <a href="/member-fund-form.html" id="fundFormLink">&#128196; Member's Fund Application</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
       <a id="adminSidebarLink" href="/admin.html" class="sidebar-admin" style="display:none;">Admin Panel</a>
@@ -432,6 +433,24 @@
       localStorage.removeItem('ucosa_user');
       window.location.href = '/';
     }
+
+    // Check if member already submitted fund application — grey out link if so
+    (async function checkFundApp() {
+      const tok = localStorage.getItem('ucosa_token');
+      if (!tok) return;
+      try {
+        const res  = await fetch('/api/member/fund-application', { headers: { 'Authorization': 'Bearer ' + tok } });
+        const data = await res.json();
+        const link = document.getElementById('fundFormLink');
+        if (data && data.id && link) {
+          link.style.opacity = '0.45';
+          link.style.pointerEvents = 'none';
+          link.style.cursor = 'default';
+          link.title = 'Application submitted — status: ' + (data.status || 'pending');
+          link.textContent = '✅ Member\'s Fund Application (Submitted)';
+        }
+      } catch(_) {}
+    })();
 
     // ── Inactivity auto-logout after 5 minutes ──
     (function() {

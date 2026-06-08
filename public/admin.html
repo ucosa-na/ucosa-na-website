@@ -682,6 +682,7 @@
           <a href="#testSms">Test SMS</a>
           <a href="#siteMaintenance">Site Maintenance</a>
           <a href="#auditLog">Audit Log</a>
+          <a href="#fundApplicationsSection">Member's Fund Applications</a>
           <a href="#birthdaySection">Member Birthdays</a>
           <a href="#emailFailuresSection">Email Failures</a>
           <a href="/notifications.html" target="_blank">Notification Reference &#8599;</a>
@@ -1237,6 +1238,75 @@
               <tr class="empty-row"><td colspan="6">Loading audit log…</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- MEMBER'S FUND APPLICATIONS -->
+      <section id="fundApplicationsSection">
+        <h2>&#128196; Member's Fund Applications</h2>
+        <p style="color:#555;font-size:16px;margin-bottom:16px;">View and manage member bereavement fund applications. Click a row to review and update office-use fields.</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <input type="text" id="fundAppSearch" oninput="renderFundApps()" placeholder="Search by name or status…" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:240px;"/>
+          <button onclick="document.getElementById('fundAppSearch').value='';renderFundApps();" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;background:white;cursor:pointer;">Clear</button>
+          <span id="fundAppCount" style="font-size:14px;color:#888;"></span>
+          <button onclick="loadFundApps()" style="margin-left:auto;padding:8px 18px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#128260; Refresh</button>
+        </div>
+        <div id="fundAppMsg" class="msg" style="display:none;margin-bottom:10px;"></div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Applicant Name</th>
+                <th>Member Email</th>
+                <th>Sex</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="fundAppTableBody">
+              <tr class="empty-row"><td colspan="7">Click Refresh to load…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Detail / Edit panel -->
+        <div id="fundAppDetail" style="display:none;margin-top:24px;background:#fff;border:1.5px solid #dde3f0;border-radius:10px;padding:24px;">
+          <h3 style="font-size:16px;font-weight:700;color:#7b2152;margin-bottom:16px;">Application Detail — <span id="detailName"></span></h3>
+          <div id="detailContent" style="font-size:14px;line-height:1.8;color:#333;margin-bottom:20px;"></div>
+
+          <div style="background:#fff8e1;border:1.5px solid #ffc107;border-radius:8px;padding:18px 20px;">
+            <div style="font-size:13px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;">For Office Use Only</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+              <div style="display:flex;flex-direction:column;flex:1;min-width:140px;">
+                <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Status</label>
+                <select id="detailStatus" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;">
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="denied">Denied</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;flex:1;min-width:140px;">
+                <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Admin Signature</label>
+                <input type="text" id="detailAdminSig" placeholder="Type full name" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
+              </div>
+              <div style="display:flex;flex-direction:column;min-width:140px;">
+                <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Date</label>
+                <input type="date" id="detailAdminDate" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;margin-bottom:14px;">
+              <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Comment</label>
+              <textarea id="detailComment" rows="3" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button onclick="saveFundApp()" style="padding:8px 24px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Save Changes</button>
+              <button onclick="document.getElementById('fundAppDetail').style.display='none';" style="padding:8px 18px;background:#888;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Close</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2107,7 +2177,7 @@
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection'];
-      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
+      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
@@ -2262,6 +2332,112 @@
     }
 
     // ── EMAIL FAILURES ────────────────────────────────────────────────────────
+    // ── Member's Fund Applications ───────────────────────────────────────────
+    let _allFundApps = [];
+    let _currentFundAppId = null;
+
+    async function loadFundApps() {
+      const tbody = document.getElementById('fundAppTableBody');
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Loading…</td></tr>';
+      try {
+        const res  = await fetch('/api/admin/fund-applications', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load');
+        _allFundApps = data;
+        renderFundApps();
+      } catch(err) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderFundApps() {
+      const search   = (document.getElementById('fundAppSearch')?.value || '').toLowerCase().trim();
+      const filtered = search
+        ? _allFundApps.filter(a =>
+            (a.applicant_name  || '').toLowerCase().includes(search) ||
+            (a.member_email    || '').toLowerCase().includes(search) ||
+            (a.status          || '').toLowerCase().includes(search))
+        : _allFundApps;
+      document.getElementById('fundAppCount').textContent = `${filtered.length} application${filtered.length !== 1 ? 's' : ''}`;
+      const tbody = document.getElementById('fundAppTableBody');
+      if (!filtered.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No applications found.</td></tr>'; return; }
+      const statusColor = { pending:'#fff3e0;color:#e65100', approved:'#e8f5e9;color:#1b5e20', denied:'#fdecea;color:#c0392b' };
+      tbody.innerHTML = filtered.map((a, i) => `
+        <tr style="cursor:pointer;" onclick="openFundApp(${a.id})">
+          <td>${i + 1}</td>
+          <td style="font-weight:600;">${a.applicant_name || ''}</td>
+          <td>${a.member_email || ''}</td>
+          <td>${a.sex || '—'}</td>
+          <td>${a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : '—'}</td>
+          <td><span style="padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;background:${(statusColor[a.status]||'#eee;color:#333').split(';')[0]};color:${(statusColor[a.status]||'#eee;color:#333').split('color:')[1]};">${a.status}</span></td>
+          <td><button onclick="event.stopPropagation();openFundApp(${a.id})" style="padding:4px 12px;background:#7b2152;color:white;border:none;border-radius:6px;font-size:13px;cursor:pointer;">View</button></td>
+        </tr>`).join('');
+    }
+
+    async function openFundApp(id) {
+      try {
+        const res  = await fetch(`/api/admin/fund-applications/${id}`, { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const a    = await res.json();
+        if (!res.ok) throw new Error(a.error || 'Failed');
+        _currentFundAppId = id;
+        document.getElementById('detailName').textContent = a.applicant_name || '';
+        const ben = (n, r) => n ? `${n} (${r || 'N/A'})` : '—';
+        document.getElementById('detailContent').innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;">
+            <div><strong>Sex:</strong> ${a.sex || '—'}</div>
+            <div><strong>Birth Date:</strong> ${a.birth_date ? new Date(a.birth_date).toLocaleDateString() : '—'}</div>
+            <div><strong>SSN (last 4):</strong> ${a.ssn_last4 || '—'}</div>
+            <div><strong>Email:</strong> ${a.email || '—'}</div>
+            <div style="grid-column:1/-1"><strong>Address:</strong> ${[a.street_address, a.city, a.state, a.zip_code].filter(Boolean).join(', ') || '—'}</div>
+            <div style="grid-column:1/-1"><strong>Alt Address:</strong> ${[a.alt_address, a.alt_city, a.alt_state, a.alt_zip].filter(Boolean).join(', ') || '—'}</div>
+            <div><strong>Alt Phone:</strong> ${a.alt_phone || '—'}</div>
+            <div><strong>Alt Email:</strong> ${a.alt_email || '—'}</div>
+            <div><strong>Beneficiary 1:</strong> ${ben(a.ben1_name, a.ben1_relation)}</div>
+            <div><strong>Beneficiary 2:</strong> ${ben(a.ben2_name, a.ben2_relation)}</div>
+            <div><strong>Beneficiary 3:</strong> ${ben(a.ben3_name, a.ben3_relation)}</div>
+            <div><strong>Terms Accepted:</strong> ${a.terms_accepted ? '✅ Yes' : '❌ No'}</div>
+            <div><strong>Applicant Signature:</strong> ${a.applicant_signature || '—'}</div>
+            <div><strong>Signature Date:</strong> ${a.signature_date ? new Date(a.signature_date).toLocaleDateString() : '—'}</div>
+            <div><strong>President Name:</strong> ${a.president_name || '—'}</div>
+            <div><strong>President Signature:</strong> ${a.president_signature || '—'}</div>
+            <div><strong>Submitted:</strong> ${a.submitted_at ? new Date(a.submitted_at).toLocaleString() : '—'}</div>
+          </div>`;
+        document.getElementById('detailStatus').value      = a.status || 'pending';
+        document.getElementById('detailAdminSig').value    = a.admin_signature || '';
+        document.getElementById('detailAdminDate').value   = a.admin_date ? a.admin_date.slice(0,10) : '';
+        document.getElementById('detailComment').value     = a.admin_comment || '';
+        document.getElementById('fundAppDetail').style.display = 'block';
+        document.getElementById('fundAppDetail').scrollIntoView({ behavior: 'smooth' });
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function saveFundApp() {
+      if (!_currentFundAppId) return;
+      const msgEl = document.getElementById('fundAppMsg');
+      msgEl.style.display = 'none';
+      try {
+        const res  = await fetch(`/api/admin/fund-applications/${_currentFundAppId}`, {
+          method:  'PUT',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            status:          document.getElementById('detailStatus').value,
+            admin_signature: document.getElementById('detailAdminSig').value.trim(),
+            admin_date:      document.getElementById('detailAdminDate').value || null,
+            admin_comment:   document.getElementById('detailComment').value.trim(),
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save');
+        msgEl.className = 'msg success'; msgEl.textContent = '✅ Application updated successfully.'; msgEl.style.display = 'block';
+        loadFundApps();
+        setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+      } catch(err) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
+      }
+    }
+
     // ── Member Birthdays ─────────────────────────────────────────────────────
     const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     let _allBirthdays = [];

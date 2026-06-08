@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>UCOSA-NA — Member's Fund Application</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;background:#f5f5f5;color:#222;font-size:14px;}
+    .page-wrap{max-width:800px;margin:0 auto;padding:28px 20px 60px;}
+
+    /* Header */
+    .form-header{background:#7b2152;color:#fff;border-radius:10px;padding:24px 32px;margin-bottom:28px;text-align:center;}
+    .form-header img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;margin-bottom:10px;}
+    .form-header h1{font-size:18px;font-weight:700;color:#c8a96e;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+    .form-header h2{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;}
+    .form-header p{font-size:13px;color:#f0d8e8;}
+
+    /* Submitted banner */
+    #submittedBanner{display:none;background:#e8f5e9;border:1.5px solid #4caf50;border-radius:8px;padding:16px 20px;margin-bottom:20px;color:#1b5e20;font-size:15px;}
+
+    /* Card */
+    .form-card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:28px 32px;margin-bottom:20px;}
+    .form-card h3{font-size:15px;font-weight:700;color:#7b2152;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #f0e6f4;padding-bottom:8px;margin-bottom:18px;}
+
+    /* Form rows */
+    .form-row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+    .form-group{display:flex;flex-direction:column;flex:1;min-width:160px;}
+    .form-group.full{flex:100%;min-width:100%;}
+    label{font-size:12px;font-weight:700;color:#555;margin-bottom:4px;letter-spacing:0.04em;}
+    label .req{color:#c0392b;}
+    input[type=text],input[type=date],input[type=email],input[type=tel],select,textarea{
+      padding:8px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;background:#fff;
+      transition:border-color 0.2s;width:100%;
+    }
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#7b2152;}
+    input:disabled,select:disabled,textarea:disabled{background:#f5f5f5;color:#aaa;cursor:not-allowed;}
+    .radio-group{display:flex;gap:20px;align-items:center;margin-top:6px;}
+    .radio-group label{font-size:13px;font-weight:400;color:#222;display:flex;align-items:center;gap:6px;cursor:pointer;}
+    .radio-group input[type=radio]{width:auto;margin:0;}
+
+    /* Benefit table */
+    .benefit-table{width:100%;border-collapse:collapse;margin:10px 0;}
+    .benefit-table th,.benefit-table td{border:1px solid #dde3f0;padding:8px 10px;text-align:center;font-size:12px;}
+    .benefit-table th{background:#7b2152;color:#fff;font-weight:700;}
+    .benefit-table td:first-child{text-align:left;font-weight:600;color:#555;}
+    .benefit-table tr:nth-child(even){background:#f9f9f9;}
+
+    /* Terms */
+    .terms-box{background:#fdf6ec;border:1px solid #e8d8c0;border-radius:8px;padding:14px 16px;font-size:12px;color:#555;line-height:1.6;margin-bottom:14px;}
+    .checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+    .checkbox-row input[type=checkbox]{margin-top:2px;width:auto;flex-shrink:0;}
+    .checkbox-row label{font-size:13px;font-weight:400;color:#222;cursor:pointer;}
+
+    /* Admin section */
+    .admin-section{background:#fff8e1;border:1.5px solid #ffc107;border-radius:8px;padding:20px 24px;margin-top:8px;}
+    .admin-section h4{color:#b45309;font-size:13px;font-weight:700;text-transform:uppercase;margin-bottom:14px;letter-spacing:0.08em;}
+    .admin-note{font-size:11px;color:#888;margin-bottom:12px;}
+
+    /* Buttons */
+    .btn-submit{width:100%;padding:14px;background:#7b2152;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:8px;}
+    .btn-submit:hover:not(:disabled){background:#6a1a44;}
+    .btn-submit:disabled{background:#aaa;cursor:not-allowed;}
+
+    .msg{padding:12px 16px;border-radius:8px;font-size:14px;margin-bottom:12px;display:none;}
+    .msg.error{background:#fdecea;color:#c0392b;border:1px solid #f5c2c2;}
+    .msg.success{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;}
+
+    /* Status badge */
+    .status-badge{display:inline-block;padding:3px 12px;border-radius:10px;font-size:12px;font-weight:700;}
+    .status-pending{background:#fff3e0;color:#e65100;}
+    .status-approved{background:#e8f5e9;color:#1b5e20;}
+    .status-denied{background:#fdecea;color:#c0392b;}
+
+    @media(max-width:600px){
+      .form-card{padding:18px 14px;}
+      .form-row{flex-direction:column;gap:10px;}
+      .form-group{min-width:100%;}
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="form-header">
+    <img src="/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>Ugbeka College Old Students Association — North America Inc.</h1>
+    <h2>Member's Fund Application</h2>
+    <p>Bereavement Coverage — UCOSA-MF &mdash; Complete all sections in full</p>
+  </div>
+
+  <div id="submittedBanner">
+    ✅ Your application has already been submitted. Status: <strong id="appStatus">—</strong>.
+    The admin will review and contact you if needed.
+  </div>
+
+  <div id="formMsg" class="msg"></div>
+
+  <form id="fundForm" novalidate>
+
+    <!-- Section 1: Personal Information -->
+    <div class="form-card">
+      <h3>Personal Information</h3>
+
+      <div class="form-row">
+        <div class="form-group full">
+          <label>1. Applicant's Full Name <span class="req">*</span></label>
+          <input type="text" id="applicant_name" required/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>2. Sex <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="sex" value="Male" required/> Male</label>
+            <label><input type="radio" name="sex" value="Female"/> Female</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>3. Birth Date <span class="req">*</span></label>
+          <input type="date" id="birth_date" required/>
+        </div>
+        <div class="form-group">
+          <label>4. Social Security # (Last 4 digits)</label>
+          <input type="text" id="ssn_last4" maxlength="4" placeholder="XXXX"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full">
+          <label>5. Street Address <span class="req">*</span></label>
+          <input type="text" id="street_address" required/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>6. City <span class="req">*</span></label>
+          <input type="text" id="city" required/>
+        </div>
+        <div class="form-group" style="max-width:100px;">
+          <label>State</label>
+          <input type="text" id="state" maxlength="2" placeholder="NY"/>
+        </div>
+        <div class="form-group" style="max-width:110px;">
+          <label>Zip Code</label>
+          <input type="text" id="zip_code" maxlength="10"/>
+        </div>
+        <div class="form-group">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" id="email" required/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Alternate Address -->
+    <div class="form-card">
+      <h3>7. Alternate / Mailing Address (if different)</h3>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Address</label>
+          <input type="text" id="alt_address"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="alt_city"/>
+        </div>
+        <div class="form-group" style="max-width:100px;">
+          <label>State</label>
+          <input type="text" id="alt_state" maxlength="2"/>
+        </div>
+        <div class="form-group" style="max-width:110px;">
+          <label>Zip Code</label>
+          <input type="text" id="alt_zip" maxlength="10"/>
+        </div>
+        <div class="form-group">
+          <label>Tel. #</label>
+          <input type="tel" id="alt_phone"/>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="alt_email"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Beneficiaries -->
+    <div class="form-card">
+      <h3>8. Names of Beneficiary/ies</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Beneficiary 1 — Name</label>
+          <input type="text" id="ben1_name"/>
+        </div>
+        <div class="form-group">
+          <label>Relationship</label>
+          <input type="text" id="ben1_relation"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Beneficiary 2 — Name</label>
+          <input type="text" id="ben2_name"/>
+        </div>
+        <div class="form-group">
+          <label>Relationship</label>
+          <input type="text" id="ben2_relation"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Beneficiary 3 — Name</label>
+          <input type="text" id="ben3_name"/>
+        </div>
+        <div class="form-group">
+          <label>Relationship</label>
+          <input type="text" id="ben3_relation"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Benefit Summary -->
+    <div class="form-card">
+      <h3>9. Benefit Coverage — $10,000.00 Bereavement Fund</h3>
+      <p style="font-size:13px;color:#555;margin-bottom:12px;">
+        I wish to apply for the ($10,000.00) bereavement coverage under the UCOSA-MF as distributed below:
+      </p>
+      <table class="benefit-table">
+        <thead>
+          <tr>
+            <th>Period of Enrollment</th>
+            <th>Less Than 6 Months</th>
+            <th>6–12 Months Consecutively</th>
+            <th>12–24 Months Consecutively</th>
+            <th>24–36 Months Consecutively</th>
+            <th>Over 36 Months Consecutively</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Benefit</td>
+            <td>—</td>
+            <td>$250</td>
+            <td>$1,000</td>
+            <td>$2,500</td>
+            <td>$5,000</td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:#7b2152;">Max Benefit</td>
+            <td colspan="5" style="text-align:center;font-weight:700;color:#7b2152;">$10,000.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 5: Declaration & Signature -->
+    <div class="form-card">
+      <h3>10–12. Declaration &amp; Applicant Signature</h3>
+
+      <div class="terms-box">
+        <strong>Section 10:</strong> I represent that the above are true and complete to the best of my knowledge and belief.
+        I understand the benefit summary above. I also understand that the coverage will not be in effect until this application
+        is completed in full and my first year's premium has been received and accepted by UCOSA-MF. Continued coverage will
+        be dependent on annual renewal.
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="terms_accepted" required/>
+        <label for="terms_accepted">
+          <strong>Section 11:</strong> I have read and accepted the terms and conditions of the UCOSA-MF member's fund. <span class="req">*</span>
+        </label>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>12. Applicant Signature (type full name) <span class="req">*</span></label>
+          <input type="text" id="applicant_signature" placeholder="Type your full name as signature" required/>
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label>Date <span class="req">*</span></label>
+          <input type="date" id="signature_date" required/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Chapter President -->
+    <div class="form-card">
+      <h3>13–14. Local Chapter President</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>13. Chapter President's Name</label>
+          <input type="text" id="president_name"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>14. President's Signature (type full name)</label>
+          <input type="text" id="president_signature"/>
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label>Date</label>
+          <input type="date" id="president_date"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn-submit" id="submitBtn">Submit Application</button>
+
+  </form>
+
+  <!-- Back link -->
+  <p style="text-align:center;margin-top:20px;">
+    <a href="/members.html" style="color:#7b2152;font-size:14px;">&#8592; Back to Member Portal</a>
+  </p>
+
+</div>
+
+<script>
+  const token = localStorage.getItem('ucosa_token');
+  if (!token) { window.location.href = '/login.html'; }
+
+  // Pre-fill today's date for signature date
+  document.getElementById('signature_date').value = new Date().toISOString().slice(0,10);
+
+  // Pre-fill member info from stored user
+  const storedUser = JSON.parse(localStorage.getItem('ucosa_user') || '{}');
+  if (storedUser.full_name) document.getElementById('applicant_name').value = storedUser.full_name;
+  if (storedUser.email)     document.getElementById('email').value           = storedUser.email;
+
+  // Check if already submitted
+  async function checkExisting() {
+    try {
+      const res  = await fetch('/api/member/fund-application', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.id) {
+        showSubmitted(data.status);
+      }
+    } catch(_) {}
+  }
+
+  function showSubmitted(status) {
+    document.getElementById('submittedBanner').style.display = 'block';
+    document.getElementById('appStatus').textContent = status || 'pending';
+    document.getElementById('appStatus').className = 'status-badge status-' + (status || 'pending');
+    // Disable all inputs
+    document.querySelectorAll('#fundForm input, #fundForm select, #fundForm textarea').forEach(el => el.disabled = true);
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').textContent = 'Application Already Submitted';
+  }
+
+  checkExisting();
+
+  document.getElementById('fundForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const msgEl = document.getElementById('formMsg');
+    msgEl.style.display = 'none';
+
+    const sex = document.querySelector('input[name="sex"]:checked')?.value;
+
+    // Validate required fields
+    const required = [
+      ['applicant_name', 'Applicant name'],
+      ['birth_date', 'Birth date'],
+      ['street_address', 'Street address'],
+      ['city', 'City'],
+      ['email', 'Email'],
+      ['applicant_signature', 'Applicant signature'],
+      ['signature_date', 'Signature date'],
+    ];
+    for (const [id, label] of required) {
+      if (!document.getElementById(id).value.trim()) {
+        msgEl.className = 'msg error'; msgEl.textContent = label + ' is required.'; msgEl.style.display = 'block';
+        document.getElementById(id).focus(); return;
+      }
+    }
+    if (!sex) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'Please select Sex.'; msgEl.style.display = 'block'; return;
+    }
+    if (!document.getElementById('terms_accepted').checked) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'You must accept the terms and conditions (Section 11).'; msgEl.style.display = 'block'; return;
+    }
+
+    const payload = {
+      applicant_name:       document.getElementById('applicant_name').value.trim(),
+      sex,
+      birth_date:           document.getElementById('birth_date').value,
+      ssn_last4:            document.getElementById('ssn_last4').value.trim(),
+      street_address:       document.getElementById('street_address').value.trim(),
+      city:                 document.getElementById('city').value.trim(),
+      state:                document.getElementById('state').value.trim(),
+      zip_code:             document.getElementById('zip_code').value.trim(),
+      email:                document.getElementById('email').value.trim(),
+      alt_address:          document.getElementById('alt_address').value.trim(),
+      alt_city:             document.getElementById('alt_city').value.trim(),
+      alt_state:            document.getElementById('alt_state').value.trim(),
+      alt_zip:              document.getElementById('alt_zip').value.trim(),
+      alt_phone:            document.getElementById('alt_phone').value.trim(),
+      alt_email:            document.getElementById('alt_email').value.trim(),
+      ben1_name:            document.getElementById('ben1_name').value.trim(),
+      ben1_relation:        document.getElementById('ben1_relation').value.trim(),
+      ben2_name:            document.getElementById('ben2_name').value.trim(),
+      ben2_relation:        document.getElementById('ben2_relation').value.trim(),
+      ben3_name:            document.getElementById('ben3_name').value.trim(),
+      ben3_relation:        document.getElementById('ben3_relation').value.trim(),
+      terms_accepted:       true,
+      applicant_signature:  document.getElementById('applicant_signature').value.trim(),
+      signature_date:       document.getElementById('signature_date').value,
+      president_name:       document.getElementById('president_name').value.trim(),
+      president_signature:  document.getElementById('president_signature').value.trim(),
+      president_date:       document.getElementById('president_date').value || null,
+    };
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    try {
+      const res  = await fetch('/api/member/fund-application', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Submission failed');
+      msgEl.className = 'msg success';
+      msgEl.textContent = '✅ Your application has been submitted successfully. The executive will review and contact you.';
+      msgEl.style.display = 'block';
+      showSubmitted('pending');
+    } catch(err) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Submit Application';
+    }
+  });
+</script>
+</body>
+</html>

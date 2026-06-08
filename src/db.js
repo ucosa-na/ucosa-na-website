@@ -243,6 +243,49 @@ pool.query(`
   `)
 ).then(() =>
   pool.query(`ALTER TABLE members_birthday ADD COLUMN IF NOT EXISTS photo_url TEXT DEFAULT NULL;`)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS member_fund_applications (
+      id                    SERIAL PRIMARY KEY,
+      user_id               INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      applicant_name        TEXT NOT NULL,
+      sex                   TEXT CHECK (sex IN ('Male','Female')),
+      birth_date            DATE,
+      ssn_last4             TEXT,
+      street_address        TEXT,
+      city                  TEXT,
+      state                 TEXT,
+      zip_code              TEXT,
+      email                 TEXT,
+      alt_address           TEXT,
+      alt_city              TEXT,
+      alt_state             TEXT,
+      alt_zip               TEXT,
+      alt_phone             TEXT,
+      alt_email             TEXT,
+      ben1_name             TEXT,
+      ben1_relation         TEXT,
+      ben2_name             TEXT,
+      ben2_relation         TEXT,
+      ben3_name             TEXT,
+      ben3_relation         TEXT,
+      terms_accepted        BOOLEAN DEFAULT FALSE,
+      applicant_signature   TEXT,
+      signature_date        DATE,
+      president_name        TEXT,
+      president_signature   TEXT,
+      president_date        DATE,
+      status                TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','denied')),
+      admin_approved        BOOLEAN DEFAULT NULL,
+      admin_comment         TEXT,
+      admin_signature       TEXT,
+      admin_date            DATE,
+      submitted_at          TIMESTAMPTZ DEFAULT NOW(),
+      updated_at            TIMESTAMPTZ DEFAULT NOW(),
+      updated_by            INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      UNIQUE(user_id)
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
