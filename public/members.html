@@ -411,7 +411,7 @@
       <a href="#endowment-section" onclick="document.getElementById('endowment-section').scrollIntoView({behavior:'smooth'})">Endowment Fund</a>
       <a href="#meeting-notes-section" onclick="document.getElementById('meeting-notes-section').scrollIntoView({behavior:'smooth'})">Meeting Notes</a>
       <a href="#special-levies-section" onclick="document.getElementById('special-levies-section').scrollIntoView({behavior:'smooth'})">Special Levies</a>
-      <a href="#fund-application-section" id="fundFormLink" onclick="document.getElementById('fund-application-section').scrollIntoView({behavior:'smooth'})">&#128196; Member's Fund Application</a>
+      <a href="/member-fund-form.html" id="fundFormLink">&#128196; Member's Fund Application</a>
       <a href="/change-password.html">Change Password</a>
       <a href="/">Back to Home</a>
       <a id="adminSidebarLink" href="/admin.html" class="sidebar-admin" style="display:none;">Admin Panel</a>
@@ -448,21 +448,6 @@
           link.style.cursor = 'default';
           link.title = 'Application submitted — status: ' + (data.status || 'pending');
           link.textContent = '✅ Member\'s Fund Application (Submitted)';
-        }
-        // Update main card button
-        const cardLink = document.getElementById('fundAppCardLink');
-        const cardStatus = document.getElementById('fundAppCardStatus');
-        const cardStatusVal = document.getElementById('fundAppCardStatusVal');
-        if (data && data.id && cardLink) {
-          cardLink.style.opacity = '0.45';
-          cardLink.style.pointerEvents = 'none';
-          cardLink.style.cursor = 'default';
-          cardLink.style.background = '#4caf50';
-          cardLink.innerHTML = '&#9989; Application Submitted';
-        }
-        if (data && data.id && cardStatus) {
-          cardStatusVal.textContent = data.status || 'pending';
-          cardStatus.style.display = 'block';
         }
       } catch(_) {}
     })();
@@ -914,21 +899,6 @@
             <h2>&#128176; Special Levies / Voluntary Contributions / Member-Donations</h2>
             <p style="color:#888;font-size:13px;margin-bottom:16px;">Read-only view. Contact the Financial Secretary to make changes.</p>
             ${buildSpecialLeviesTable(levies)}
-          </section>
-
-          <!-- FUND APPLICATION CARD -->
-          <section id="fund-application-section">
-            <h2>&#128196; Member's Fund Application</h2>
-            <div id="fundAppCard" style="background:#fff;border:1.5px solid #dde3f0;border-radius:12px;padding:28px 32px;max-width:640px;box-shadow:0 2px 10px rgba(0,0,0,0.07);margin-top:12px;">
-              <p style="font-size:15px;color:#444;margin-bottom:8px;">The UCOSA-NA Member's Fund provides bereavement coverage for active members. Fill out the application form to enroll.</p>
-              <p style="font-size:13px;color:#888;margin-bottom:20px;">One submission per member. Your application will be reviewed by the admin.</p>
-              <a id="fundAppCardLink" href="/member-fund-form.html"
-                style="display:inline-flex;align-items:center;gap:10px;background:#7b2152;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:16px;font-weight:700;transition:opacity 0.2s;"
-                onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
-                &#128196; Fill Out Application Form
-              </a>
-              <p id="fundAppCardStatus" style="display:none;margin-top:14px;font-size:14px;color:#1b5e20;font-weight:600;">&#9989; Application submitted &mdash; Status: <span id="fundAppCardStatusVal">pending</span></p>
-            </div>
           </section>
 
           <!-- QUICK ACTIONS -->
