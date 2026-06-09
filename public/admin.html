@@ -986,10 +986,11 @@
                 <th>Phone</th>
                 <th>Role</th>
                 <th>Created</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody id="unactivatedTableBody">
-              <tr class="empty-row"><td colspan="6">Click Refresh to load…</td></tr>
+              <tr class="empty-row"><td colspan="7">Click Refresh to load…</td></tr>
             </tbody>
           </table>
         </div>
@@ -2783,7 +2784,7 @@
 
     async function loadUnactivated() {
       const tbody = document.getElementById('unactivatedTableBody');
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Loading…</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Loading…</td></tr>';
       try {
         const res  = await fetch('/api/admin/users/never-logged-in', { headers: { 'Authorization': 'Bearer ' + getToken() } });
         const data = await res.json();
@@ -2791,7 +2792,7 @@
         _unactivatedList = data;
         document.getElementById('unactivatedCount').textContent = `${data.length} member${data.length !== 1 ? 's' : ''}`;
         if (!data.length) {
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="6">All members have logged in. 🎉</td></tr>';
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="7">All members have logged in. 🎉</td></tr>';
           return;
         }
         tbody.innerHTML = data.map((m, i) => `
@@ -2802,9 +2803,15 @@
             <td>${m.phone || '—'}</td>
             <td>${m.role || ''}</td>
             <td>${m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</td>
+            <td>
+              <button id="reminderBtn-${m.id}" onclick="sendIndividualReminder(${m.id}, '${(m.full_name||'').replace(/'/g,"\\'")}', this)"
+                style="padding:4px 12px;background:#7b2152;color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+                &#128231; Send Reminder
+              </button>
+            </td>
           </tr>`).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Error: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Error: ${err.message}</td></tr>`;
       }
     }
 
@@ -2817,6 +2824,31 @@
         `_${_unactivatedList.length} member(s) have never logged in_\n\n` +
         names;
       navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! Paste in WhatsApp.'));
+    }
+
+    async function sendIndividualReminder(userId, name, btn) {
+      if (!confirm(`Send activation reminder to ${name}? This will reset their password.`)) return;
+      const msgEl = document.getElementById('unactivatedMsg');
+      msgEl.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch(`/api/admin/users/${userId}/send-activation-reminder`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        msgEl.className = 'msg success';
+        msgEl.textContent = `✅ ${data.message}`;
+        msgEl.style.display = 'block';
+        btn.textContent = '✅ Sent';
+        btn.style.background = '#2e7d32';
+      } catch (err) {
+        msgEl.className = 'msg error';
+        msgEl.textContent = `Error: ${err.message}`;
+        msgEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '📧 Send Reminder';
+      }
     }
 
     async function sendActivationReminders() {
