@@ -1251,22 +1251,24 @@ router.post('/email/broadcast', proOrAdmin, async (req, res) => {
   }
 });
 
-// POST /api/admin/email/invite-broadcast — send personalised invitational email to a provided list
+// POST /api/admin/email/invite-broadcast — send personalised invitational email + SMS to a provided list
 router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
   const { list } = req.body;
   if (!list || !list.trim()) return res.status(400).json({ error: 'Recipient list is required' });
 
-  const entries = list.split(',').map(s => s.trim()).filter(Boolean);
+  // Format: "Full Name:email@example.com" or "Full Name:email@example.com:+1234567890"
+  const entries = list.split('\n').flatMap(line => line.split(','))
+    .map(s => s.trim()).filter(Boolean);
   const parsed  = [];
   const skipped = [];
 
   for (const entry of entries) {
-    const colonIdx = entry.lastIndexOf(':');
-    if (colonIdx === -1) { skipped.push(entry); continue; }
-    const fullName = entry.slice(0, colonIdx).trim();
-    const email    = entry.slice(colonIdx + 1).trim();
+    const parts    = entry.split(':').map(s => s.trim());
+    const fullName = parts[0];
+    const email    = parts[1] || '';
+    const phone    = parts[2] || '';
     if (!fullName || !email || !email.includes('@')) { skipped.push(entry); continue; }
-    parsed.push({ fullName, email });
+    parsed.push({ fullName, email, phone });
   }
 
   if (!parsed.length) return res.status(400).json({ error: 'No valid entries found. Use format: Full Name:email@example.com' });
@@ -1322,7 +1324,7 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
 </div>
 </body></html>`.trim();
 
-  const results = await Promise.allSettled(
+  const emailResults = await Promise.allSettled(
     parsed.map(({ fullName, email }) => sendEmail({
       to:      `"${fullName}" <${email}>`,
       subject: 'We Miss You — Come Back Home to UCOSA-NA',
@@ -1330,12 +1332,29 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
     }))
   );
 
-  const sent   = results.filter(r => r.status === 'fulfilled').length;
-  const failed = results.filter(r => r.status === 'rejected').length;
-  log.info(`Invite broadcast sent to ${sent} recipient(s), ${failed} failed, ${skipped.length} skipped`);
+  // SMS: send only to entries that have a phone number
+  const smsTargets = parsed.filter(p => p.phone);
+  const smsBody = (name) =>
+    `UCOSA-NA: Dear ${name}, we miss you!\n\n` +
+    `We invite you to reconnect with your fellow Ugbeka College alumni in North America.\n\n` +
+    `Visit us at https://ucosa-na.org and click "Request To Join" to come back home.\n\n` +
+    `— UCOSA-North America`;
+
+  const smsResults = await Promise.allSettled(
+    smsTargets.map(({ fullName, phone }) => sendSMS(phone, smsBody(fullName)))
+  );
+
+  const emailSent   = emailResults.filter(r => r.status === 'fulfilled').length;
+  const emailFailed = emailResults.filter(r => r.status === 'rejected').length;
+  const smsSent     = smsResults.filter(r => r.status === 'fulfilled' && r.value).length;
+  const smsFailed   = smsResults.length - smsSent;
+
+  log.info(`Invite broadcast: ${emailSent} emails sent, ${emailFailed} failed; ${smsSent} SMS sent, ${smsFailed} failed; ${skipped.length} skipped`);
   res.json({
-    message: `Invitation sent to ${sent} recipient(s).${failed ? ` ${failed} failed.` : ''}${skipped.length ? ` ${skipped.length} skipped (bad format).` : ''}`,
-    sent, failed, skipped: skipped.length,
+    message: `Email: ${emailSent} sent${emailFailed ? `, ${emailFailed} failed` : ''}.` +
+             (smsTargets.length ? ` SMS: ${smsSent} sent${smsFailed ? `, ${smsFailed} failed` : ''}.` : '') +
+             (skipped.length ? ` ${skipped.length} skipped (bad format).` : ''),
+    emailSent, emailFailed, smsSent, smsFailed, skipped: skipped.length,
   });
 });
 

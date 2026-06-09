@@ -1694,31 +1694,33 @@
 
       <!-- INVITE BROADCAST -->
       <section id="inviteBroadcast">
-        <h2>&#128140; Broadcast Email (Invitational)</h2>
+        <h2>&#128140; Broadcast Email + SMS (Invitational)</h2>
         <p style="color:#555;font-size:19px;margin-bottom:20px;">
-          Enter the list of former members to invite back to UCOSA-NA. Each entry must be
-          <strong>Full Name:email@example.com</strong>, separated by commas. Each person will
-          receive a personalised invitation using their full name.
+          Invite former members back to UCOSA-NA. Enter one recipient per line (or comma-separated).<br/>
+          <strong>Format:</strong> <code>Full Name:email@example.com</code> — email only<br/>
+          <strong>Format with SMS:</strong> <code>Full Name:email@example.com:+12125551234</code> — email + SMS
         </p>
         <div id="inviteError"   class="msg error"></div>
         <div id="inviteSuccess" class="msg success"></div>
 
         <div class="form-group" style="margin-bottom:16px;">
           <label for="inviteList">Recipient List <span style="color:#e63946;">*</span></label>
-          <textarea id="inviteList" rows="6"
-            style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:18px;resize:vertical;font-family:monospace;"
-            placeholder="Samson Imaria:sonnie_avens@gmail.com, Jane Doe:jane@example.com, John Okoro:john@example.com"></textarea>
-          <div style="font-size:15px;color:#888;margin-top:4px;">
-            Recipients detected: <span id="inviteCount">0</span>
+          <textarea id="inviteList" rows="8"
+            style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:15px;resize:vertical;font-family:monospace;line-height:1.6;"
+            placeholder="Jane Doe:jane@example.com&#10;John Okoro:john@example.com:+12125550001&#10;Samson Imaria:samson@example.com:+16465550002"></textarea>
+          <div style="font-size:14px;color:#888;margin-top:6px;display:flex;gap:24px;">
+            <span>&#9993; Email recipients: <strong id="inviteEmailCount">0</strong></span>
+            <span>&#128242; SMS recipients (with phone): <strong id="inviteSmsCount">0</strong></span>
           </div>
         </div>
 
-        <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:16px;color:#7c5700;">
-          <strong>Preview of email subject:</strong> We Miss You — Come Back Home to UCOSA-NA<br/>
-          Each recipient will be greeted: <em>Dear [Full Name],</em> and invited to visit ucosa-na.org and click <strong>Request To Join</strong>.
+        <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:15px;color:#7c5700;">
+          <strong>Email subject:</strong> "We Miss You — Come Back Home to UCOSA-NA"<br/>
+          <strong>SMS message:</strong> "Dear [Name], we miss you! Visit ucosa-na.org and click Request To Join to reconnect."<br/>
+          Each recipient is greeted personally by name.
         </div>
 
-        <button class="btn-primary" onclick="sendInviteBroadcast()">&#128140; Send Invitations</button>
+        <button class="btn-primary" onclick="sendInviteBroadcast()">&#128140; Send Invitations (Email + SMS)</button>
       </section>
 
       <!-- MEMBERS-DONATIONS -->
@@ -3706,8 +3708,10 @@
 
     document.addEventListener('input', function(e) {
       if (e.target.id !== 'inviteList') return;
-      const entries = e.target.value.split(',').map(s => s.trim()).filter(s => s.includes(':'));
-      document.getElementById('inviteCount').textContent = entries.length;
+      const raw     = e.target.value;
+      const entries = raw.split('\n').flatMap(l => l.split(',')).map(s => s.trim()).filter(s => s.includes(':'));
+      document.getElementById('inviteEmailCount').textContent = entries.length;
+      document.getElementById('inviteSmsCount').textContent   = entries.filter(s => s.split(':').length >= 3 && s.split(':')[2].trim()).length;
     });
 
     async function sendInviteBroadcast() {
@@ -3718,11 +3722,12 @@
       const list = document.getElementById('inviteList').value.trim();
       if (!list) { errEl.textContent = 'Please enter at least one recipient.'; errEl.style.display = 'block'; return; }
 
-      const entries = list.split(',').map(s => s.trim()).filter(Boolean);
+      const entries = list.split('\n').flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean);
       const valid   = entries.filter(s => s.includes(':'));
-      if (!valid.length) { errEl.textContent = 'No valid entries found. Use format: Full Name:email@example.com'; errEl.style.display = 'block'; return; }
+      const withSms = valid.filter(s => s.split(':').length >= 3 && s.split(':')[2].trim());
+      if (!valid.length) { errEl.textContent = 'No valid entries. Use format: Full Name:email@example.com or Full Name:email:+1phone'; errEl.style.display = 'block'; return; }
 
-      if (!confirm(`Send invitational email to ${valid.length} recipient(s)?`)) return;
+      if (!confirm(`Send invitations to ${valid.length} recipient(s) by email${withSms.length ? ` + SMS to ${withSms.length}` : ''}?`)) return;
 
       const btn = event.target;
       btn.disabled = true; btn.textContent = 'Sending…';
@@ -3737,9 +3742,10 @@
         if (!res.ok) { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; return; }
         okEl.textContent = data.message; okEl.style.display = 'block';
         document.getElementById('inviteList').value = '';
-        document.getElementById('inviteCount').textContent = '0';
+        document.getElementById('inviteEmailCount').textContent = '0';
+        document.getElementById('inviteSmsCount').textContent   = '0';
       } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
-      finally { btn.disabled = false; btn.textContent = '📬 Send Invitations'; }
+      finally { btn.disabled = false; btn.textContent = '📬 Send Invitations (Email + SMS)'; }
     }
 
     // ── EDIT MEMBER MODAL ────────────────────────────────────────────────────
