@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>UCOSA-NA — Endowment Fund Contribution</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;background:#f5f5f5;color:#222;font-size:15px;}
+    .page-wrap{max-width:700px;margin:0 auto;padding:32px 20px 60px;}
+
+    .form-header{background:#7b2152;color:#fff;border-radius:10px;padding:24px 32px;margin-bottom:28px;text-align:center;}
+    .form-header img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;margin-bottom:10px;}
+    .form-header h1{font-size:18px;font-weight:700;color:#c8a96e;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+    .form-header h2{font-size:24px;font-weight:700;color:#fff;margin-bottom:4px;}
+    .form-header p{font-size:13px;color:#f0d8e8;}
+
+    #submittedBanner{display:none;background:#e8f5e9;border:1.5px solid #4caf50;border-radius:8px;padding:16px 20px;margin-bottom:20px;color:#1b5e20;font-size:15px;}
+
+    .form-card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:28px 32px;margin-bottom:20px;}
+    .form-card h3{font-size:15px;font-weight:700;color:#7b2152;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #f0e6f4;padding-bottom:8px;margin-bottom:18px;}
+
+    .form-row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+    .form-group{display:flex;flex-direction:column;flex:1;min-width:160px;}
+    .form-group.full{flex:100%;min-width:100%;}
+    label{font-size:12px;font-weight:700;color:#555;margin-bottom:4px;letter-spacing:0.04em;}
+    label .req{color:#c0392b;}
+    input[type=text],input[type=date],input[type=email],input[type=number],select,textarea{
+      padding:10px 12px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;background:#fff;
+      transition:border-color 0.2s;width:100%;
+    }
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#7b2152;}
+    input:disabled,select:disabled,textarea:disabled{background:#f5f5f5;color:#aaa;cursor:not-allowed;}
+
+    .terms-box{background:#fdf6ec;border:1px solid #e8d8c0;border-radius:8px;padding:14px 16px;font-size:13px;color:#555;line-height:1.6;margin-bottom:14px;}
+    .checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+    .checkbox-row input[type=checkbox]{margin-top:2px;width:auto;flex-shrink:0;}
+    .checkbox-row label{font-size:13px;font-weight:400;color:#222;cursor:pointer;}
+
+    .btn-submit{width:100%;padding:14px;background:#7b2152;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:8px;}
+    .btn-submit:hover:not(:disabled){background:#6a1a44;}
+    .btn-submit:disabled{background:#aaa;cursor:not-allowed;}
+
+    .msg{padding:12px 16px;border-radius:8px;font-size:14px;margin-bottom:12px;display:none;}
+    .msg.error{background:#fdecea;color:#c0392b;border:1px solid #f5c2c2;}
+    .msg.success{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;}
+
+    .back-link{display:inline-block;margin-bottom:20px;color:#7b2152;text-decoration:none;font-size:14px;font-weight:600;}
+    .back-link:hover{text-decoration:underline;}
+
+    @media(max-width:600px){
+      .form-card{padding:18px 14px;}
+      .form-row{flex-direction:column;gap:10px;}
+      .form-group{min-width:100%;}
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <a href="/members.html" class="back-link">&#8592; Back to Member Dashboard</a>
+
+  <div class="form-header">
+    <img src="/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>Ugbeka College Old Students Association — North America Inc.</h1>
+    <h2>Endowment Fund Contribution</h2>
+    <p>Complete all required fields and submit to record your contribution</p>
+  </div>
+
+  <div id="submittedBanner">
+    &#9989; You have already submitted an endowment fund contribution. Contact the Financial Secretary to make changes.
+  </div>
+
+  <div id="formMsg" class="msg"></div>
+
+  <form id="endowmentForm" novalidate>
+
+    <div class="form-card">
+      <h3>Contributor Information</h3>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Full Name <span class="req">*</span></label>
+          <input type="text" id="full_name" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" id="email" required/>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>Contribution Details</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contribution Year <span class="req">*</span></label>
+          <select id="year" required></select>
+        </div>
+        <div class="form-group">
+          <label>Amount (USD) <span class="req">*</span></label>
+          <input type="number" id="amount" min="1" step="0.01" placeholder="0.00" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Payment Method <span class="req">*</span></label>
+          <select id="payment_method" required>
+            <option value="">— Select —</option>
+            <option>Check</option>
+            <option>Cash</option>
+            <option>Zelle</option>
+            <option>Bank Transfer</option>
+            <option>Money Order</option>
+            <option>Online (Stripe)</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment Date <span class="req">*</span></label>
+          <input type="date" id="contribution_date" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Notes / Reference (optional)</label>
+          <textarea id="notes" rows="3" placeholder="e.g. check number, transfer reference…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>Declaration</h3>
+      <div class="terms-box">
+        I hereby certify that the information provided above is true and accurate. I understand that this
+        endowment fund contribution supports UCOSA-NA's charitable objectives and benefits at Ugbeka College
+        Evboehighae. This submission will be reviewed and confirmed by the Financial Secretary.
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="terms_accepted" required/>
+        <label for="terms_accepted">I confirm the above declaration and agree to the terms. <span class="req">*</span></label>
+      </div>
+    </div>
+
+    <div id="submitMsg" class="msg"></div>
+    <button type="button" class="btn-submit" id="submitBtn" onclick="submitForm()">&#128229; Submit Endowment Contribution</button>
+
+  </form>
+</div>
+
+<script>
+  // Pre-fill year dropdown
+  (function() {
+    const sel = document.getElementById('year');
+    const now = new Date().getFullYear();
+    for (let y = now; y >= now - 5; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === now) o.selected = true;
+      sel.appendChild(o);
+    }
+    // Default date to today
+    document.getElementById('contribution_date').value = new Date().toISOString().slice(0, 10);
+  })();
+
+  // Pre-fill from localStorage
+  (function() {
+    try {
+      const u = JSON.parse(localStorage.getItem('ucosa_user') || '{}');
+      if (u.fullName) document.getElementById('full_name').value = u.fullName;
+      if (u.email)    document.getElementById('email').value    = u.email;
+    } catch(_) {}
+  })();
+
+  // Check if already submitted — disable form if so
+  (async function checkExisting() {
+    const tok = localStorage.getItem('ucosa_token');
+    if (!tok) { window.location.href = '/login.html'; return; }
+    try {
+      const res  = await fetch('/api/member/endowment', { headers: { 'Authorization': 'Bearer ' + tok } });
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        document.getElementById('submittedBanner').style.display = 'block';
+        document.getElementById('endowmentForm').querySelectorAll('input,select,textarea,button').forEach(el => el.disabled = true);
+      }
+    } catch(_) {}
+  })();
+
+  async function submitForm() {
+    const msgEl = document.getElementById('submitMsg');
+    msgEl.style.display = 'none';
+
+    const full_name         = document.getElementById('full_name').value.trim();
+    const email             = document.getElementById('email').value.trim();
+    const year              = document.getElementById('year').value;
+    const amount            = parseFloat(document.getElementById('amount').value);
+    const payment_method    = document.getElementById('payment_method').value;
+    const contribution_date = document.getElementById('contribution_date').value;
+    const notes             = document.getElementById('notes').value.trim();
+    const terms_accepted    = document.getElementById('terms_accepted').checked;
+
+    if (!full_name || !email || !year || !amount || !payment_method || !contribution_date) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'Please fill in all required fields.'; msgEl.style.display = 'block'; return;
+    }
+    if (amount <= 0) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'Amount must be greater than zero.'; msgEl.style.display = 'block'; return;
+    }
+    if (!terms_accepted) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'You must accept the declaration to submit.'; msgEl.style.display = 'block'; return;
+    }
+
+    const tok = localStorage.getItem('ucosa_token');
+    if (!tok) { window.location.href = '/login.html'; return; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    try {
+      const res  = await fetch('/api/member/endowment-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+        body: JSON.stringify({ full_name, email, year: parseInt(year), amount, payment_method, contribution_date, notes })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Submission failed.'; msgEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '📩 Submit Endowment Contribution';
+        return;
+      }
+      msgEl.className = 'msg success';
+      msgEl.textContent = '✅ Your endowment fund contribution has been submitted successfully. The Financial Secretary will confirm your record.';
+      msgEl.style.display = 'block';
+      document.getElementById('endowmentForm').querySelectorAll('input,select,textarea,button').forEach(el => el.disabled = true);
+      document.getElementById('submittedBanner').style.display = 'block';
+    } catch(e) {
+      msgEl.className = 'msg error'; msgEl.textContent = 'Network error. Please try again.'; msgEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = '📩 Submit Endowment Contribution';
+    }
+  }
+</script>
+</body>
+</html>

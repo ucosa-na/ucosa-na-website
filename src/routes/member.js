@@ -51,6 +51,26 @@ router.get('/endowment', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/member/endowment-submit — member self-submits an endowment contribution
+router.post('/endowment-submit', requireAuth, async (req, res) => {
+  try {
+    const { year, amount, payment_method, contribution_date, notes } = req.body;
+    if (!year || !amount || !payment_method || !contribution_date) {
+      return res.status(400).json({ error: 'year, amount, payment_method and contribution_date are required.' });
+    }
+    const { rows } = await pool.query(`
+      INSERT INTO endowment_fund (user_id, amount, contribution_date, payment_method, notes, year, status)
+      VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+      RETURNING id, amount, year, status`,
+      [req.user.id, amount, contribution_date, payment_method, notes || null, year]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Endowment submit error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/member/fund-application — check if member already submitted
 router.get('/fund-application', requireAuth, async (req, res) => {
   try {
