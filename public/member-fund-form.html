@@ -6,14 +6,14 @@
   <title>UCOSA-NA — Member's Endowment Fund Application</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;background:#f5f5f5;color:#222;font-size:20px;}
+    body{font-family:Arial,sans-serif;background:#f5f5f5;color:#222;font-size:24px;}
     .page-wrap{max-width:1000px;margin:0 auto;padding:32px 24px 60px;}
 
     /* Header */
     .form-header{background:#7b2152;color:#fff;border-radius:10px;padding:24px 32px;margin-bottom:28px;text-align:center;}
     .form-header img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;margin-bottom:10px;}
-    .form-header h1{font-size:24px;font-weight:700;color:#c8a96e;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
-    .form-header h2{font-size:30px;font-weight:700;color:#fff;margin-bottom:4px;}
+    .form-header h1{font-size:30px;font-weight:700;color:#c8a96e;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+    .form-header h2{font-size:40px;font-weight:700;color:#fff;margin-bottom:4px;}
     .form-header p{font-size:13px;color:#f0d8e8;}
 
     /* Submitted banner */
@@ -21,16 +21,16 @@
 
     /* Card */
     .form-card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:32px 34px;margin-bottom:20px;}
-    .form-card h3{font-size:20px;font-weight:700;color:#7b2152;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #f0e6f4;padding-bottom:8px;margin-bottom:18px;}
+    .form-card h3{font-size:30px;font-weight:700;color:#7b2152;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #f0e6f4;padding-bottom:8px;margin-bottom:18px;}
 
     /* Form rows */
     .form-row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
     .form-group{display:flex;flex-direction:column;flex:1;min-width:160px;}
     .form-group.full{flex:100%;min-width:100%;}
-    label{font-size:18px;font-weight:700;color:#555;margin-bottom:6px;letter-spacing:0.04em;}
+    label{font-size:24px;font-weight:700;color:#555;margin-bottom:6px;letter-spacing:0.04em;}
     label .req{color:#c0392b;}
     input[type=text],input[type=date],input[type=email],input[type=tel],select,textarea{
-      padding:10px 12px;border:1.5px solid #dde3f0;border-radius:6px;font-size:18px;background:#fff;
+      padding:10px 12px;border:1.5px solid #dde3f0;border-radius:6px;font-size:24px;background:#fff;
       transition:border-color 0.2s;width:100%;
     }
     input:focus,select:focus,textarea:focus{outline:none;border-color:#7b2152;}
@@ -58,7 +58,7 @@
     .admin-note{font-size:11px;color:#888;margin-bottom:12px;}
 
     /* Buttons */
-    .btn-submit{width:100%;padding:20px;background:#7b2152;color:#fff;border:none;border-radius:8px;font-size:24px;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:8px;}
+    .btn-submit{width:100%;padding:20px;background:#7b2152;color:#fff;border:none;border-radius:8px;font-size:30px;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:8px;}
     .btn-submit:hover:not(:disabled){background:#6a1a44;}
     .btn-submit:disabled{background:#aaa;cursor:not-allowed;}
 
@@ -79,14 +79,15 @@
     }
 
     /* Toolbar */
-    .form-toolbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1.5px solid #dde3f0;padding:10px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:16px;}
-    .zoom-label{font-size:14px;color:#555;font-weight:600;margin-right:2px;}
-    .tb-btn{padding:7px 16px;border:1.5px solid #dde3f0;border-radius:6px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s;}
+    .form-toolbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1.5px solid #dde3f0;padding:12px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:16px;}
+    .zoom-label{font-size:16px;color:#555;font-weight:700;margin-right:2px;}
+    .tb-btn{padding:10px 20px;border:2px solid #dde3f0;border-radius:8px;background:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:background 0.15s;}
     .tb-btn:hover{background:#f5f0f8;border-color:#7b2152;color:#7b2152;}
-    .tb-btn.primary{background:#7b2152;color:#fff;border-color:#7b2152;}
+    .tb-btn.zoom-btn{padding:10px 22px;font-size:22px;font-weight:900;min-width:52px;line-height:1;}
+    .tb-btn.primary{background:#7b2152;color:#fff;border-color:#7b2152;padding:12px 30px;font-size:18px;}
     .tb-btn.primary:hover{background:#6a1a44;}
-    .zoom-level{font-size:14px;color:#555;min-width:38px;text-align:center;font-weight:600;}
-    .tb-sep{width:1px;height:22px;background:#dde3f0;margin:0 4px;}
+    .zoom-level{font-size:16px;color:#555;min-width:48px;text-align:center;font-weight:700;}
+    .tb-sep{width:1px;height:28px;background:#dde3f0;margin:0 6px;}
 
     /* Print styles */
     @media print{
@@ -102,9 +103,9 @@
 <body>
 <div class="form-toolbar" id="formToolbar">
   <span class="zoom-label">Zoom:</span>
-  <button class="tb-btn" onclick="adjustZoom(-10)">&#8722;</button>
-  <span class="zoom-level" id="zoomLevel">100%</span>
-  <button class="tb-btn" onclick="adjustZoom(10)">&#43;</button>
+  <button class="tb-btn zoom-btn" onclick="adjustZoom(-10)" title="Zoom out">&#8722;</button>
+  <span class="zoom-level" id="zoomLevel">140%</span>
+  <button class="tb-btn zoom-btn" onclick="adjustZoom(10)" title="Zoom in">&#43;</button>
   <button class="tb-btn" onclick="resetZoom()">Reset</button>
   <div class="tb-sep"></div>
   <button class="tb-btn primary" onclick="window.print()">&#128424; Print</button>
@@ -466,18 +467,21 @@
     }
   });
 
-  // Zoom controls
-  let zoomPct = 100;
-  function adjustZoom(delta) {
-    zoomPct = Math.min(200, Math.max(50, zoomPct + delta));
-    document.getElementById('pageWrap').style.fontSize = (zoomPct / 100) + 'em';
+  // Zoom controls — start at 120% for better readability
+  let zoomPct = 140;
+  function applyZoom() {
+    document.documentElement.style.zoom = (zoomPct / 100).toString();
     document.getElementById('zoomLevel').textContent = zoomPct + '%';
   }
-  function resetZoom() {
-    zoomPct = 100;
-    document.getElementById('pageWrap').style.fontSize = '';
-    document.getElementById('zoomLevel').textContent = '100%';
+  function adjustZoom(delta) {
+    zoomPct = Math.min(300, Math.max(50, zoomPct + delta));
+    applyZoom();
   }
+  function resetZoom() {
+    zoomPct = 140;
+    applyZoom();
+  }
+  applyZoom();
   function downloadPDF() {
     document.getElementById('formToolbar').style.display = 'none';
     window.print();
