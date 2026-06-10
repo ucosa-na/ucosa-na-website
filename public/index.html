@@ -2145,7 +2145,7 @@
     </style>
 
     <script>
-    (function(){
+    document.addEventListener('DOMContentLoaded', function() {
       const slides = document.querySelectorAll('.misc-slide');
       const dotsEl = document.getElementById('miscDots');
       let cur = 0;
@@ -2165,7 +2165,7 @@
         dotsEl.children[cur].classList.add('on');
       }
       setInterval(() => goTo((cur+1) % slides.length), 10000);
-    })();
+    });
     </script>
   </section>
 
