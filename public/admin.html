@@ -1245,7 +1245,7 @@
       <!-- MEMBER'S FUND APPLICATIONS -->
       <section id="fundApplicationsSection">
         <h2>&#128196; Member's Fund Applications</h2>
-        <p style="color:#555;font-size:16px;margin-bottom:16px;">View and manage member bereavement fund applications. Click a row to review and update office-use fields. &nbsp;<a href="/member-fund-form.html" target="_blank" style="font-size:14px;color:#1a1a2e;font-weight:600;">&#128196; Preview Blank Form &#8599;</a></p>
+        <p style="color:#555;font-size:16px;margin-bottom:16px;">View and manage member bereavement fund applications. Click a row to review and update office-use fields.</p>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
           <input type="text" id="fundAppSearch" oninput="renderFundApps()" placeholder="Search by name or status…" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:240px;"/>
           <button onclick="document.getElementById('fundAppSearch').value='';renderFundApps();" style="padding:6px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;background:white;cursor:pointer;">Clear</button>
@@ -4249,8 +4249,6 @@
         setInterval(fetchMetrics, 10000);
         loadAuditLog();
         loadEmailFailures();
-        loadFundApps();
-        loadBirthdays();
       }
 
       if (['admin', 'fin-role'].includes(user.role)) {
