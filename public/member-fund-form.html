@@ -77,10 +77,40 @@
       .form-row{flex-direction:column;gap:10px;}
       .form-group{min-width:100%;}
     }
+
+    /* Toolbar */
+    .form-toolbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1.5px solid #dde3f0;padding:10px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:16px;}
+    .zoom-label{font-size:14px;color:#555;font-weight:600;margin-right:2px;}
+    .tb-btn{padding:7px 16px;border:1.5px solid #dde3f0;border-radius:6px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s;}
+    .tb-btn:hover{background:#f5f0f8;border-color:#7b2152;color:#7b2152;}
+    .tb-btn.primary{background:#7b2152;color:#fff;border-color:#7b2152;}
+    .tb-btn.primary:hover{background:#6a1a44;}
+    .zoom-level{font-size:14px;color:#555;min-width:38px;text-align:center;font-weight:600;}
+    .tb-sep{width:1px;height:22px;background:#dde3f0;margin:0 4px;}
+
+    /* Print styles */
+    @media print{
+      .form-toolbar,.back-link,.btn-submit{display:none!important;}
+      body{background:#fff;font-size:14px;}
+      .page-wrap{max-width:100%;padding:10px 16px;}
+      .form-card{box-shadow:none;border:1px solid #ddd;padding:16px 20px;}
+      .form-header{border-radius:0;padding:16px 20px;}
+      input,select,textarea{border:1px solid #ccc!important;}
+    }
   </style>
 </head>
 <body>
-<div class="page-wrap">
+<div class="form-toolbar" id="formToolbar">
+  <span class="zoom-label">Zoom:</span>
+  <button class="tb-btn" onclick="adjustZoom(-10)">&#8722;</button>
+  <span class="zoom-level" id="zoomLevel">100%</span>
+  <button class="tb-btn" onclick="adjustZoom(10)">&#43;</button>
+  <button class="tb-btn" onclick="resetZoom()">Reset</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn primary" onclick="window.print()">&#128424; Print</button>
+  <button class="tb-btn primary" onclick="downloadPDF()">&#11015; Download PDF</button>
+</div>
+<div class="page-wrap" id="pageWrap">
 
   <div class="form-header">
     <img src="/logo.jpg" alt="UCOSA-NA Logo"/>
@@ -435,6 +465,24 @@
       btn.disabled = false; btn.textContent = 'Submit Application';
     }
   });
+
+  // Zoom controls
+  let zoomPct = 100;
+  function adjustZoom(delta) {
+    zoomPct = Math.min(200, Math.max(50, zoomPct + delta));
+    document.getElementById('pageWrap').style.fontSize = (zoomPct / 100) + 'em';
+    document.getElementById('zoomLevel').textContent = zoomPct + '%';
+  }
+  function resetZoom() {
+    zoomPct = 100;
+    document.getElementById('pageWrap').style.fontSize = '';
+    document.getElementById('zoomLevel').textContent = '100%';
+  }
+  function downloadPDF() {
+    document.getElementById('formToolbar').style.display = 'none';
+    window.print();
+    setTimeout(() => document.getElementById('formToolbar').style.display = '', 500);
+  }
 </script>
 </body>
 </html>
