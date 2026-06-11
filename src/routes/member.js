@@ -126,4 +126,54 @@ router.post('/fund-application', requireAuth, async (req, res) => {
   }
 });
 
+// PUT /api/member/fund-application — update own application
+router.put('/fund-application', requireAuth, async (req, res) => {
+  try {
+    const { rows: existing } = await pool.query(
+      `SELECT id FROM member_fund_applications WHERE user_id = $1`, [req.user.id]
+    );
+    if (!existing.length) return res.status(404).json({ error: 'No application found.' });
+    const f = req.body;
+    const { rows } = await pool.query(`
+      UPDATE member_fund_applications SET
+        applicant_name=$2, sex=$3, birth_date=$4, ssn_last4=$5,
+        street_address=$6, city=$7, state=$8, zip_code=$9, email=$10,
+        alt_address=$11, alt_city=$12, alt_state=$13, alt_zip=$14, alt_phone=$15, alt_email=$16,
+        ben1_name=$17, ben1_relation=$18, ben2_name=$19, ben2_relation=$20, ben3_name=$21, ben3_relation=$22,
+        terms_accepted=$23, applicant_signature=$24, signature_date=$25,
+        president_name=$26, president_signature=$27, president_date=$28,
+        status='pending'
+      WHERE user_id=$1
+      RETURNING id, status`,
+      [
+        req.user.id, f.applicant_name, f.sex, f.birth_date || null, f.ssn_last4 || null,
+        f.street_address, f.city, f.state || null, f.zip_code || null, f.email,
+        f.alt_address || null, f.alt_city || null, f.alt_state || null, f.alt_zip || null,
+        f.alt_phone || null, f.alt_email || null,
+        f.ben1_name || null, f.ben1_relation || null,
+        f.ben2_name || null, f.ben2_relation || null,
+        f.ben3_name || null, f.ben3_relation || null,
+        f.terms_accepted || false, f.applicant_signature, f.signature_date || null,
+        f.president_name || null, f.president_signature || null, f.president_date || null
+      ]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/member/fund-application — delete own application
+router.delete('/fund-application', requireAuth, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query(
+      `DELETE FROM member_fund_applications WHERE user_id = $1`, [req.user.id]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'No application found.' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -354,6 +354,8 @@
   const token = localStorage.getItem('ucosa_token');
   if (!token) { window.location.href = '/login.html'; }
 
+  const isEditMode = new URLSearchParams(window.location.search).get('edit') === '1';
+
   // Pre-fill today's date for signature date
   document.getElementById('signature_date').value = new Date().toISOString().slice(0,10);
 
@@ -362,6 +364,24 @@
   if (storedUser.full_name) document.getElementById('applicant_name').value = storedUser.full_name;
   if (storedUser.email)     document.getElementById('email').value           = storedUser.email;
 
+  function fillForm(data) {
+    const fields = [
+      'applicant_name','birth_date','ssn_last4','street_address','city','state','zip_code','email',
+      'alt_address','alt_city','alt_state','alt_zip','alt_phone','alt_email',
+      'ben1_name','ben1_relation','ben2_name','ben2_relation','ben3_name','ben3_relation',
+      'applicant_signature','signature_date','president_name','president_signature','president_date'
+    ];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && data[id]) el.value = data[id];
+    });
+    if (data.sex) {
+      const r = document.querySelector(`input[name="sex"][value="${data.sex}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.terms_accepted) document.getElementById('terms_accepted').checked = true;
+  }
+
   // Check if already submitted
   async function checkExisting() {
     try {
@@ -369,7 +389,16 @@
       if (!res.ok) return;
       const data = await res.json();
       if (data && data.id) {
-        showSubmitted(data.status);
+        if (isEditMode) {
+          // Edit mode: pre-fill the form with existing data and keep it enabled
+          fillForm(data);
+          document.getElementById('submitBtn').textContent = 'Update Application';
+          document.getElementById('submittedBanner').style.display = 'block';
+          document.getElementById('appStatus').textContent = data.status || 'pending';
+          document.getElementById('appStatus').className = 'status-badge status-' + (data.status || 'pending');
+        } else {
+          showSubmitted(data.status);
+        }
       }
     } catch(_) {}
   }
@@ -378,7 +407,6 @@
     document.getElementById('submittedBanner').style.display = 'block';
     document.getElementById('appStatus').textContent = status || 'pending';
     document.getElementById('appStatus').className = 'status-badge status-' + (status || 'pending');
-    // Disable all inputs
     document.querySelectorAll('#fundForm input, #fundForm select, #fundForm textarea').forEach(el => el.disabled = true);
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').textContent = 'Application Already Submitted';
@@ -447,23 +475,25 @@
     };
 
     const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'Submitting…';
+    btn.disabled = true; btn.textContent = isEditMode ? 'Updating…' : 'Submitting…';
 
     try {
       const res  = await fetch('/api/member/fund-application', {
-        method: 'POST',
+        method: isEditMode ? 'PUT' : 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Submission failed');
+      if (!res.ok) throw new Error(data.error || (isEditMode ? 'Update failed' : 'Submission failed'));
       msgEl.className = 'msg success';
-      msgEl.textContent = '✅ Your application has been submitted successfully. The executive will review and contact you.';
+      msgEl.textContent = isEditMode
+        ? '✅ Your application has been updated successfully. The admin will review the changes.'
+        : '✅ Your application has been submitted successfully. The executive will review and contact you.';
       msgEl.style.display = 'block';
       showSubmitted('pending');
     } catch(err) {
       msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Submit Application';
+      btn.disabled = false; btn.textContent = isEditMode ? 'Update Application' : 'Submit Application';
     }
   });
 
