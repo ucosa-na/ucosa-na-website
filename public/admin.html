@@ -2420,6 +2420,7 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;">
             <div><strong>Sex:</strong> ${a.sex || '—'}</div>
             <div><strong>Birth Date:</strong> ${a.birth_date ? new Date(a.birth_date).toLocaleDateString() : '—'}</div>
+            <div><strong>Commencement Date:</strong> ${a.commencement_date ? new Date(a.commencement_date).toLocaleDateString() : '—'}</div>
             <div><strong>SSN (last 4):</strong> ${a.ssn_last4 || '—'}</div>
             <div><strong>Email:</strong> ${a.email || '—'}</div>
             <div style="grid-column:1/-1"><strong>Address:</strong> ${[a.street_address, a.city, a.state, a.zip_code].filter(Boolean).join(', ') || '—'}</div>

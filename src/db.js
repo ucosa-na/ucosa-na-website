@@ -286,6 +286,8 @@ pool.query(`
       UNIQUE(user_id)
     );
   `)
+).then(() =>
+  pool.query(`ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS commencement_date DATE DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

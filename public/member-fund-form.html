@@ -153,21 +153,25 @@
           <input type="date" id="birth_date" required/>
         </div>
         <div class="form-group">
-          <label>4. Social Security # (Last 4 digits)</label>
+          <label>4. Commencement Date</label>
+          <input type="date" id="commencement_date"/>
+        </div>
+        <div class="form-group">
+          <label>5. Social Security # (Last 4 digits)</label>
           <input type="text" id="ssn_last4" maxlength="4" placeholder="XXXX"/>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group full">
-          <label>5. Street Address <span class="req">*</span></label>
+          <label>6. Street Address <span class="req">*</span></label>
           <input type="text" id="street_address" required/>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>6. City <span class="req">*</span></label>
+          <label>7. City <span class="req">*</span></label>
           <input type="text" id="city" required/>
         </div>
         <div class="form-group" style="max-width:100px;">
@@ -366,7 +370,7 @@
 
   function fillForm(data) {
     const fields = [
-      'applicant_name','birth_date','ssn_last4','street_address','city','state','zip_code','email',
+      'applicant_name','birth_date','commencement_date','ssn_last4','street_address','city','state','zip_code','email',
       'alt_address','alt_city','alt_state','alt_zip','alt_phone','alt_email',
       'ben1_name','ben1_relation','ben2_name','ben2_relation','ben3_name','ben3_relation',
       'applicant_signature','signature_date','president_name','president_signature','president_date'
@@ -448,6 +452,7 @@
       applicant_name:       document.getElementById('applicant_name').value.trim(),
       sex,
       birth_date:           document.getElementById('birth_date').value,
+      commencement_date:    document.getElementById('commencement_date').value || null,
       ssn_last4:            document.getElementById('ssn_last4').value.trim(),
       street_address:       document.getElementById('street_address').value.trim(),
       city:                 document.getElementById('city').value.trim(),

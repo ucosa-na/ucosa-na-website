@@ -98,7 +98,7 @@ router.post('/fund-application', requireAuth, async (req, res) => {
     const f = req.body;
     const { rows } = await pool.query(`
       INSERT INTO member_fund_applications (
-        user_id, applicant_name, sex, birth_date, ssn_last4,
+        user_id, applicant_name, sex, birth_date, commencement_date, ssn_last4,
         street_address, city, state, zip_code, email,
         alt_address, alt_city, alt_state, alt_zip, alt_phone, alt_email,
         ben1_name, ben1_relation, ben2_name, ben2_relation, ben3_name, ben3_relation,
@@ -106,12 +106,12 @@ router.post('/fund-application', requireAuth, async (req, res) => {
         president_name, president_signature, president_date
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-        $11,$12,$13,$14,$15,$16,
-        $17,$18,$19,$20,$21,$22,
-        $23,$24,$25,$26,$27,$28
+        $11,$12,$13,$14,$15,$16,$17,
+        $18,$19,$20,$21,$22,$23,
+        $24,$25,$26,$27,$28,$29
       ) RETURNING id, status`,
       [
-        req.user.id, f.applicant_name, f.sex, f.birth_date || null, f.ssn_last4 || null,
+        req.user.id, f.applicant_name, f.sex, f.birth_date || null, f.commencement_date || null, f.ssn_last4 || null,
         f.street_address, f.city, f.state || null, f.zip_code || null, f.email,
         f.alt_address || null, f.alt_city || null, f.alt_state || null, f.alt_zip || null,
         f.alt_phone || null, f.alt_email || null,
@@ -160,17 +160,17 @@ router.put('/fund-application', requireAuth, async (req, res) => {
     const f = req.body;
     const { rows } = await pool.query(`
       UPDATE member_fund_applications SET
-        applicant_name=$2, sex=$3, birth_date=$4, ssn_last4=$5,
-        street_address=$6, city=$7, state=$8, zip_code=$9, email=$10,
-        alt_address=$11, alt_city=$12, alt_state=$13, alt_zip=$14, alt_phone=$15, alt_email=$16,
-        ben1_name=$17, ben1_relation=$18, ben2_name=$19, ben2_relation=$20, ben3_name=$21, ben3_relation=$22,
-        terms_accepted=$23, applicant_signature=$24, signature_date=$25,
-        president_name=$26, president_signature=$27, president_date=$28,
+        applicant_name=$2, sex=$3, birth_date=$4, commencement_date=$5, ssn_last4=$6,
+        street_address=$7, city=$8, state=$9, zip_code=$10, email=$11,
+        alt_address=$12, alt_city=$13, alt_state=$14, alt_zip=$15, alt_phone=$16, alt_email=$17,
+        ben1_name=$18, ben1_relation=$19, ben2_name=$20, ben2_relation=$21, ben3_name=$22, ben3_relation=$23,
+        terms_accepted=$24, applicant_signature=$25, signature_date=$26,
+        president_name=$27, president_signature=$28, president_date=$29,
         status='pending'
       WHERE user_id=$1
       RETURNING id, status`,
       [
-        req.user.id, f.applicant_name, f.sex, f.birth_date || null, f.ssn_last4 || null,
+        req.user.id, f.applicant_name, f.sex, f.birth_date || null, f.commencement_date || null, f.ssn_last4 || null,
         f.street_address, f.city, f.state || null, f.zip_code || null, f.email,
         f.alt_address || null, f.alt_city || null, f.alt_state || null, f.alt_zip || null,
         f.alt_phone || null, f.alt_email || null,
