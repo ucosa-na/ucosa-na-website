@@ -680,6 +680,7 @@
         <div class="sidebar-group-items open" id="groupAdminItems">
           <a href="#testEmail">Test Email</a>
           <a href="#testSms">Test SMS</a>
+          <a href="#testFundNotifications">Test Fund Notifications</a>
           <a href="#siteMaintenance">Site Maintenance</a>
           <a href="#auditLog">Audit Log</a>
           <a href="#fundApplicationsSection">Member's Endowment Fund Applications</a>
@@ -883,6 +884,35 @@
             <input type="tel" id="testSmsPhone" placeholder="+12015551234" style="width:100%;padding:11px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:20px;outline:none;"/>
           </div>
           <button class="btn-primary" id="testSmsBtn" onclick="sendTestSms()" style="white-space:nowrap;">Send Test SMS</button>
+        </div>
+      </section>
+
+      <!-- TEST FUND APPLICATION NOTIFICATIONS -->
+      <section id="testFundNotifications">
+        <h2>&#128203; Test Fund Application Notifications</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">
+          Send test email and/or SMS using the exact fund application notification templates to verify delivery before going live.
+        </p>
+        <div id="testFundNotifMsg" class="msg" style="display:none;margin-bottom:14px;font-size:15px;line-height:1.8;"></div>
+
+        <!-- Shared inputs -->
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="flex:1;min-width:200px;">
+            <label style="font-size:15px;font-weight:700;color:#444;display:block;margin-bottom:5px;">Member Name (for greeting)</label>
+            <input type="text" id="testFundName" placeholder="e.g. John Doe" style="width:100%;padding:10px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:16px;"/>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label style="font-size:15px;font-weight:700;color:#444;display:block;margin-bottom:5px;">Email Address</label>
+            <input type="email" id="testFundEmail" placeholder="you@example.com" style="width:100%;padding:10px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:16px;"/>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label style="font-size:15px;font-weight:700;color:#444;display:block;margin-bottom:5px;">Phone Number</label>
+            <input type="tel" id="testFundPhone" placeholder="+12015551234" style="width:100%;padding:10px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:16px;"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button onclick="testFundNotification('submission')" style="padding:10px 24px;background:#1565c0;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">&#9993; Test Submission Notification</button>
+          <button onclick="testFundNotification('approval')" style="padding:10px 24px;background:#2e7d32;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">&#10003; Test Approval Notification</button>
         </div>
       </section>
 
@@ -2181,7 +2211,7 @@
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection'];
-      const adminSections    = ['statsRow', 'testEmail', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
+      const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
@@ -3196,6 +3226,31 @@
         errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = 'Send Test SMS';
+      }
+    }
+
+    async function testFundNotification(type) {
+      const name  = document.getElementById('testFundName').value.trim() || 'Test Member';
+      const email = document.getElementById('testFundEmail').value.trim();
+      const phone = document.getElementById('testFundPhone').value.trim();
+      const msgEl = document.getElementById('testFundNotifMsg');
+      msgEl.style.display = 'none';
+      if (!email && !phone) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Enter at least an email or phone number.'; msgEl.style.display = 'block'; return;
+      }
+      const endpoint = type === 'approval' ? '/api/admin/test-fund-approval' : '/api/admin/test-fund-submission';
+      try {
+        const res  = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ name, email: email || undefined, phone: phone || undefined })
+        });
+        const data = await res.json();
+        if (!res.ok) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Request failed'; msgEl.style.display = 'block'; return; }
+        const lines = Object.entries(data).filter(([,v]) => v).map(([k,v]) => `<strong>${k}:</strong> ${v}`).join('<br/>');
+        msgEl.className = 'msg success'; msgEl.innerHTML = lines || 'Done.'; msgEl.style.display = 'block';
+      } catch(err) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
       }
     }
 

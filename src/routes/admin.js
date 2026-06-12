@@ -383,6 +383,78 @@ router.post('/test-email', adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/admin/test-fund-submission — test fund application submission notification
+router.post('/test-fund-submission', adminOnly, async (req, res) => {
+  const { email, phone, name } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone number.' });
+  const memberName = name || 'Test Member';
+  const results = { email: null, sms: null };
+
+  if (email) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Fund Application Received — UCOSA-NA',
+        html: `<p>Dear ${memberName},</p>
+               <p>Your <strong>Member's Endowment Fund Application</strong> has been received successfully.</p>
+               <p>The admin will review your application and you will be notified of the outcome.</p>
+               <p>Thank you,<br/>UCOSA-NA</p>`
+      });
+      results.email = `Test submission email sent to ${email}`;
+    } catch (err) {
+      results.email = `Email failed: ${err.message}`;
+    }
+  }
+
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      const sent = await sendSMS(normalized, `Dear ${memberName}, your UCOSA-NA Member's Endowment Fund Application has been received. The admin will review and notify you of the outcome. — UCOSA-NA`).catch(err => { results.sms = `SMS failed: ${err.message}`; return false; });
+      if (sent && !results.sms) results.sms = `Test submission SMS sent to ${normalized}`;
+    } else {
+      results.sms = `Invalid phone number: ${phone}`;
+    }
+  }
+
+  res.json(results);
+});
+
+// POST /api/admin/test-fund-approval — test fund application approval notification
+router.post('/test-fund-approval', adminOnly, async (req, res) => {
+  const { email, phone, name } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone number.' });
+  const memberName = name || 'Test Member';
+  const results = { email: null, sms: null };
+
+  if (email) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Fund Application Approved — UCOSA-NA',
+        html: `<p>Dear ${memberName},</p>
+               <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
+               <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
+               <p>Thank you,<br/>UCOSA-NA</p>`
+      });
+      results.email = `Test approval email sent to ${email}`;
+    } catch (err) {
+      results.email = `Email failed: ${err.message}`;
+    }
+  }
+
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      const sent = await sendSMS(normalized, `Dear ${memberName}, your UCOSA-NA Member's Endowment Fund Application has been APPROVED. You are now enrolled for bereavement coverage. — UCOSA-NA`).catch(err => { results.sms = `SMS failed: ${err.message}`; return false; });
+      if (sent && !results.sms) results.sms = `Test approval SMS sent to ${normalized}`;
+    } else {
+      results.sms = `Invalid phone number: ${phone}`;
+    }
+  }
+
+  res.json(results);
+});
+
 // GET /api/admin/users — list all members with profile data
 router.get('/users', anyPriv, async (req, res) => {
   try {
