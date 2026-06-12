@@ -2369,6 +2369,7 @@
     // ── Member's Endowment Fund Applications ───────────────────────────────────────────
     let _allFundApps = [];
     let _currentFundAppId = null;
+    let _currentFundAppData = null;
 
     async function loadFundApps() {
       const tbody = document.getElementById('fundAppTableBody');
@@ -2414,6 +2415,7 @@
         const a    = await res.json();
         if (!res.ok) throw new Error(a.error || 'Failed');
         _currentFundAppId = id;
+        _currentFundAppData = a;
         document.getElementById('detailName').textContent = a.applicant_name || '';
         const ben = (n, r) => n ? `${n} (${r || 'N/A'})` : '—';
         document.getElementById('detailContent').innerHTML = `
@@ -2468,9 +2470,105 @@
         msgEl.className = 'msg success'; msgEl.textContent = '✅ Application updated successfully. Member notified if approved.'; msgEl.style.display = 'block';
         loadFundApps();
         setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
+        if (document.getElementById('detailStatus').value === 'approved' && _currentFundAppData) {
+          const appData = Object.assign({}, _currentFundAppData, {
+            status: 'approved',
+            admin_signature: document.getElementById('detailAdminSig').value.trim(),
+            admin_date:      document.getElementById('detailAdminDate').value || null,
+            admin_comment:   document.getElementById('detailComment').value.trim(),
+          });
+          setTimeout(() => generateApprovedPDF(appData), 500);
+        }
       } catch(err) {
         msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
       }
+    }
+
+    function generateApprovedPDF(a) {
+      const fmt = d => d ? new Date(d).toLocaleDateString() : '—';
+      const val = v => v || '—';
+      const ben = (n, r) => n ? `${n} (${r || 'N/A'})` : '—';
+      const win = window.open('', '_blank', 'width=900,height=700');
+      win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+      <title>Approved Fund Application — ${val(a.applicant_name)}</title>
+      <style>
+        body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}
+        .header{background:#7b2152;color:#fff;text-align:center;padding:24px 32px;}
+        .header img{width:70px;height:70px;border-radius:50%;border:3px solid #c8a96e;margin-bottom:10px;}
+        .header h1{font-size:16px;font-weight:700;color:#c8a96e;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;}
+        .header h2{font-size:20px;font-weight:700;color:#fff;margin:0 0 4px;}
+        .header p{font-size:12px;color:#f0d8e8;margin:0;}
+        .approved-badge{display:inline-block;background:#1b5e20;color:#fff;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:700;margin-top:8px;}
+        .body{padding:24px 32px;}
+        .section{margin-bottom:18px;}
+        .section h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#7b2152;border-bottom:2px solid #f0e6f4;padding-bottom:4px;margin-bottom:10px;}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;}
+        .field{font-size:12px;color:#333;margin-bottom:4px;}
+        .field strong{color:#1a1a2e;}
+        .full{grid-column:1/-1;}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}
+        th{background:#1a1a2e;color:#fff;padding:7px 12px;text-align:left;}
+        td{padding:7px 12px;border-bottom:1px solid #f0e6f4;color:#333;}
+        tr:nth-child(even){background:#fdf6fb;}
+        .admin-section{background:#f8f4fc;border:1.5px solid #7b2152;border-radius:8px;padding:14px 18px;margin-top:14px;}
+        .admin-section h3{color:#7b2152;}
+        @media print{body{margin:0;}button{display:none!important;}}
+      </style></head><body>
+      <div class="header">
+        <img src="/logo.jpg" alt="UCOSA-NA Logo">
+        <h1>Ugbeka College Old Students Association — North America Inc.</h1>
+        <h2>Member's Endowment Fund Application</h2>
+        <p>Bereavement Coverage — UCOSA-MF</p>
+        <div class="approved-badge">✅ APPROVED</div>
+      </div>
+      <div class="body">
+        <div class="section">
+          <h3>Personal Information</h3>
+          <div class="grid">
+            <div class="field"><strong>Applicant Name:</strong> ${val(a.applicant_name)}</div>
+            <div class="field"><strong>Sex:</strong> ${val(a.sex)}</div>
+            <div class="field"><strong>Birth Date:</strong> ${fmt(a.birth_date)}</div>
+            <div class="field"><strong>Commencement Date:</strong> ${fmt(a.commencement_date)}</div>
+            <div class="field"><strong>SSN (Last 4):</strong> ${val(a.ssn_last4)}</div>
+            <div class="field"><strong>Email:</strong> ${val(a.email)}</div>
+            <div class="field full"><strong>Address:</strong> ${[a.street_address,a.city,a.state,a.zip_code].filter(Boolean).join(', ') || '—'}</div>
+            <div class="field full"><strong>Alt Address:</strong> ${[a.alt_address,a.alt_city,a.alt_state,a.alt_zip].filter(Boolean).join(', ') || '—'}</div>
+            <div class="field"><strong>Alt Phone:</strong> ${val(a.alt_phone)}</div>
+            <div class="field"><strong>Alt Email:</strong> ${val(a.alt_email)}</div>
+          </div>
+        </div>
+        <div class="section">
+          <h3>Beneficiaries</h3>
+          <table><thead><tr><th>#</th><th>Name</th><th>Relationship</th></tr></thead><tbody>
+            <tr><td>1</td><td>${val(a.ben1_name)}</td><td>${val(a.ben1_relation)}</td></tr>
+            <tr><td>2</td><td>${val(a.ben2_name)}</td><td>${val(a.ben2_relation)}</td></tr>
+            <tr><td>3</td><td>${val(a.ben3_name)}</td><td>${val(a.ben3_relation)}</td></tr>
+          </tbody></table>
+        </div>
+        <div class="section">
+          <h3>Signatures</h3>
+          <div class="grid">
+            <div class="field"><strong>Terms Accepted:</strong> ${a.terms_accepted ? '✅ Yes' : '❌ No'}</div>
+            <div class="field"><strong>Signature Date:</strong> ${fmt(a.signature_date)}</div>
+            <div class="field"><strong>Applicant Signature:</strong> ${val(a.applicant_signature)}</div>
+            <div class="field"><strong>President Name:</strong> ${val(a.president_name)}</div>
+            <div class="field"><strong>President Signature:</strong> ${val(a.president_signature)}</div>
+            <div class="field"><strong>President Date:</strong> ${fmt(a.president_date)}</div>
+          </div>
+        </div>
+        <div class="admin-section">
+          <h3>Office Use Only — APPROVED</h3>
+          <div class="grid">
+            <div class="field"><strong>Admin Signature:</strong> ${val(a.admin_signature)}</div>
+            <div class="field"><strong>Admin Date:</strong> ${fmt(a.admin_date)}</div>
+            <div class="field full"><strong>Comment:</strong> ${val(a.admin_comment)}</div>
+            <div class="field"><strong>Submitted:</strong> ${a.submitted_at ? new Date(a.submitted_at).toLocaleString() : '—'}</div>
+          </div>
+        </div>
+      </div>
+      <script>window.onload=function(){window.print();}<\/script>
+      </body></html>`);
+      win.document.close();
     }
 
     async function deleteFundApp() {

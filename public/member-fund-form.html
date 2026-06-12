@@ -359,6 +359,7 @@
   if (!token) { window.location.href = '/login.html'; }
 
   const isEditMode = new URLSearchParams(window.location.search).get('edit') === '1';
+  const isViewMode = new URLSearchParams(window.location.search).get('view') === '1';
 
   // Pre-fill today's date for signature date
   document.getElementById('signature_date').value = new Date().toISOString().slice(0,10);
@@ -393,7 +394,17 @@
       if (!res.ok) return;
       const data = await res.json();
       if (data && data.id) {
-        if (isEditMode) {
+        if (isViewMode) {
+          // View mode: pre-fill read-only, hide submit, auto-download PDF
+          fillForm(data);
+          document.querySelectorAll('#fundForm input, #fundForm select, #fundForm textarea').forEach(el => el.disabled = true);
+          document.getElementById('submitBtn').style.display = 'none';
+          document.getElementById('submittedBanner').style.display = 'block';
+          document.getElementById('appStatus').textContent = 'approved';
+          document.getElementById('appStatus').className = 'status-badge status-approved';
+          // Auto-trigger PDF download
+          setTimeout(() => downloadPDF(), 800);
+        } else if (isEditMode) {
           // Edit mode: pre-fill the form with existing data and keep it enabled
           fillForm(data);
           document.getElementById('submitBtn').textContent = 'Update Application';

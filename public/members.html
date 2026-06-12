@@ -469,6 +469,7 @@
         const note         = document.getElementById('fundAppCardNote');
         const statusVal    = document.getElementById('fundAppCardStatusVal');
         const approvedBtn  = document.getElementById('fundAppApprovedBtn');
+        const downloadBtn  = document.getElementById('fundAppDownloadBtn');
         const updateBtn    = document.getElementById('fundAppUpdateBtn');
         const deleteBtn    = document.getElementById('fundAppDeleteBtn');
         const deniedNote   = document.getElementById('fundAppDeniedNote');
@@ -481,9 +482,10 @@
           btn.style.background = '#9e9e9e';
         }
         if (data && data.id && data.status === 'approved') {
-          if (approvedBtn) approvedBtn.style.display = 'inline-flex';
-          if (updateBtn)   updateBtn.style.display   = 'inline-flex';
-          if (deleteBtn)   deleteBtn.style.display   = 'inline-flex';
+          if (approvedBtn)  approvedBtn.style.display  = 'inline-flex';
+          if (downloadBtn)  downloadBtn.style.display  = 'inline-flex';
+          if (updateBtn)    updateBtn.style.display    = 'inline-flex';
+          if (deleteBtn)    deleteBtn.style.display    = 'inline-flex';
         }
         if (data && data.id && data.status === 'denied') {
           if (updateBtn)    updateBtn.style.display    = 'inline-flex';
@@ -934,6 +936,7 @@
                   &#128196; Fill Out &amp; Submit Application
                 </a>
                 <span id="fundAppApprovedBtn" style="display:none;align-items:center;gap:8px;background:#1b5e20;color:#fff;padding:12px 26px;border-radius:8px;font-size:15px;font-weight:700;">&#9989; Form Submitted and Approved</span>
+                <a id="fundAppDownloadBtn" href="/member-fund-form.html?view=1" style="display:none;align-items:center;gap:8px;background:#0277bd;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:700;">&#11015; Download PDF</a>
                 <a id="fundAppUpdateBtn" href="/member-fund-form.html?edit=1" style="display:none;align-items:center;gap:8px;background:#1565c0;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:700;">&#9998; Update</a>
                 <button id="fundAppDeleteBtn" onclick="deleteFundApplication()" style="display:none;align-items:center;gap:8px;background:#c62828;color:#fff;border:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">&#128465; Delete</button>
               </div>
