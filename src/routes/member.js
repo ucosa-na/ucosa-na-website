@@ -77,7 +77,7 @@ router.post('/endowment-submit', requireAuth, async (req, res) => {
 router.get('/fund-application', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, status, submitted_at FROM member_fund_applications WHERE user_id = $1`,
+      `SELECT id, status, admin_comment, submitted_at FROM member_fund_applications WHERE user_id = $1`,
       [req.user.id]
     );
     res.json(rows[0] || null);
@@ -182,6 +182,28 @@ router.put('/fund-application', requireAuth, async (req, res) => {
       ]
     );
     res.json(rows[0]);
+
+    // Notify member of resubmission
+    try {
+      const { rows: uRows } = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
+      const u = uRows[0] || {};
+      const name = f.applicant_name || u.full_name || 'Member';
+      if (u.email) {
+        sendEmail({
+          to: u.email,
+          subject: 'Fund Application Resubmitted — UCOSA-NA',
+          html: `<p>Dear ${name},</p>
+                 <p>Your <strong>Member's Endowment Fund Application</strong> has been updated and resubmitted successfully.</p>
+                 <p>The admin will review your updated application and notify you of the outcome.</p>
+                 <p>Thank you,<br/>UCOSA-NA</p>`
+        }).catch(() => {});
+      }
+      const phone = normalizePhone(u.phone);
+      if (phone) {
+        sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been updated and resubmitted. The admin will review and notify you. — UCOSA-NA`).catch(() => {});
+      }
+    } catch(_) {}
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

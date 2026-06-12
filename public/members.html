@@ -465,12 +465,14 @@
           link.textContent = '✅ Member\'s Fund Application (Submitted)';
         }
         // Update main card button
-        const btn        = document.getElementById('fundAppCardBtn');
-        const note       = document.getElementById('fundAppCardNote');
-        const statusVal  = document.getElementById('fundAppCardStatusVal');
-        const approvedBtn = document.getElementById('fundAppApprovedBtn');
-        const updateBtn  = document.getElementById('fundAppUpdateBtn');
-        const deleteBtn  = document.getElementById('fundAppDeleteBtn');
+        const btn          = document.getElementById('fundAppCardBtn');
+        const note         = document.getElementById('fundAppCardNote');
+        const statusVal    = document.getElementById('fundAppCardStatusVal');
+        const approvedBtn  = document.getElementById('fundAppApprovedBtn');
+        const updateBtn    = document.getElementById('fundAppUpdateBtn');
+        const deleteBtn    = document.getElementById('fundAppDeleteBtn');
+        const deniedNote   = document.getElementById('fundAppDeniedNote');
+        const deniedReason = document.getElementById('fundAppDeniedReason');
         if (data && data.id && btn) {
           btn.dataset.submitted = '1';
           btn.style.opacity = '0.45';
@@ -482,6 +484,11 @@
           if (approvedBtn) approvedBtn.style.display = 'inline-flex';
           if (updateBtn)   updateBtn.style.display   = 'inline-flex';
           if (deleteBtn)   deleteBtn.style.display   = 'inline-flex';
+        }
+        if (data && data.id && data.status === 'denied') {
+          if (updateBtn)    updateBtn.style.display    = 'inline-flex';
+          if (deniedNote)   deniedNote.style.display   = 'block';
+          if (deniedReason) deniedReason.textContent   = data.admin_comment || 'No reason provided.';
         }
         if (data && data.id && note) {
           if (statusVal) statusVal.textContent = data.status || 'pending';
@@ -931,6 +938,11 @@
                 <button id="fundAppDeleteBtn" onclick="deleteFundApplication()" style="display:none;align-items:center;gap:8px;background:#c62828;color:#fff;border:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">&#128465; Delete</button>
               </div>
               <p id="fundAppCardNote" style="display:none;margin-top:12px;font-size:14px;color:#2e7d32;font-weight:600;">&#9989; Application submitted &mdash; Status: <span id="fundAppCardStatusVal">pending</span></p>
+              <div id="fundAppDeniedNote" style="display:none;margin-top:14px;background:#fdecea;border:1.5px solid #ef9a9a;border-radius:8px;padding:14px 16px;">
+                <p style="font-size:14px;font-weight:700;color:#c62828;margin-bottom:6px;">&#10060; Application Denied</p>
+                <p style="font-size:13px;color:#333;margin-bottom:8px;"><strong>Reason:</strong> <span id="fundAppDeniedReason">No reason provided.</span></p>
+                <p style="font-size:13px;color:#555;">Please click <strong>Update</strong> to modify your application and resubmit for review.</p>
+              </div>
             </div>
           </section>
 

@@ -1944,8 +1944,8 @@ router.put('/fund-applications/:id', adminOnly, async (req, res) => {
       rows[0].id, rows[0].applicant_name, { status: rows[0].status });
     res.json(rows[0]);
 
-    // Notify member by email + SMS when status is set to approved
-    if (rows[0].status === 'approved') {
+    // Notify member by email + SMS when status is approved or denied
+    if (rows[0].status === 'approved' || rows[0].status === 'denied') {
       try {
         const { rows: uRows } = await pool.query(
           `SELECT u.full_name, u.email, u.phone FROM users u
@@ -1954,19 +1954,40 @@ router.put('/fund-applications/:id', adminOnly, async (req, res) => {
         );
         const u = uRows[0] || {};
         const name = rows[0].applicant_name || u.full_name || 'Member';
-        if (u.email) {
-          sendEmail({
-            to: u.email,
-            subject: 'Fund Application Approved — UCOSA-NA',
-            html: `<p>Dear ${name},</p>
-                   <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
-                   <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
-                   <p>Thank you,<br/>UCOSA-NA</p>`
-          }).catch(() => {});
-        }
-        const phone = normalizePhone(u.phone);
-        if (phone) {
-          sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been APPROVED. You are now enrolled for bereavement coverage. — UCOSA-NA`).catch(() => {});
+        const reason = rows[0].admin_comment ? `<p><strong>Reason:</strong> ${rows[0].admin_comment}</p>` : '';
+        const smsReason = rows[0].admin_comment ? ` Reason: ${rows[0].admin_comment}.` : '';
+
+        if (rows[0].status === 'approved') {
+          if (u.email) {
+            sendEmail({
+              to: u.email,
+              subject: 'Fund Application Approved — UCOSA-NA',
+              html: `<p>Dear ${name},</p>
+                     <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
+                     <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
+                     <p>Thank you,<br/>UCOSA-NA</p>`
+            }).catch(() => {});
+          }
+          const phone = normalizePhone(u.phone);
+          if (phone) {
+            sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been APPROVED. You are now enrolled for bereavement coverage. — UCOSA-NA`).catch(() => {});
+          }
+        } else {
+          if (u.email) {
+            sendEmail({
+              to: u.email,
+              subject: 'Fund Application Denied — UCOSA-NA',
+              html: `<p>Dear ${name},</p>
+                     <p>We regret to inform you that your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#c62828;">denied</strong>.</p>
+                     ${reason}
+                     <p>You may log in to your member portal, update your application, and resubmit for review.</p>
+                     <p>Thank you,<br/>UCOSA-NA</p>`
+            }).catch(() => {});
+          }
+          const phone = normalizePhone(u.phone);
+          if (phone) {
+            sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been DENIED.${smsReason} Please log in to update and resubmit your application. — UCOSA-NA`).catch(() => {});
+          }
         }
       } catch(_) {}
     }
