@@ -1,6 +1,8 @@
 const express = require('express');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
+const { sendEmail } = require('../mailer');
+const { sendSMS, normalizePhone } = require('../sms');
 
 const router = express.Router();
 
@@ -121,6 +123,28 @@ router.post('/fund-application', requireAuth, async (req, res) => {
       ]
     );
     res.json(rows[0]);
+
+    // Notify member by email + SMS
+    try {
+      const { rows: uRows } = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
+      const u = uRows[0] || {};
+      const name = f.applicant_name || u.full_name || 'Member';
+      if (u.email) {
+        sendEmail({
+          to: u.email,
+          subject: "Fund Application Received — UCOSA-NA",
+          html: `<p>Dear ${name},</p>
+                 <p>Your <strong>Member's Endowment Fund Application</strong> has been received successfully.</p>
+                 <p>The admin will review your application and you will be notified of the outcome.</p>
+                 <p>Thank you,<br/>UCOSA-NA</p>`
+        }).catch(() => {});
+      }
+      const phone = normalizePhone(u.phone);
+      if (phone) {
+        sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been received. The admin will review and notify you of the outcome. — UCOSA-NA`).catch(() => {});
+      }
+    } catch(_) {}
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

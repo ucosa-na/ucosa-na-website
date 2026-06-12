@@ -1303,8 +1303,9 @@
               <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Comment</label>
               <textarea id="detailComment" rows="3" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
             </div>
-            <div style="display:flex;gap:10px;">
-              <button onclick="saveFundApp()" style="padding:8px 24px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Save Changes</button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onclick="saveFundApp()" style="padding:8px 24px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">&#10003; Save Changes</button>
+              <button onclick="deleteFundApp()" style="padding:8px 20px;background:#c62828;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">&#128465; Delete Application</button>
               <button onclick="document.getElementById('fundAppDetail').style.display='none';" style="padding:8px 18px;background:#888;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Close</button>
             </div>
           </div>
@@ -2433,9 +2434,32 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to save');
-        msgEl.className = 'msg success'; msgEl.textContent = '✅ Application updated successfully.'; msgEl.style.display = 'block';
+        msgEl.className = 'msg success'; msgEl.textContent = '✅ Application updated successfully. Member notified if approved.'; msgEl.style.display = 'block';
         loadFundApps();
-        setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+        setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
+      } catch(err) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
+      }
+    }
+
+    async function deleteFundApp() {
+      if (!_currentFundAppId) return;
+      const name = document.getElementById('detailName').textContent || 'this application';
+      if (!confirm(`Are you sure you want to permanently delete the application for "${name}"? This cannot be undone.`)) return;
+      const msgEl = document.getElementById('fundAppMsg');
+      msgEl.style.display = 'none';
+      try {
+        const res  = await fetch(`/api/admin/fund-applications/${_currentFundAppId}`, {
+          method:  'DELETE',
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Delete failed');
+        document.getElementById('fundAppDetail').style.display = 'none';
+        _currentFundAppId = null;
+        msgEl.className = 'msg success'; msgEl.textContent = '✅ Application deleted successfully.'; msgEl.style.display = 'block';
+        loadFundApps();
+        setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
       } catch(err) {
         msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
       }

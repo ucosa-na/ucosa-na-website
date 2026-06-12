@@ -1871,6 +1871,50 @@ router.put('/fund-applications/:id', adminOnly, async (req, res) => {
     await logAudit(req.user.id, req.user.email, 'FUND_APP_UPDATED', 'FUND_APPLICATION',
       rows[0].id, rows[0].applicant_name, { status: rows[0].status });
     res.json(rows[0]);
+
+    // Notify member by email + SMS when status is set to approved
+    if (rows[0].status === 'approved') {
+      try {
+        const { rows: uRows } = await pool.query(
+          `SELECT u.full_name, u.email, u.phone FROM users u
+           JOIN member_fund_applications mfa ON mfa.user_id = u.id
+           WHERE mfa.id = $1`, [req.params.id]
+        );
+        const u = uRows[0] || {};
+        const name = rows[0].applicant_name || u.full_name || 'Member';
+        if (u.email) {
+          sendEmail({
+            to: u.email,
+            subject: 'Fund Application Approved — UCOSA-NA',
+            html: `<p>Dear ${name},</p>
+                   <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
+                   <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
+                   <p>Thank you,<br/>UCOSA-NA</p>`
+          }).catch(() => {});
+        }
+        const phone = normalizePhone(u.phone);
+        if (phone) {
+          sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been APPROVED. You are now enrolled for bereavement coverage. — UCOSA-NA`).catch(() => {});
+        }
+      } catch(_) {}
+    }
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/fund-applications/:id — admin deletes a fund application
+router.delete('/fund-applications/:id', adminOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `DELETE FROM member_fund_applications WHERE id = $1 RETURNING id, applicant_name, user_id`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    await logAudit(req.user.id, req.user.email, 'FUND_APP_DELETED', 'FUND_APPLICATION',
+      rows[0].id, rows[0].applicant_name, {});
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
