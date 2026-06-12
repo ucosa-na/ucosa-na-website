@@ -244,13 +244,16 @@ pool.query(`
 ).then(() =>
   pool.query(`ALTER TABLE members_birthday ADD COLUMN IF NOT EXISTS photo_url TEXT DEFAULT NULL;`)
 ).then(() =>
+  pool.query(`DROP TABLE IF EXISTS member_fund_applications CASCADE;`)
+).then(() =>
   pool.query(`
-    CREATE TABLE IF NOT EXISTS member_fund_applications (
+    CREATE TABLE member_fund_applications (
       id                    SERIAL PRIMARY KEY,
       user_id               INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       applicant_name        TEXT NOT NULL,
       sex                   TEXT CHECK (sex IN ('Male','Female')),
       birth_date            DATE,
+      commencement_date     DATE,
       ssn_last4             TEXT,
       street_address        TEXT,
       city                  TEXT,
@@ -286,8 +289,6 @@ pool.query(`
       UNIQUE(user_id)
     );
   `)
-).then(() =>
-  pool.query(`ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS commencement_date DATE DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
