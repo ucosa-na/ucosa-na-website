@@ -6,11 +6,21 @@ const { sendSMS, normalizePhone } = require('../sms');
 
 const router = express.Router();
 
-// Enrollment period: January 1–30 each year
+// Enrollment period: Jan 1–Jul 30 for 2026; Jan 1–30 from 2027 onward
 function isEnrollmentOpen() {
-  const now = new Date();
-  const month = now.getMonth(); // 0 = January
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth(); // 0 = January, 6 = July
   const day   = now.getDate();
+
+  if (year === 2026) {
+    // Jan 1 – Jul 30
+    if (month < 6) return true;                              // Jan–Jun fully open
+    if (month === 6 && day >= 1 && day <= 30) return true;  // Jul 1–30
+    return false;
+  }
+
+  // 2027 and beyond: January 1–30 only
   return month === 0 && day >= 1 && day <= 30;
 }
 
@@ -97,7 +107,7 @@ router.get('/fund-application', requireAuth, async (req, res) => {
 // POST /api/member/fund-application — submit the form
 router.post('/fund-application', requireAuth, async (req, res) => {
   if (!isEnrollmentOpen()) {
-    return res.status(403).json({ error: 'The enrollment period is closed. Applications are accepted January 1–30 each year.' });
+    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications are accepted January 1 – July 30. From 2027 onward, enrollment runs January 1–30 each year.' });
   }
   try {
     // One submission per member
@@ -164,7 +174,7 @@ router.post('/fund-application', requireAuth, async (req, res) => {
 // PUT /api/member/fund-application — update own application
 router.put('/fund-application', requireAuth, async (req, res) => {
   if (!isEnrollmentOpen()) {
-    return res.status(403).json({ error: 'The enrollment period is closed. Applications can only be updated January 1–30 each year.' });
+    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications can be updated January 1 – July 30. From 2027 onward, enrollment runs January 1–30 each year.' });
   }
   try {
     const { rows: existing } = await pool.query(

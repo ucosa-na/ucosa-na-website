@@ -363,6 +363,9 @@ async function sendEnrollmentOpenEmails() {
     `);
     if (!members.length) { log.info('Scheduler: no active members for enrollment email'); return; }
 
+    const enrollDeadline = year === 2026 ? 'July 30' : 'January 30';
+    const enrollPeriod   = year === 2026 ? 'January 1 – July 30' : 'January 1 – January 30';
+
     const results = await Promise.allSettled(members.map(m => sendEmail({
       to: m.email,
       subject: `UCOSA-NA Member's Endowment Fund — Enrollment Now Open (${year})`,
@@ -380,7 +383,7 @@ async function sendEnrollmentOpenEmails() {
   .badge{display:inline-block;background:#1b5e20;color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:18px}
   .info-box{background:#f0f7ff;border-left:4px solid #0d47a1;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0}
   .cta{text-align:center;margin:24px 0}
-  .cta a{background:#7b2152;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;display:inline-block}
+  .cta a{background:#7b2152;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;display:inline-block;margin:6px}
   .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
   .ftr a{color:#c8a96e;text-decoration:none}
   strong{color:#7b2152}
@@ -396,13 +399,16 @@ async function sendEnrollmentOpenEmails() {
     <div class="badge">✅ Enrollment Now Open</div>
     <p>We are pleased to announce that the <strong>UCOSA-NA Member's Endowment Fund (UCOSA-MF)</strong> enrollment period is now open for <strong>${year}</strong>.</p>
     <div class="info-box">
-      <strong style="color:#0d47a1;">Enrollment Period: January 1 – January 30, ${year}</strong><br/>
-      <span style="font-size:14px;color:#444;">Applications submitted after January 30th will not be accepted until the next enrollment period.</span>
+      <strong style="color:#0d47a1;">Enrollment Period: ${enrollPeriod}, ${year}</strong><br/>
+      <span style="font-size:14px;color:#444;">Applications submitted after ${enrollDeadline} will not be accepted until the next enrollment period.</span>
     </div>
-    <p>For existing enrollment, you can change your selections. <strong>All members who wish to participate</strong> in the UCOSA-MF should fill out the enrollment form before <strong>January 30, ${year}</strong>.</p>
+    <p>For existing enrollment, you can change your selections. <strong>All members who wish to participate</strong> in the UCOSA-MF should fill out the enrollment form before <strong>${enrollDeadline}, ${year}</strong>.</p>
     <p>The UCOSA-MF provides financial assistance to enrolled members and their designated beneficiaries during times of bereavement. Benefits range from <strong>$250 up to $5,000</strong> depending on your continuous enrollment period, with a maximum lifetime benefit of <strong>$10,000</strong>.</p>
-    <p>To enroll, log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong>.</p>
-    <div class="cta"><a href="https://ucosa-na.org/members.html">Log In &amp; Apply Now</a></div>
+    <p>To enroll, log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong> using the buttons below.</p>
+    <div class="cta">
+      <a href="https://ucosa-na.org/member-fund-form.html">Complete Endowment Fund Application</a>
+      <a href="https://ucosa-na.org/members.html" style="background:#0d47a1;">Log In to Member Portal</a>
+    </div>
     <p>With warmth and fellowship,</p>
     <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
   </div>
