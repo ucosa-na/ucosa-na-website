@@ -289,6 +289,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
       message: `Member ${fullName} created.${smsNote}`,
       tempPassword,
       smsSent,
+      userId,
     });
 
     // Fire-and-forget welcome email
@@ -1650,7 +1651,7 @@ router.get('/logs', secOrAdmin, (req, res) => {
 
 // ── SPECIAL LEVIES / VOLUNTARY CONTRIBUTIONS / DONATIONS ─────────────────────
 
-const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Member-Donation'];
+const LEVY_TYPES = ['Special Levy', 'Voluntary Contribution', 'Member-Donation', 'Development Levy'];
 
 // GET /api/admin/special-levies — readable by all authenticated members
 router.get('/special-levies', requireAuth, async (req, res) => {
@@ -1676,7 +1677,7 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
   if (!userId || !type || !year || amount === undefined) {
     return res.status(400).json({ error: 'Member, type, year, and amount are required.' });
   }
-  if (!donationCode) {
+  if (!donationCode && type !== 'Development Levy') {
     return res.status(400).json({ error: 'Donation Code is required.' });
   }
   if (!LEVY_TYPES.includes(type)) {

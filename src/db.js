@@ -289,6 +289,12 @@ pool.query(`
       UNIQUE(user_id)
     );
   `)
+).then(() =>
+  pool.query(`
+    ALTER TABLE special_levies DROP CONSTRAINT IF EXISTS special_levies_type_check;
+    ALTER TABLE special_levies ADD CONSTRAINT special_levies_type_check
+      CHECK (type IN ('Special Levy','Voluntary Contribution','Member-Donation','Development Levy'));
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
