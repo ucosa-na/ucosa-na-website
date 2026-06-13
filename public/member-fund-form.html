@@ -445,6 +445,16 @@
           document.getElementById('submittedBanner').style.display = 'block';
           document.getElementById('appStatus').textContent = data.status || 'pending';
           document.getElementById('appStatus').className = 'status-badge status-' + (data.status || 'pending');
+          // Lock commencement_date after approval — only new applications can set it
+          if (data.status === 'approved') {
+            const cdEl = document.getElementById('commencement_date');
+            if (cdEl) {
+              cdEl.readOnly = true;
+              cdEl.style.background = '#f5f5f5';
+              cdEl.style.cursor = 'not-allowed';
+              cdEl.title = 'Commencement date cannot be changed after approval';
+            }
+          }
         } else {
           showSubmitted(data.status);
         }

@@ -399,8 +399,9 @@ async function sendEnrollmentOpenEmails() {
       <strong style="color:#0d47a1;">Enrollment Period: January 1 – January 30, ${year}</strong><br/>
       <span style="font-size:14px;color:#444;">Applications submitted after January 30th will not be accepted until the next enrollment period.</span>
     </div>
+    <p>For existing enrollment, you can change your selections. <strong>All members who wish to participate</strong> in the UCOSA-MF should fill out the enrollment form before <strong>January 30, ${year}</strong>.</p>
     <p>The UCOSA-MF provides financial assistance to enrolled members and their designated beneficiaries during times of bereavement. Benefits range from <strong>$250 up to $5,000</strong> depending on your continuous enrollment period, with a maximum lifetime benefit of <strong>$10,000</strong>.</p>
-    <p>To enroll, simply log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong> before <strong>January 30, ${year}</strong>.</p>
+    <p>To enroll, log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong>.</p>
     <div class="cta"><a href="https://ucosa-na.org/members.html">Log In &amp; Apply Now</a></div>
     <p>With warmth and fellowship,</p>
     <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>

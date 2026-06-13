@@ -168,10 +168,14 @@ router.put('/fund-application', requireAuth, async (req, res) => {
   }
   try {
     const { rows: existing } = await pool.query(
-      `SELECT id FROM member_fund_applications WHERE user_id = $1`, [req.user.id]
+      `SELECT id, status, commencement_date FROM member_fund_applications WHERE user_id = $1`, [req.user.id]
     );
     if (!existing.length) return res.status(404).json({ error: 'No application found.' });
     const f = req.body;
+    // Preserve commencement_date if previously approved — cannot be changed after approval
+    const commencementDate = existing[0].status === 'approved'
+      ? existing[0].commencement_date
+      : (f.commencement_date || null);
     const { rows } = await pool.query(`
       UPDATE member_fund_applications SET
         applicant_name=$2, sex=$3, birth_date=$4, commencement_date=$5, ssn_last4=$6,
@@ -184,7 +188,7 @@ router.put('/fund-application', requireAuth, async (req, res) => {
       WHERE user_id=$1
       RETURNING id, status`,
       [
-        req.user.id, f.applicant_name, f.sex, f.birth_date || null, f.commencement_date || null, f.ssn_last4 || null,
+        req.user.id, f.applicant_name, f.sex, f.birth_date || null, commencementDate, f.ssn_last4 || null,
         f.street_address, f.city, f.state || null, f.zip_code || null, f.email,
         f.alt_address || null, f.alt_city || null, f.alt_state || null, f.alt_zip || null,
         f.alt_phone || null, f.alt_email || null,
