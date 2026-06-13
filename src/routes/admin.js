@@ -1360,6 +1360,12 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
   .body p{margin:0 0 16px}
   .body ul{margin:0 0 16px 20px}
   .body ul li{margin-bottom:8px}
+  .links-table{width:100%;border-collapse:collapse;margin:0 0 20px}
+  .links-table th{background:#1a1a2e;color:#c8a96e;padding:10px 14px;text-align:left;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .links-table td{padding:10px 14px;border-bottom:1px solid #f0e6f4;font-size:14px}
+  .links-table tr:last-child td{border-bottom:none}
+  .links-table tr:nth-child(even) td{background:#fdf6fb}
+  .links-table td a{color:#7b2152;font-weight:600;text-decoration:none}
   .cta{text-align:center;margin:28px 0}
   .cta a{background:#c8a96e;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;display:inline-block}
   .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:18px 20px;font-size:12px}
@@ -1388,8 +1394,18 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
       <li>To organize cultural, social, and fundraising activities that benefit our association and the broader Ugbeka community</li>
     </ul>
     <p>We recognize our shared heritage and our collective responsibility to the institution that shaped us all. That responsibility does not expire — and neither does your place among us.</p>
-    <p><strong>We would love to welcome you back.</strong> Visit <a href="https://ucosa-na.org">ucosa-na.org</a> to reconnect. While at the website, click on <strong>"Request To Join"</strong> so we can reconnect and get you back where you belong.</p>
-    <div class="cta"><a href="https://ucosa-na.org">Visit ucosa-na.org</a></div>
+    <p><strong>We would love to welcome you back.</strong> Visit <a href="https://ucosa-na.org">ucosa-na.org</a> to reconnect. While at the website, check out our member benefits and the development work we have done so far at our alma mater:</p>
+    <table class="links-table">
+      <thead><tr><th>Page</th><th>Direct Link</th></tr></thead>
+      <tbody>
+        <tr><td>Member Benefits</td><td><a href="https://ucosa-na.org/#member-benefit">ucosa-na.org/#member-benefit</a></td></tr>
+        <tr><td>Computer Lab</td><td><a href="https://ucosa-na.org/#computer-lab">ucosa-na.org/#computer-lab</a></td></tr>
+        <tr><td>Development Projects</td><td><a href="https://ucosa-na.org/#dev-projects">ucosa-na.org/#dev-projects</a></td></tr>
+        <tr><td><strong>Request To Join</strong></td><td><a href="https://ucosa-na.org/#join"><strong>ucosa-na.org/#join</strong></a></td></tr>
+      </tbody>
+    </table>
+    <p>Please click <strong>"Request To Join"</strong> so we can reconnect and get you back where you belong.</p>
+    <div class="cta"><a href="https://ucosa-na.org/#join">Request To Join</a></div>
     <p>With warmth and fellowship,</p>
     <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org">www.ucosa-na.org</a></p>
   </div>
