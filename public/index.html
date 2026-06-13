@@ -3132,9 +3132,18 @@
 
   // Auto-navigate on load if ?page= param is present (e.g. from donate.html links)
   document.addEventListener('DOMContentLoaded', function () {
+    // ?page= query param takes priority, then #hash
     const p = new URLSearchParams(window.location.search).get('page');
-    if (p && document.getElementById('page-' + p)) showPage(p, null);
+    const h = window.location.hash.replace('#', '');
+    const target = p || h;
+    if (target && document.getElementById('page-' + target)) showPage(target, null);
     loadBirthdayHighlights();
+  });
+
+  // Browser back/forward hash navigation
+  window.addEventListener('hashchange', function () {
+    const id = window.location.hash.replace('#', '');
+    if (id && document.getElementById('page-' + id)) showPage(id, null);
   });
 
   async function loadBirthdayHighlights() {
@@ -3171,6 +3180,10 @@
     document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
     const slideshow = document.getElementById('misc-slideshow');
     if (slideshow) slideshow.style.display = (id === 'welcome') ? 'block' : 'none';
+    // Update URL hash for direct linking (suppress hashchange to avoid loop)
+    if (window.location.hash !== '#' + id) {
+      history.replaceState(null, '', '#' + id);
+    }
   }
 
 
