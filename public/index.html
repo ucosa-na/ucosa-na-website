@@ -3136,14 +3136,22 @@
     const p = new URLSearchParams(window.location.search).get('page');
     const h = window.location.hash.replace('#', '');
     const target = p || h;
-    if (target && document.getElementById('page-' + target)) showPage(target, null);
+    if (target === 'join') {
+      openJoinModal();
+    } else if (target && document.getElementById('page-' + target)) {
+      showPage(target, null);
+    }
     loadBirthdayHighlights();
   });
 
   // Browser back/forward hash navigation
   window.addEventListener('hashchange', function () {
     const id = window.location.hash.replace('#', '');
-    if (id && document.getElementById('page-' + id)) showPage(id, null);
+    if (id === 'join') {
+      openJoinModal();
+    } else if (id && document.getElementById('page-' + id)) {
+      showPage(id, null);
+    }
   });
 
   async function loadBirthdayHighlights() {
