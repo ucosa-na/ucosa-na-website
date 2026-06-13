@@ -1554,6 +1554,15 @@
         <h2>&#127775; Endowment Fund</h2>
         <p style="color:#555;font-size:19px;margin-bottom:20px;">Record endowment fund contributions from members.</p>
 
+        <div style="background:#f0f7ff;border:1.5px solid #0d47a1;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <strong style="color:#0d47a1;">&#9993; Enrollment Open Notification</strong>
+            <p style="margin:4px 0 0;font-size:13px;color:#555;">Send the Endowment Fund enrollment open email to all active members now.</p>
+          </div>
+          <button id="sendEnrollmentEmailBtn" onclick="sendEnrollmentEmail()" style="background:#7b2152;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">&#128231; Send Enrollment Email Now</button>
+          <span id="enrollEmailStatus" style="font-size:13px;font-weight:600;"></span>
+        </div>
+
         <div id="endError"   class="msg error"></div>
         <div id="endSuccess" class="msg success"></div>
 
@@ -3087,6 +3096,31 @@
         msgEl.textContent = `Error: ${err.message}`;
         msgEl.style.display = 'block';
         btn.disabled = false; btn.textContent = '📧 Send Reminder';
+      }
+    }
+
+    async function sendEnrollmentEmail() {
+      if (!confirm('Send the Endowment Fund enrollment open email to ALL active members now?')) return;
+      const btn    = document.getElementById('sendEnrollmentEmailBtn');
+      const status = document.getElementById('enrollEmailStatus');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      status.textContent = '';
+      try {
+        const res  = await fetch('/api/admin/send-enrollment-email', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        status.style.color = '#1b5e20';
+        status.textContent = `✅ Sent to ${data.sent} member(s)${data.failed ? `, ${data.failed} failed` : ''}.`;
+      } catch (err) {
+        status.style.color = '#c0392b';
+        status.textContent = `Error: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📧 Send Enrollment Email Now';
       }
     }
 

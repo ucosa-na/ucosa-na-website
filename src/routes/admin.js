@@ -2222,4 +2222,82 @@ router.post('/users/send-activation-reminders', secOrAdmin, async (req, res) => 
   }
 });
 
+// POST /api/admin/send-enrollment-email — manually trigger endowment enrollment open email
+router.post('/send-enrollment-email', adminOnly, async (req, res) => {
+  try {
+    const year = new Date().getFullYear();
+    const enrollDeadline = year === 2026 ? 'August 15' : 'January 30';
+    const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – January 30';
+
+    const { rows: members } = await pool.query(`
+      SELECT u.id, u.full_name, u.email
+      FROM users u
+      WHERE u.is_active = TRUE AND u.role != 'admin' AND u.email IS NOT NULL
+      ORDER BY u.full_name ASC
+    `);
+
+    if (!members.length) return res.json({ sent: 0, failed: 0 });
+
+    const results = await Promise.allSettled(members.map(m => sendEmail({
+      to: m.email,
+      subject: `UCOSA-NA Member's Endowment Fund — Enrollment Now Open (${year})`,
+      html: `
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fdf6ec;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px}
+  .hdr h1{color:#f5e6d0;font-size:20px;margin:0;letter-spacing:.06em}
+  .hdr p{color:#d4a0b8;font-size:12px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.1em}
+  .body{padding:32px 36px;color:#333;font-size:15px;line-height:1.75}
+  .body p{margin:0 0 14px}
+  .badge{display:inline-block;background:#1b5e20;color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:18px}
+  .info-box{background:#f0f7ff;border-left:4px solid #0d47a1;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0}
+  .cta{text-align:center;margin:24px 0}
+  .cta a{background:#7b2152;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;display:inline-block;margin:6px}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+  strong{color:#7b2152}
+</style></head><body>
+<div class="wrap">
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>UCOSA-NA Member's Endowment Fund</h1>
+    <p>Bereavement Benefit Program — ${year}</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${m.full_name}</strong>,</p>
+    <div class="badge">✅ Enrollment Now Open</div>
+    <p>We are pleased to announce that the <strong>UCOSA-NA Member's Endowment Fund (UCOSA-MF)</strong> enrollment period is now open for <strong>${year}</strong>.</p>
+    <div class="info-box">
+      <strong style="color:#0d47a1;">Enrollment Period: ${enrollPeriod}, ${year}</strong><br/>
+      <span style="font-size:14px;color:#444;">Applications submitted after ${enrollDeadline} will not be accepted until the next enrollment period.</span>
+    </div>
+    <p>For existing enrollment, you can change your selections. <strong>All members who wish to participate</strong> in the UCOSA-MF should fill out the enrollment form before <strong>${enrollDeadline}, ${year}</strong>.</p>
+    <p>The UCOSA-MF provides financial assistance to enrolled members and their designated beneficiaries during times of bereavement. Benefits range from <strong>$250 up to $5,000</strong> depending on your continuous enrollment period, with a maximum lifetime benefit of <strong>$10,000</strong>.</p>
+    <p>To enroll, log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong> using the buttons below.</p>
+    <div class="cta">
+      <a href="https://ucosa-na.org/member-fund-form.html">Complete Endowment Fund Application</a>
+      <a href="https://ucosa-na.org/members.html" style="background:#0d47a1;">Log In to Member Portal</a>
+    </div>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; ${year} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim(),
+    })));
+
+    const sent   = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    await logAudit(req.user.id, req.user.email, 'ENROLLMENT_EMAIL_SENT', 'SYSTEM', null, null, { sent, failed, year });
+    log.info(`Manual enrollment email: ${sent} sent, ${failed} failed`);
+    res.json({ sent, failed });
+  } catch (err) {
+    log.error('send-enrollment-email error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
