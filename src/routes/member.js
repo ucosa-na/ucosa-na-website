@@ -6,6 +6,14 @@ const { sendSMS, normalizePhone } = require('../sms');
 
 const router = express.Router();
 
+// Enrollment period: January 1–30 each year
+function isEnrollmentOpen() {
+  const now = new Date();
+  const month = now.getMonth(); // 0 = January
+  const day   = now.getDate();
+  return month === 0 && day >= 1 && day <= 30;
+}
+
 // GET /api/member/financials — own financial records (from annual_dues + endowment_fund)
 router.get('/financials', requireAuth, async (req, res) => {
   try {
@@ -88,6 +96,9 @@ router.get('/fund-application', requireAuth, async (req, res) => {
 
 // POST /api/member/fund-application — submit the form
 router.post('/fund-application', requireAuth, async (req, res) => {
+  if (!isEnrollmentOpen()) {
+    return res.status(403).json({ error: 'The enrollment period is closed. Applications are accepted January 1–30 each year.' });
+  }
   try {
     // One submission per member
     const { rows: existing } = await pool.query(
@@ -152,6 +163,9 @@ router.post('/fund-application', requireAuth, async (req, res) => {
 
 // PUT /api/member/fund-application — update own application
 router.put('/fund-application', requireAuth, async (req, res) => {
+  if (!isEnrollmentOpen()) {
+    return res.status(403).json({ error: 'The enrollment period is closed. Applications can only be updated January 1–30 each year.' });
+  }
   try {
     const { rows: existing } = await pool.query(
       `SELECT id FROM member_fund_applications WHERE user_id = $1`, [req.user.id]

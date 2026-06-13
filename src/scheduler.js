@@ -349,6 +349,75 @@ async function sendInactivityReminders() {
   log.info(`Scheduler: 90-day inactivity reminders dispatched to ${members.length} member(s)`);
 }
 
+// ── Endowment Fund Enrollment Open (January 1st) ──────────────────────────────
+
+async function sendEnrollmentOpenEmails() {
+  const year = new Date().getFullYear();
+  log.info(`Scheduler: sending endowment enrollment open emails for ${year}`);
+  try {
+    const { rows: members } = await pool.query(`
+      SELECT u.id, u.full_name, u.email
+      FROM users u
+      WHERE u.is_active = TRUE AND u.role != 'admin' AND u.email IS NOT NULL
+      ORDER BY u.full_name ASC
+    `);
+    if (!members.length) { log.info('Scheduler: no active members for enrollment email'); return; }
+
+    const results = await Promise.allSettled(members.map(m => sendEmail({
+      to: m.email,
+      subject: `UCOSA-NA Member's Endowment Fund — Enrollment Now Open (${year})`,
+      html: `
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fdf6ec;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px}
+  .hdr h1{color:#f5e6d0;font-size:20px;margin:0;letter-spacing:.06em}
+  .hdr p{color:#d4a0b8;font-size:12px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.1em}
+  .body{padding:32px 36px;color:#333;font-size:15px;line-height:1.75}
+  .body p{margin:0 0 14px}
+  .badge{display:inline-block;background:#1b5e20;color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:18px}
+  .info-box{background:#f0f7ff;border-left:4px solid #0d47a1;border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0}
+  .cta{text-align:center;margin:24px 0}
+  .cta a{background:#7b2152;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;display:inline-block}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+  strong{color:#7b2152}
+</style></head><body>
+<div class="wrap">
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>UCOSA-NA Member's Endowment Fund</h1>
+    <p>Bereavement Benefit Program — ${year}</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${m.full_name}</strong>,</p>
+    <div class="badge">✅ Enrollment Now Open</div>
+    <p>We are pleased to announce that the <strong>UCOSA-NA Member's Endowment Fund (UCOSA-MF)</strong> enrollment period is now open for <strong>${year}</strong>.</p>
+    <div class="info-box">
+      <strong style="color:#0d47a1;">Enrollment Period: January 1 – January 30, ${year}</strong><br/>
+      <span style="font-size:14px;color:#444;">Applications submitted after January 30th will not be accepted until the next enrollment period.</span>
+    </div>
+    <p>The UCOSA-MF provides financial assistance to enrolled members and their designated beneficiaries during times of bereavement. Benefits range from <strong>$250 up to $5,000</strong> depending on your continuous enrollment period, with a maximum lifetime benefit of <strong>$10,000</strong>.</p>
+    <p>To enroll, simply log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong> before <strong>January 30, ${year}</strong>.</p>
+    <div class="cta"><a href="https://ucosa-na.org/members.html">Log In &amp; Apply Now</a></div>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; ${year} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim(),
+    })));
+
+    const sent   = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    log.info(`Scheduler: enrollment open emails — ${sent} sent, ${failed} failed`);
+  } catch (err) {
+    log.error(`Scheduler: sendEnrollmentOpenEmails error: ${err.message}`);
+  }
+}
+
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
 // January 1st at 00:01 AM — populate annual dues records for all active members
@@ -366,6 +435,9 @@ cron.schedule('0 8 * * *', sendInactivityReminders, { timezone: 'America/New_Yor
 // 1st of every month at 9:00 AM — birthday emails
 cron.schedule('0 9 1 * *', sendBirthdayEmails, { timezone: 'America/New_York' });
 
-log.info('Scheduler: jobs registered (Jan 1 dues populate, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
+// January 1st at 9:00 AM — endowment fund enrollment open notification
+cron.schedule('0 9 1 1 *', sendEnrollmentOpenEmails, { timezone: 'America/New_York' });
 
-module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails };
+log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open email, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
+
+module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenEmails };
