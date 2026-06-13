@@ -851,7 +851,7 @@
             </div>
           </div>
           <!-- Development Levy (2026+) -->
-          <div id="devLevySection" style="display:none;margin-top:8px;background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:16px 20px;">
+          <div id="devLevySection" style="display:block;margin-top:8px;background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:16px 20px;">
             <label style="display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:#0d47a1;cursor:pointer;margin-bottom:12px;">
               <input type="checkbox" id="devLevyEnabled" style="width:18px;height:18px;cursor:pointer;">
               Add Development Levy <span style="font-size:14px;font-weight:400;color:#555;">(applies to members joining from 2026 onwards)</span>
@@ -3219,19 +3219,10 @@
       }
     }
 
-    // Show/hide dev levy section based on yearJoined
+    // Auto-fill dev levy year from yearJoined
     document.getElementById('yearJoined').addEventListener('input', function() {
       const yr = parseInt(this.value);
-      const section = document.getElementById('devLevySection');
-      const levyYear = document.getElementById('devLevyYear');
-      if (yr >= 2026) {
-        section.style.display = 'block';
-        levyYear.value = yr;
-      } else {
-        section.style.display = 'none';
-        document.getElementById('devLevyEnabled').checked = false;
-        document.getElementById('devLevyFields').style.display = 'none';
-      }
+      if (yr >= 2026) document.getElementById('devLevyYear').value = yr;
     });
     document.getElementById('devLevyEnabled').addEventListener('change', function() {
       document.getElementById('devLevyFields').style.display = this.checked ? 'block' : 'none';
@@ -3312,7 +3303,7 @@
           document.getElementById('tempPasswordBox').style.display = 'block';
         }
         document.getElementById('createForm').reset();
-        document.getElementById('devLevySection').style.display = 'none';
+        document.getElementById('devLevyFields').style.display = 'none';
         loadMembers();
 
       } catch (err) {
