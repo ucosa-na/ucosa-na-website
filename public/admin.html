@@ -716,6 +716,7 @@
           <a href="#donationsSection">Donations</a>
           <a href="#specialLeviesSection">Members-Donations</a>
           <a href="#levyRecordsSection">Special Levy</a>
+          <a href="#devLevySection">Development Levy</a>
         </div>
       </div>
 
@@ -1942,6 +1943,67 @@
         </div>
       </section>
 
+      <!-- DEVELOPMENT LEVY -->
+      <section id="devLevySection" class="fin-section">
+        <h2>&#128178; Development Levy</h2>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">Track development levies for members joining from 2026 onwards.</p>
+
+        <div id="devLevyError"   class="msg error"></div>
+        <div id="devLevySuccess" class="msg success"></div>
+
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+          <div class="form-group" style="min-width:200px;flex:2;">
+            <label for="devLevyMember">Member <span style="color:#e63946;">*</span></label>
+            <select id="devLevyMember"><option value="">— Choose member —</option></select>
+          </div>
+          <div class="form-group" style="max-width:110px;">
+            <label for="devLevyFormYear">Year <span style="color:#e63946;">*</span></label>
+            <input type="number" id="devLevyFormYear" placeholder="e.g. 2026" min="2026" max="2099" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="devLevyFormAmount">Amount ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="devLevyFormAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:170px;">
+            <label for="devLevyFormPaidDate">Paid Date</label>
+            <input type="date" id="devLevyFormPaidDate" />
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="devLevyFormNotes">Notes</label>
+            <input type="text" id="devLevyFormNotes" placeholder="Optional notes" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="devLevySaveBtn" onclick="saveDevLevy()">Add Development Levy</button>
+          <button class="btn-secondary" id="devLevyCancelBtn" style="display:none;margin-left:10px;" onclick="cancelDevLevyEdit()">Cancel Edit</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="text" id="devLevySearch" oninput="applyDevLevyFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:200px;" />
+          <button onclick="downloadDevLevyCSV()" style="padding:6px 16px;background:#1a1a2e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
+          <span id="devLevyCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="fin-table" id="devLevyTable">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Year</th>
+                <th>Amount</th>
+                <th>Paid Date</th>
+                <th>Notes</th>
+                <th>Recorded By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="devLevyTbody">
+              <tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+            </tbody>
+            <tfoot id="devLevyTfoot"></tfoot>
+          </table>
+        </div>
+      </section>
+
       <!-- DONATIONS -->
       <section id="donationsSection" class="fin-section">
         <h2>&#128155; Donations</h2>
@@ -2234,7 +2296,7 @@
 
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
-      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection'];
+      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
       const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
@@ -3486,6 +3548,7 @@
       document.getElementById('endMember').innerHTML     = opts;
       document.getElementById('levyMember').innerHTML    = opts;
       document.getElementById('levyRecMember').innerHTML = opts;
+      document.getElementById('devLevyMember').innerHTML = opts;
     }
 
     // ── ANNUAL DUES ───────────────────────────────────────────────────────────
@@ -4496,6 +4559,7 @@
         loadDonations();
         loadSpecialLevies();
         loadLevyRecords();
+        loadDevLevies();
       }
 
       if (['admin', 'security-role'].includes(user.role)) {
@@ -4900,6 +4964,166 @@
     // ── DONATIONS ─────────────────────────────────────────────────────────────
 
     let _allDonations = [];
+
+    // ── Development Levy ──────────────────────────────────────────
+    let _allDevLevies = [];
+    let devLevyEditId = null;
+
+    async function loadDevLevies() {
+      document.getElementById('devLevyFormYear').value =
+        document.getElementById('devLevyFormYear').value || new Date().getFullYear();
+      try {
+        const res  = await fetch('/api/admin/special-levies', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        _allDevLevies = data.filter(r => r.type === 'Development Levy');
+        applyDevLevyFilter();
+        populateDevLevyMemberSelect();
+      } catch (err) {
+        document.getElementById('devLevyError').textContent = 'Failed to load development levies.';
+        document.getElementById('devLevyError').style.display = 'block';
+      }
+    }
+
+    function populateDevLevyMemberSelect() {
+      const sel = document.getElementById('devLevyMember');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— Choose member —</option>';
+      (_allMembers || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id; opt.textContent = m.full_name;
+        sel.appendChild(opt);
+      });
+      if (cur) sel.value = cur;
+    }
+
+    function applyDevLevyFilter() {
+      const search   = (document.getElementById('devLevySearch').value || '').toLowerCase();
+      const filtered = _allDevLevies.filter(r =>
+        !search || (r.member_name || '').toLowerCase().includes(search)
+      );
+      const tbody = document.getElementById('devLevyTbody');
+      document.getElementById('devLevyCountLabel').textContent =
+        `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        document.getElementById('devLevyTfoot').innerHTML = '';
+        return;
+      }
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td><strong>${escapeHtml(r.member_name)}</strong></td>
+          <td>${r.year}</td>
+          <td style="font-weight:700;color:#0d47a1;">$${parseFloat(r.amount).toFixed(2)}</td>
+          <td>${r.paid_date ? parseDate(r.paid_date).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
+          <td style="color:#555;">${escapeHtml(r.notes || '—')}</td>
+          <td style="color:#888;font-size:13px;">${escapeHtml(r.recorded_by_name || '—')}</td>
+          <td>
+            <button onclick="editDevLevy(${r.id})" style="background:#1565c0;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;margin-right:4px;">Edit</button>
+            <button onclick="deleteDevLevy(${r.id})" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;">Delete</button>
+          </td>
+        </tr>`).join('');
+      const total = filtered.reduce((s, r) => s + parseFloat(r.amount || 0), 0).toFixed(2);
+      document.getElementById('devLevyTfoot').innerHTML =
+        `<tr style="font-weight:700;background:#e3f2fd;"><td colspan="2">Total (${filtered.length} record${filtered.length !== 1 ? 's' : ''})</td><td style="color:#0d47a1;">$${total}</td><td colspan="4"></td></tr>`;
+    }
+
+    async function saveDevLevy() {
+      const errEl  = document.getElementById('devLevyError');
+      const sucEl  = document.getElementById('devLevySuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+      const userId = document.getElementById('devLevyMember').value;
+      const year   = document.getElementById('devLevyFormYear').value;
+      const amount = document.getElementById('devLevyFormAmount').value;
+      const paidDate = document.getElementById('devLevyFormPaidDate').value;
+      const notes  = document.getElementById('devLevyFormNotes').value.trim();
+      if (!userId || !year || !amount) {
+        errEl.textContent = 'Member, year, and amount are required.';
+        errEl.style.display = 'block'; return;
+      }
+      const btn = document.getElementById('devLevySaveBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const url    = devLevyEditId ? `/api/admin/special-levies/${devLevyEditId}` : '/api/admin/special-levies';
+        const method = devLevyEditId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify({ userId, type: 'Development Levy', year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, notes: notes || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save');
+        sucEl.textContent = devLevyEditId ? '✅ Record updated.' : '✅ Development levy added.';
+        sucEl.style.display = 'block';
+        cancelDevLevyEdit();
+        loadDevLevies();
+        setTimeout(() => { sucEl.style.display = 'none'; }, 3000);
+      } catch (err) {
+        errEl.textContent = 'Error: ' + err.message; errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = devLevyEditId ? 'Update Record' : 'Add Development Levy';
+      }
+    }
+
+    function editDevLevy(id) {
+      const r = _allDevLevies.find(x => x.id === id);
+      if (!r) return;
+      devLevyEditId = id;
+      document.getElementById('devLevyMember').value       = r.user_id || '';
+      document.getElementById('devLevyFormYear').value     = r.year || '';
+      document.getElementById('devLevyFormAmount').value   = r.amount || '';
+      document.getElementById('devLevyFormPaidDate').value = r.paid_date ? r.paid_date.slice(0,10) : '';
+      document.getElementById('devLevyFormNotes').value    = r.notes || '';
+      document.getElementById('devLevySaveBtn').textContent  = 'Update Record';
+      document.getElementById('devLevyCancelBtn').style.display = 'inline-block';
+      document.getElementById('devLevySection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelDevLevyEdit() {
+      devLevyEditId = null;
+      document.getElementById('devLevyMember').value       = '';
+      document.getElementById('devLevyFormYear').value     = new Date().getFullYear();
+      document.getElementById('devLevyFormAmount').value   = '';
+      document.getElementById('devLevyFormPaidDate').value = '';
+      document.getElementById('devLevyFormNotes').value    = '';
+      document.getElementById('devLevySaveBtn').textContent      = 'Add Development Levy';
+      document.getElementById('devLevyCancelBtn').style.display  = 'none';
+    }
+
+    async function deleteDevLevy(id) {
+      if (!confirm('Delete this development levy record? This cannot be undone.')) return;
+      try {
+        const res = await fetch(`/api/admin/special-levies/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Delete failed');
+        loadDevLevies();
+      } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    function downloadDevLevyCSV() {
+      if (!_allDevLevies.length) { alert('No records to download.'); return; }
+      const search   = (document.getElementById('devLevySearch').value || '').toLowerCase();
+      const rows = _allDevLevies.filter(r => !search || (r.member_name || '').toLowerCase().includes(search));
+      const headers = ['Member','Year','Amount','Paid Date','Notes','Recorded By'];
+      const lines = [
+        headers.join(','),
+        ...rows.map(r => [
+          `"${(r.member_name || '').replace(/"/g,'""')}"`,
+          r.year || '',
+          r.amount != null ? parseFloat(r.amount).toFixed(2) : '',
+          r.paid_date ? r.paid_date.slice(0,10) : '',
+          `"${(r.notes || '').replace(/"/g,'""')}"`,
+          `"${(r.recorded_by_name || '').replace(/"/g,'""')}"`,
+        ].join(','))
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `development-levy-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+    // ─────────────────────────────────────────────────────────────
 
     async function loadDonations() {
       const tbody = document.getElementById('donationsTbody');
