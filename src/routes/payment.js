@@ -30,6 +30,25 @@ router.post('/create-intent', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid endowment amount.' });
     }
 
+    // Server-side dev levy eligibility check
+    if (payDevLevy) {
+      const { rows: [user] } = await db.query('SELECT created_at FROM users WHERE id = $1', [req.user.id]);
+      const joinedAt = new Date(user.created_at);
+      const now = new Date();
+      const monthsElapsed = (now.getFullYear() - joinedAt.getFullYear()) * 12 + (now.getMonth() - joinedAt.getMonth());
+      const { rows: [levyRow] } = await db.query(
+        `SELECT COALESCE(SUM(amount), 0) AS total_paid FROM special_levies WHERE user_id = $1 AND type = 'Development Levy'`,
+        [req.user.id]
+      );
+      const totalPaid = parseFloat(levyRow.total_paid);
+      if (monthsElapsed >= 6) {
+        return res.status(403).json({ error: 'Development levy is not required for existing members.' });
+      }
+      if (totalPaid >= 200) {
+        return res.status(403).json({ error: 'Development levy already fully paid.' });
+      }
+    }
+
     const total = (payDues ? DUES_AMOUNT : 0) + (payEndow ? endowmentAmount : 0) + (payLevy ? levyAmount : 0) + (payDevLevy ? devLevyAmount : 0);
     const parts = [];
     if (payDues)    parts.push('Annual Dues ($100)');
