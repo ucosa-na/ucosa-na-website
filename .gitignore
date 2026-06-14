@@ -14,3 +14,28 @@ twilio_2FA_recovery_code.txt
 public/Video/
 public/Video2/
 public/Golden_jubilee2/
+
+# Local files not part of the project
+*.sqlite
+*.xlsx
+*.docx
+qr.png
+%USERPROFILE%Desktopqr.png
+.claude/
+
+# Public media folders managed on server
+public/911-Museum/
+public/Endownment/
+public/Gala-night/
+public/Golden_Jubilee/
+public/Minute_Of_Meetings/
+"public/Past executives/"
+public/Principal_Building_Commissioning/
+"public/Ucosa-NA Constitution/"
+public/Welcome-night/
+public/Welcome-night2/
+public/computer_lab/
+"public/current executive/"
+public/photo_gallery/
+public/pic1/
+public/ucosa_na_members/
