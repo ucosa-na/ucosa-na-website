@@ -1707,7 +1707,7 @@ router.post('/special-levies', finOrAdmin, async (req, res) => {
       RETURNING id
     `, [userId, type, year, parseFloat(amount), levyAmountDue, paidDate || null, donationCode || null, notes || null, req.user.id]);
     const { rows: member } = await pool.query(`SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`, [userId]);
-    if (member[0]) {
+    if (member[0] && parseFloat(amount) > 0) {
       sendPaymentNotification(member[0].full_name, member[0].email, member[0].phone, `${type} (${year})`, parseFloat(amount), null, `LEVY-${rows[0].id}`);
     }
     res.json({ ok: true, id: rows[0].id });
