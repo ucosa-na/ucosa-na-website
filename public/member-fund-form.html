@@ -227,32 +227,33 @@
       <h3>8. Names of Beneficiary/ies</h3>
       <div class="form-row">
         <div class="form-group">
-          <label>Beneficiary 1 — Name</label>
+          <label>Name</label>
           <input type="text" id="ben1_name"/>
         </div>
         <div class="form-group">
-          <label>Relationship</label>
-          <input type="text" id="ben1_relation"/>
+          <label>Birth Date</label>
+          <input type="date" id="ben1_birth_date"/>
+        </div>
+        <div class="form-group">
+          <label>Sex</label>
+          <div style="display:flex;gap:16px;align-items:center;padding-top:6px;">
+            <label><input type="radio" name="ben1_sex" value="Male"/> Male</label>
+            <label><input type="radio" name="ben1_sex" value="Female"/> Female</label>
+          </div>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Beneficiary 2 — Name</label>
-          <input type="text" id="ben2_name"/>
+          <label>Social Security # (Last 4 digits)</label>
+          <input type="text" id="ben1_ssn_last4" maxlength="4" placeholder="e.g. 1234"/>
         </div>
         <div class="form-group">
-          <label>Relationship</label>
-          <input type="text" id="ben2_relation"/>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Beneficiary 3 — Name</label>
-          <input type="text" id="ben3_name"/>
+          <label>Telephone #</label>
+          <input type="tel" id="ben1_phone" placeholder="e.g. +1 555 000 0000"/>
         </div>
         <div class="form-group">
-          <label>Relationship</label>
-          <input type="text" id="ben3_relation"/>
+          <label>Email</label>
+          <input type="email" id="ben1_email" placeholder="e.g. name@email.com"/>
         </div>
       </div>
     </div>
@@ -407,7 +408,7 @@
     const fields = [
       'applicant_name','birth_date','commencement_date','ssn_last4','street_address','city','state','zip_code','email',
       'alt_address','alt_city','alt_state','alt_zip','alt_phone','alt_email',
-      'ben1_name','ben1_relation','ben2_name','ben2_relation','ben3_name','ben3_relation',
+      'ben1_name','ben1_birth_date','ben1_ssn_last4','ben1_phone','ben1_email',
       'applicant_signature','signature_date','president_name','president_signature','president_date'
     ];
     fields.forEach(id => {
@@ -416,6 +417,10 @@
     });
     if (data.sex) {
       const r = document.querySelector(`input[name="sex"][value="${data.sex}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.ben1_sex) {
+      const r = document.querySelector(`input[name="ben1_sex"][value="${data.ben1_sex}"]`);
       if (r) r.checked = true;
     }
     if (data.terms_accepted) document.getElementById('terms_accepted').checked = true;
@@ -479,6 +484,7 @@
     msgEl.style.display = 'none';
 
     const sex = document.querySelector('input[name="sex"]:checked')?.value;
+    const ben1_sex = document.querySelector('input[name="ben1_sex"]:checked')?.value;
 
     // Validate required fields
     const required = [
@@ -521,11 +527,11 @@
       alt_phone:            document.getElementById('alt_phone').value.trim(),
       alt_email:            document.getElementById('alt_email').value.trim(),
       ben1_name:            document.getElementById('ben1_name').value.trim(),
-      ben1_relation:        document.getElementById('ben1_relation').value.trim(),
-      ben2_name:            document.getElementById('ben2_name').value.trim(),
-      ben2_relation:        document.getElementById('ben2_relation').value.trim(),
-      ben3_name:            document.getElementById('ben3_name').value.trim(),
-      ben3_relation:        document.getElementById('ben3_relation').value.trim(),
+      ben1_birth_date:      document.getElementById('ben1_birth_date').value,
+      ben1_sex,
+      ben1_ssn_last4:       document.getElementById('ben1_ssn_last4').value.trim(),
+      ben1_phone:           document.getElementById('ben1_phone').value.trim(),
+      ben1_email:           document.getElementById('ben1_email').value.trim(),
       terms_accepted:       true,
       applicant_signature:  document.getElementById('applicant_signature').value.trim(),
       signature_date:       document.getElementById('signature_date').value,
