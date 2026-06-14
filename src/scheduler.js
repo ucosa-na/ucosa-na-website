@@ -363,8 +363,8 @@ async function sendEnrollmentOpenEmails() {
     `);
     if (!members.length) { log.info('Scheduler: no active members for enrollment email'); return; }
 
-    const enrollDeadline = year === 2026 ? 'August 15' : 'January 30';
-    const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – January 30';
+    const enrollDeadline = year === 2026 ? 'August 15' : 'March 15';
+    const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – March 15';
 
     const results = await Promise.allSettled(members.map(m => sendEmail({
       to: m.email,

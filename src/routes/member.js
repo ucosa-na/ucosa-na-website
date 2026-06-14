@@ -6,11 +6,11 @@ const { sendSMS, normalizePhone } = require('../sms');
 
 const router = express.Router();
 
-// Enrollment period: Jun 15–Aug 15 for 2026; Jan 1–30 from 2027 onward
+// Enrollment period: Jun 15–Aug 15 for 2026; Jan 1–Mar 15 from 2027 onward
 function isEnrollmentOpen() {
   const now   = new Date();
   const year  = now.getFullYear();
-  const month = now.getMonth(); // 0 = January, 5 = June, 7 = August
+  const month = now.getMonth(); // 0 = January, 2 = March, 5 = June, 7 = August
   const day   = now.getDate();
 
   if (year === 2026) {
@@ -21,8 +21,11 @@ function isEnrollmentOpen() {
     return false;
   }
 
-  // 2027 and beyond: January 1–30 only
-  return month === 0 && day >= 1 && day <= 30;
+  // 2027 and beyond: January 1 – March 15
+  if (month === 0) return true;                 // Jan fully open
+  if (month === 1) return true;                 // Feb fully open
+  if (month === 2 && day <= 15) return true;    // Mar 1–15
+  return false;
 }
 
 // GET /api/member/financials — own financial records (from annual_dues + endowment_fund)
@@ -108,7 +111,7 @@ router.get('/fund-application', requireAuth, async (req, res) => {
 // POST /api/member/fund-application — submit the form
 router.post('/fund-application', requireAuth, async (req, res) => {
   if (!isEnrollmentOpen()) {
-    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications are accepted June 15 – August 15. From 2027 onward, enrollment runs January 1–30 each year.' });
+    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications are accepted June 15 – August 15. From 2027 onward, enrollment runs January 1 – March 15 each year.' });
   }
   try {
     // One submission per member
@@ -175,7 +178,7 @@ router.post('/fund-application', requireAuth, async (req, res) => {
 // PUT /api/member/fund-application — update own application
 router.put('/fund-application', requireAuth, async (req, res) => {
   if (!isEnrollmentOpen()) {
-    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications can be updated June 15 – August 15. From 2027 onward, enrollment runs January 1–30 each year.' });
+    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications can be updated June 15 – August 15. From 2027 onward, enrollment runs January 1 – March 15 each year.' });
   }
   try {
     const { rows: existing } = await pool.query(

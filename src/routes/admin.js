@@ -2226,8 +2226,8 @@ router.post('/users/send-activation-reminders', secOrAdmin, async (req, res) => 
 router.post('/send-enrollment-email', adminOnly, async (req, res) => {
   try {
     const year = new Date().getFullYear();
-    const enrollDeadline = year === 2026 ? 'August 15' : 'January 30';
-    const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – January 30';
+    const enrollDeadline = year === 2026 ? 'August 15' : 'March 15';
+    const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – March 15';
 
     const { rows: members } = await pool.query(`
       SELECT u.id, u.full_name, u.email
