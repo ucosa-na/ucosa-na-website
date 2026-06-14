@@ -1021,19 +1021,24 @@
         const devLevyDesc = document.getElementById('devlevy-desc');
         const devLevyAmtDisplay = document.getElementById('devlevy-amount-display');
         if (devLevyCard) {
+          const devLevyInput = document.getElementById('devlevy-custom-amt');
+          const devLevyYearSel = document.getElementById('devlevy-year');
           if (devLevyStatus && devLevyStatus.eligible) {
             devLevyCard.classList.remove('disabled');
             const remaining = devLevyStatus.remaining.toFixed(2);
             devLevyAmtDisplay.textContent = `$${remaining} remaining`;
             devLevyDesc.textContent = `Mandatory one-time development levy. $${devLevyStatus.totalPaid.toFixed(2)} paid of $200.00 total.`;
-            const input = document.getElementById('devlevy-custom-amt');
-            if (input) input.max = remaining;
-          } else if (devLevyStatus) {
+            if (devLevyInput) devLevyInput.max = remaining;
+          } else {
+            // Not eligible — lock card completely
             devLevyCard.classList.add('disabled');
-            if (devLevyStatus.fullyPaid) {
-              devLevyDesc.textContent = 'Development levy fully paid ($200.00). Thank you!';
+            devLevyCard.onclick = null;
+            if (devLevyInput)   { devLevyInput.disabled   = true; devLevyInput.value = ''; }
+            if (devLevyYearSel)   devLevyYearSel.disabled = true;
+            if (devLevyStatus && devLevyStatus.fullyPaid) {
               devLevyAmtDisplay.textContent = '$0 remaining';
-            } else if (!devLevyStatus.withinSixMonths) {
+              devLevyDesc.textContent = 'Development levy fully paid ($200.00). Thank you!';
+            } else {
               devLevyAmtDisplay.textContent = 'N/A';
               devLevyDesc.textContent = 'Development levy not required for existing members.';
             }
@@ -1100,6 +1105,7 @@
         const was = document.getElementById('card-levy').classList.contains('selected');
         document.getElementById('card-levy').classList.toggle('selected', !was);
       } else if (type === 'devlevy') {
+        if (document.getElementById('card-devlevy').classList.contains('disabled')) return;
         const was = document.getElementById('card-devlevy').classList.contains('selected');
         document.getElementById('card-devlevy').classList.toggle('selected', !was);
       } else {
