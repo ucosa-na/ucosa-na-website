@@ -1969,16 +1969,17 @@
             <label for="devLevyFormYear">Year <span style="color:#e63946;">*</span></label>
             <input type="number" id="devLevyFormYear" placeholder="e.g. 2026" min="2026" max="2099" />
           </div>
-          <div class="form-group" style="max-width:140px;">
-            <label for="devLevyFormAmount">Amount ($) <span style="color:#e63946;">*</span></label>
-            <input type="number" id="devLevyFormAmount" placeholder="0.00" min="0" step="0.01" />
+          <div class="form-group" style="max-width:160px;">
+            <label for="devLevyFormAmount">Amount Paid ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="devLevyFormAmount" placeholder="e.g. 50" min="0" step="0.01" />
+            <div style="font-size:11px;color:#888;margin-top:3px;">Total required: $200.00</div>
           </div>
           <div class="form-group" style="max-width:170px;">
             <label for="devLevyFormPaidDate">Paid Date</label>
             <input type="date" id="devLevyFormPaidDate" />
           </div>
           <div class="form-group" style="flex:2;min-width:180px;">
-            <label for="devLevyFormNotes">Notes</label>
+            <label for="devLevyFormNotes">Notes (optional)</label>
             <input type="text" id="devLevyFormNotes" placeholder="Optional notes" />
           </div>
         </div>
@@ -1998,15 +1999,16 @@
               <tr>
                 <th>Member</th>
                 <th>Year</th>
-                <th>Amount</th>
-                <th>Paid Date</th>
+                <th>Amount Paid</th>
+                <th>Balance Due</th>
+                <th>Status</th>
+                <th>Last Payment</th>
                 <th>Notes</th>
-                <th>Recorded By</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="devLevyTbody">
-              <tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
             </tbody>
             <tfoot id="devLevyTfoot"></tfoot>
           </table>
@@ -5037,29 +5039,75 @@
         !search || (r.member_name || '').toLowerCase().includes(search)
       );
       const tbody = document.getElementById('devLevyTbody');
+
+      // Group records by member
+      const memberMap = {};
+      filtered.forEach(r => {
+        const key = r.user_id;
+        if (!memberMap[key]) {
+          memberMap[key] = { user_id: r.user_id, member_name: r.member_name, year: r.year, totalPaid: 0, lastPayment: null, notes: [], records: [] };
+        }
+        memberMap[key].totalPaid += parseFloat(r.amount || 0);
+        if (r.paid_date && (!memberMap[key].lastPayment || r.paid_date > memberMap[key].lastPayment)) {
+          memberMap[key].lastPayment = r.paid_date;
+        }
+        if (r.notes) memberMap[key].notes.push(r.notes);
+        memberMap[key].records.push(r);
+      });
+
+      const members = Object.values(memberMap);
+      const DEV_LEVY_TOTAL = 200;
+
       document.getElementById('devLevyCountLabel').textContent =
-        `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
-      if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        `${members.length} member${members.length !== 1 ? 's' : ''}`;
+
+      if (!members.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
         document.getElementById('devLevyTfoot').innerHTML = '';
         return;
       }
-      tbody.innerHTML = filtered.map(r => `
-        <tr>
-          <td><strong>${escapeHtml(r.member_name)}</strong></td>
-          <td>${r.year}</td>
-          <td style="font-weight:700;color:#0d47a1;">$${parseFloat(r.amount).toFixed(2)}</td>
-          <td>${r.paid_date ? parseDate(r.paid_date).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
-          <td style="color:#555;">${escapeHtml(r.notes || '—')}</td>
-          <td style="color:#888;font-size:13px;">${escapeHtml(r.recorded_by_name || '—')}</td>
-          <td>
-            <button onclick="editDevLevy(${r.id})" style="background:#1565c0;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;margin-right:4px;">Edit</button>
-            <button onclick="deleteDevLevy(${r.id})" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;">Delete</button>
-          </td>
-        </tr>`).join('');
-      const total = filtered.reduce((s, r) => s + parseFloat(r.amount || 0), 0).toFixed(2);
+
+      tbody.innerHTML = members.map(m => {
+        const totalPaid  = m.totalPaid;
+        const balance    = Math.max(0, DEV_LEVY_TOTAL - totalPaid);
+        const fullyPaid  = balance === 0;
+        const statusBadge = fullyPaid
+          ? `<span style="background:#1b5e20;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">✅ Paid</span>`
+          : `<span style="background:#e65100;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">Pending</span>`;
+        const lastDate = m.lastPayment
+          ? parseDate(m.lastPayment).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})
+          : '—';
+        const editBtn  = m.records.length === 1
+          ? `<button onclick="editDevLevy(${m.records[0].id})" style="background:#1565c0;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;margin-right:4px;">Edit</button>`
+          : '';
+        const addBtn = `<button onclick="prefillDevLevyMember(${m.user_id})" style="background:#2e7d32;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;margin-right:4px;">+ Add Payment</button>`;
+        return `<tr>
+          <td><strong>${escapeHtml(m.member_name)}</strong></td>
+          <td>${m.year}</td>
+          <td style="font-weight:700;color:#0d47a1;">$${totalPaid.toFixed(2)}</td>
+          <td style="font-weight:700;color:${fullyPaid ? '#1b5e20' : '#c62828'};">$${balance.toFixed(2)}</td>
+          <td>${statusBadge}</td>
+          <td style="color:#555;">${lastDate}</td>
+          <td style="color:#555;font-size:13px;">${escapeHtml(m.notes.join('; ') || '—')}</td>
+          <td>${addBtn}${editBtn}</td>
+        </tr>`;
+      }).join('');
+
+      const grandTotal  = members.reduce((s, m) => s + m.totalPaid, 0);
+      const grandBalance = members.reduce((s, m) => s + Math.max(0, DEV_LEVY_TOTAL - m.totalPaid), 0);
       document.getElementById('devLevyTfoot').innerHTML =
-        `<tr style="font-weight:700;background:#e3f2fd;"><td colspan="2">Total (${filtered.length} record${filtered.length !== 1 ? 's' : ''})</td><td style="color:#0d47a1;">$${total}</td><td colspan="4"></td></tr>`;
+        `<tr style="font-weight:700;background:#e3f2fd;">
+          <td colspan="2">Total (${members.length} member${members.length !== 1 ? 's' : ''})</td>
+          <td style="color:#0d47a1;">$${grandTotal.toFixed(2)}</td>
+          <td style="color:#c62828;">$${grandBalance.toFixed(2)}</td>
+          <td colspan="4"></td>
+        </tr>`;
+    }
+
+    function prefillDevLevyMember(userId) {
+      document.getElementById('devLevyMember').value = userId;
+      document.getElementById('devLevySection').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('devLevyFormAmount').focus();
     }
 
     async function saveDevLevy() {
