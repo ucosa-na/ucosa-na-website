@@ -5031,10 +5031,15 @@
       const sel = document.getElementById('devLevyMember');
       const cur = sel.value;
       sel.innerHTML = '<option value="">— Choose member —</option>';
-      (_allMembers || []).forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id; opt.textContent = m.full_name;
-        sel.appendChild(opt);
+      // Only list members who already have a development levy record
+      const seen = new Set();
+      (_allDevLevies || []).forEach(r => {
+        if (!seen.has(r.user_id)) {
+          seen.add(r.user_id);
+          const opt = document.createElement('option');
+          opt.value = r.user_id; opt.textContent = r.member_name;
+          sel.appendChild(opt);
+        }
       });
       if (cur) sel.value = cur;
     }
