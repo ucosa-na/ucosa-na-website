@@ -32,17 +32,22 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 
     // Server-side dev levy eligibility check
     if (payDevLevy) {
+      const DEV_LEVY_POLICY_DATE = new Date('2026-06-13T00:00:00Z');
       const { rows: [user] } = await db.query('SELECT created_at FROM users WHERE id = $1', [req.user.id]);
       const joinedAt = new Date(user.created_at);
       const now = new Date();
+      const isNewMember = joinedAt >= DEV_LEVY_POLICY_DATE;
       const monthsElapsed = (now.getFullYear() - joinedAt.getFullYear()) * 12 + (now.getMonth() - joinedAt.getMonth());
       const { rows: [levyRow] } = await db.query(
         `SELECT COALESCE(SUM(amount), 0) AS total_paid FROM special_levies WHERE user_id = $1 AND type = 'Development Levy'`,
         [req.user.id]
       );
       const totalPaid = parseFloat(levyRow.total_paid);
-      if (monthsElapsed >= 6) {
+      if (!isNewMember) {
         return res.status(403).json({ error: 'Development levy is not required for existing members.' });
+      }
+      if (monthsElapsed >= 6) {
+        return res.status(403).json({ error: 'Development levy enrollment period has closed (6 months from joining).' });
       }
       if (totalPaid >= 200) {
         return res.status(403).json({ error: 'Development levy already fully paid.' });
