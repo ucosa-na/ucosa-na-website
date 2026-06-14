@@ -312,8 +312,10 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label>12. Applicant Signature (type full name) <span class="req">*</span></label>
-          <input type="text" id="applicant_signature" placeholder="Type your full name as signature" required/>
+          <label>12. Applicant Signature <span class="req">*</span></label>
+          <input type="text" id="applicant_signature" required readonly
+            style="font-family:'Brush Script MT',cursive;font-size:20px;color:#1a1a6e;background:#f5f5ff;border:1.5px solid #b0b8e0;border-radius:6px;padding:8px 12px;cursor:not-allowed;"/>
+          <div style="font-size:11px;color:#888;margin-top:3px;">Auto-signed with your registered name</div>
         </div>
         <div class="form-group" style="max-width:180px;">
           <label>Date <span class="req">*</span></label>
@@ -333,8 +335,10 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>14. President's Signature (type full name)</label>
-          <input type="text" id="president_signature"/>
+          <label>14. President's Signature</label>
+          <input type="text" id="president_signature" readonly
+            style="font-family:'Brush Script MT',cursive;font-size:20px;color:#1a1a6e;background:#f5f5ff;border:1.5px solid #b0b8e0;border-radius:6px;padding:8px 12px;cursor:not-allowed;"/>
+          <div style="font-size:11px;color:#888;margin-top:3px;">Auto-signed from President's Name above</div>
         </div>
         <div class="form-group" style="max-width:180px;">
           <label>Date</label>
@@ -401,8 +405,14 @@
 
   // Pre-fill member info from stored user
   const storedUser = JSON.parse(localStorage.getItem('ucosa_user') || '{}');
-  if (storedUser.full_name) document.getElementById('applicant_name').value = storedUser.full_name;
-  if (storedUser.email)     document.getElementById('email').value           = storedUser.email;
+  if (storedUser.full_name) document.getElementById('applicant_name').value      = storedUser.full_name;
+  if (storedUser.full_name) document.getElementById('applicant_signature').value = storedUser.full_name;
+  if (storedUser.email)     document.getElementById('email').value               = storedUser.email;
+
+  // Auto-sign president signature when president name is typed
+  document.getElementById('president_name').addEventListener('input', function() {
+    document.getElementById('president_signature').value = this.value;
+  });
 
   function fillForm(data) {
     const fields = [
