@@ -912,7 +912,7 @@
                 </div>
                 <div class="pay-type-card disabled" id="card-devlevy" onclick="togglePayType('devlevy')">
                   <div class="pay-label">&#127959; Development Fee</div>
-                  <div class="pay-amount" id="devlevy-amount-display">$200</div>
+                  <div class="pay-amount" id="devlevy-amount-display">—</div>
                   <div class="pay-desc" id="devlevy-desc">Mandatory one-time development levy for new members ($200 total)</div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;" onclick="event.stopPropagation()">
                     <div>
@@ -1034,7 +1034,8 @@
               devLevyDesc.textContent = 'Development levy fully paid ($200.00). Thank you!';
               devLevyAmtDisplay.textContent = '$0 remaining';
             } else if (!devLevyStatus.withinSixMonths) {
-              devLevyDesc.textContent = `Development fee enrollment period closed (6 months from joining). Contact admin if needed.`;
+              devLevyAmtDisplay.textContent = 'N/A';
+              devLevyDesc.textContent = 'Development levy not required for existing members.';
             }
           }
         }
