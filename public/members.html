@@ -804,27 +804,6 @@
         const levies         = leviesRes.ok         ? await leviesRes.json()         : [];
         const devLevyStatus  = devLevyStatusRes.ok  ? await devLevyStatusRes.json()  : null;
 
-        // Apply dev levy card eligibility
-        const devLevyCard = document.getElementById('card-devlevy');
-        const devLevyDesc = document.getElementById('devlevy-desc');
-        const devLevyAmtDisplay = document.getElementById('devlevy-amount-display');
-        if (devLevyStatus && devLevyStatus.eligible) {
-          devLevyCard.classList.remove('disabled');
-          const remaining = devLevyStatus.remaining.toFixed(2);
-          devLevyAmtDisplay.textContent = `$${remaining} remaining`;
-          devLevyDesc.textContent = `Mandatory one-time development levy. $${devLevyStatus.totalPaid.toFixed(2)} paid of $200.00 total.`;
-          const input = document.getElementById('devlevy-custom-amt');
-          if (input) input.max = remaining;
-        } else if (devLevyStatus) {
-          devLevyCard.classList.add('disabled');
-          if (devLevyStatus.fullyPaid) {
-            devLevyDesc.textContent = 'Development levy fully paid ($200.00). Thank you!';
-            devLevyAmtDisplay.textContent = '$0 remaining';
-          } else if (!devLevyStatus.withinSixMonths) {
-            devLevyDesc.textContent = `Development fee enrollment period closed (6 months from joining). Contact admin if needed.`;
-          }
-        }
-
         if (user.mustChangePassword) {
           window.location.href = '/change-password.html?required=1';
           return;
@@ -1036,6 +1015,29 @@
         document.getElementById('mainLayout').style.display = 'flex';
         filterDues('all');
         populateYearSelects();
+
+        // Apply dev levy card eligibility (must run after content.innerHTML is set)
+        const devLevyCard = document.getElementById('card-devlevy');
+        const devLevyDesc = document.getElementById('devlevy-desc');
+        const devLevyAmtDisplay = document.getElementById('devlevy-amount-display');
+        if (devLevyCard) {
+          if (devLevyStatus && devLevyStatus.eligible) {
+            devLevyCard.classList.remove('disabled');
+            const remaining = devLevyStatus.remaining.toFixed(2);
+            devLevyAmtDisplay.textContent = `$${remaining} remaining`;
+            devLevyDesc.textContent = `Mandatory one-time development levy. $${devLevyStatus.totalPaid.toFixed(2)} paid of $200.00 total.`;
+            const input = document.getElementById('devlevy-custom-amt');
+            if (input) input.max = remaining;
+          } else if (devLevyStatus) {
+            devLevyCard.classList.add('disabled');
+            if (devLevyStatus.fullyPaid) {
+              devLevyDesc.textContent = 'Development levy fully paid ($200.00). Thank you!';
+              devLevyAmtDisplay.textContent = '$0 remaining';
+            } else if (!devLevyStatus.withinSixMonths) {
+              devLevyDesc.textContent = `Development fee enrollment period closed (6 months from joining). Contact admin if needed.`;
+            }
+          }
+        }
 
       } catch (err) {
         document.getElementById('mainContent').innerHTML = `
