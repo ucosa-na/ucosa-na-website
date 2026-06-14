@@ -295,6 +295,8 @@ pool.query(`
     ALTER TABLE special_levies ADD CONSTRAINT special_levies_type_check
       CHECK (type IN ('Special Levy','Voluntary Contribution','Member-Donation','Development Levy'));
   `)
+).then(() =>
+  pool.query(`ALTER TABLE special_levies ADD COLUMN IF NOT EXISTS amount_due NUMERIC(10,2) DEFAULT 200;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

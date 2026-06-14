@@ -1969,10 +1969,14 @@
             <label for="devLevyFormYear">Year <span style="color:#e63946;">*</span></label>
             <input type="number" id="devLevyFormYear" placeholder="e.g. 2026" min="2026" max="2099" />
           </div>
-          <div class="form-group" style="max-width:160px;">
+          <div class="form-group" style="max-width:150px;">
+            <label for="devLevyFormAmountDue">Amount Due ($) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="devLevyFormAmountDue" placeholder="200" min="0" step="0.01" value="200" />
+            <div style="font-size:11px;color:#888;margin-top:3px;">Default: $200.00</div>
+          </div>
+          <div class="form-group" style="max-width:150px;">
             <label for="devLevyFormAmount">Amount Paid ($) <span style="color:#e63946;">*</span></label>
             <input type="number" id="devLevyFormAmount" placeholder="e.g. 50" min="0" step="0.01" />
-            <div style="font-size:11px;color:#888;margin-top:3px;">Total required: $200.00</div>
           </div>
           <div class="form-group" style="max-width:170px;">
             <label for="devLevyFormPaidDate">Paid Date</label>
@@ -1999,6 +2003,7 @@
               <tr>
                 <th>Member</th>
                 <th>Year</th>
+                <th>Amount Due</th>
                 <th>Amount Paid</th>
                 <th>Balance Due</th>
                 <th>Status</th>
@@ -2008,7 +2013,7 @@
               </tr>
             </thead>
             <tbody id="devLevyTbody">
-              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
             </tbody>
             <tfoot id="devLevyTfoot"></tfoot>
           </table>
@@ -5045,8 +5050,10 @@
       filtered.forEach(r => {
         const key = r.user_id;
         if (!memberMap[key]) {
-          memberMap[key] = { user_id: r.user_id, member_name: r.member_name, year: r.year, totalPaid: 0, lastPayment: null, notes: [], records: [] };
+          memberMap[key] = { user_id: r.user_id, member_name: r.member_name, year: r.year, amountDue: parseFloat(r.amount_due || 200), totalPaid: 0, lastPayment: null, notes: [], records: [] };
         }
+        // Use the highest amount_due recorded for this member
+        if (parseFloat(r.amount_due || 200) > memberMap[key].amountDue) memberMap[key].amountDue = parseFloat(r.amount_due);
         memberMap[key].totalPaid += parseFloat(r.amount || 0);
         if (r.paid_date && (!memberMap[key].lastPayment || r.paid_date > memberMap[key].lastPayment)) {
           memberMap[key].lastPayment = r.paid_date;
@@ -5062,14 +5069,15 @@
         `${members.length} member${members.length !== 1 ? 's' : ''}`;
 
       if (!members.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
         document.getElementById('devLevyTfoot').innerHTML = '';
         return;
       }
 
       tbody.innerHTML = members.map(m => {
         const totalPaid  = m.totalPaid;
-        const balance    = Math.max(0, DEV_LEVY_TOTAL - totalPaid);
+        const amountDue  = m.amountDue;
+        const balance    = Math.max(0, amountDue - totalPaid);
         const fullyPaid  = balance === 0;
         const statusBadge = fullyPaid
           ? `<span style="background:#1b5e20;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">✅ Paid</span>`
@@ -5084,6 +5092,7 @@
         return `<tr>
           <td><strong>${escapeHtml(m.member_name)}</strong></td>
           <td>${m.year}</td>
+          <td style="font-weight:700;color:#555;">$${amountDue.toFixed(2)}</td>
           <td style="font-weight:700;color:#0d47a1;">$${totalPaid.toFixed(2)}</td>
           <td style="font-weight:700;color:${fullyPaid ? '#1b5e20' : '#c62828'};">$${balance.toFixed(2)}</td>
           <td>${statusBadge}</td>
@@ -5093,11 +5102,13 @@
         </tr>`;
       }).join('');
 
-      const grandTotal  = members.reduce((s, m) => s + m.totalPaid, 0);
-      const grandBalance = members.reduce((s, m) => s + Math.max(0, DEV_LEVY_TOTAL - m.totalPaid), 0);
+      const grandAmountDue = members.reduce((s, m) => s + m.amountDue, 0);
+      const grandTotal     = members.reduce((s, m) => s + m.totalPaid, 0);
+      const grandBalance   = members.reduce((s, m) => s + Math.max(0, m.amountDue - m.totalPaid), 0);
       document.getElementById('devLevyTfoot').innerHTML =
         `<tr style="font-weight:700;background:#e3f2fd;">
           <td colspan="2">Total (${members.length} member${members.length !== 1 ? 's' : ''})</td>
+          <td style="color:#555;">$${grandAmountDue.toFixed(2)}</td>
           <td style="color:#0d47a1;">$${grandTotal.toFixed(2)}</td>
           <td style="color:#c62828;">$${grandBalance.toFixed(2)}</td>
           <td colspan="4"></td>
@@ -5114,13 +5125,14 @@
       const errEl  = document.getElementById('devLevyError');
       const sucEl  = document.getElementById('devLevySuccess');
       errEl.style.display = 'none'; sucEl.style.display = 'none';
-      const userId = document.getElementById('devLevyMember').value;
-      const year   = document.getElementById('devLevyFormYear').value;
-      const amount = document.getElementById('devLevyFormAmount').value;
-      const paidDate = document.getElementById('devLevyFormPaidDate').value;
-      const notes  = document.getElementById('devLevyFormNotes').value.trim();
+      const userId    = document.getElementById('devLevyMember').value;
+      const year      = document.getElementById('devLevyFormYear').value;
+      const amountDue = document.getElementById('devLevyFormAmountDue').value || 200;
+      const amount    = document.getElementById('devLevyFormAmount').value;
+      const paidDate  = document.getElementById('devLevyFormPaidDate').value;
+      const notes     = document.getElementById('devLevyFormNotes').value.trim();
       if (!userId || !year || !amount) {
-        errEl.textContent = 'Member, year, and amount are required.';
+        errEl.textContent = 'Member, year, and amount paid are required.';
         errEl.style.display = 'block'; return;
       }
       const btn = document.getElementById('devLevySaveBtn');
@@ -5131,7 +5143,7 @@
         const res = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
-          body: JSON.stringify({ userId, type: 'Development Levy', year: parseInt(year), amount: parseFloat(amount), paidDate: paidDate || null, notes: notes || null }),
+          body: JSON.stringify({ userId, type: 'Development Levy', year: parseInt(year), amountDue: parseFloat(amountDue), amount: parseFloat(amount), paidDate: paidDate || null, notes: notes || null }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to save');
@@ -5152,11 +5164,12 @@
       const r = _allDevLevies.find(x => x.id === id);
       if (!r) return;
       devLevyEditId = id;
-      document.getElementById('devLevyMember').value       = r.user_id || '';
-      document.getElementById('devLevyFormYear').value     = r.year || '';
-      document.getElementById('devLevyFormAmount').value   = r.amount || '';
-      document.getElementById('devLevyFormPaidDate').value = r.paid_date ? r.paid_date.slice(0,10) : '';
-      document.getElementById('devLevyFormNotes').value    = r.notes || '';
+      document.getElementById('devLevyMember').value          = r.user_id || '';
+      document.getElementById('devLevyFormYear').value        = r.year || '';
+      document.getElementById('devLevyFormAmountDue').value   = r.amount_due || 200;
+      document.getElementById('devLevyFormAmount').value      = r.amount || '';
+      document.getElementById('devLevyFormPaidDate').value    = r.paid_date ? r.paid_date.slice(0,10) : '';
+      document.getElementById('devLevyFormNotes').value       = r.notes || '';
       document.getElementById('devLevySaveBtn').textContent  = 'Update Record';
       document.getElementById('devLevyCancelBtn').style.display = 'inline-block';
       document.getElementById('devLevySection').scrollIntoView({ behavior: 'smooth' });
@@ -5164,11 +5177,12 @@
 
     function cancelDevLevyEdit() {
       devLevyEditId = null;
-      document.getElementById('devLevyMember').value       = '';
-      document.getElementById('devLevyFormYear').value     = new Date().getFullYear();
-      document.getElementById('devLevyFormAmount').value   = '';
-      document.getElementById('devLevyFormPaidDate').value = '';
-      document.getElementById('devLevyFormNotes').value    = '';
+      document.getElementById('devLevyMember').value         = '';
+      document.getElementById('devLevyFormYear').value       = new Date().getFullYear();
+      document.getElementById('devLevyFormAmountDue').value  = 200;
+      document.getElementById('devLevyFormAmount').value     = '';
+      document.getElementById('devLevyFormPaidDate').value   = '';
+      document.getElementById('devLevyFormNotes').value      = '';
       document.getElementById('devLevySaveBtn').textContent      = 'Add Development Levy';
       document.getElementById('devLevyCancelBtn').style.display  = 'none';
     }
