@@ -254,4 +254,30 @@ router.delete('/fund-application', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/member/dev-levy-status — check if member is eligible to pay development levy
+router.get('/dev-levy-status', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { rows: [user] } = await pool.query('SELECT created_at FROM users WHERE id = $1', [userId]);
+    const joinedAt = new Date(user.created_at);
+    const now = new Date();
+    const monthsElapsed = (now.getFullYear() - joinedAt.getFullYear()) * 12 + (now.getMonth() - joinedAt.getMonth());
+
+    const { rows: [levyRow] } = await pool.query(
+      `SELECT COALESCE(SUM(amount), 0) AS total_paid FROM special_levies WHERE user_id = $1 AND type = 'Development Levy'`,
+      [userId]
+    );
+
+    const totalPaid = parseFloat(levyRow.total_paid);
+    const remaining = Math.max(0, 200 - totalPaid);
+    const withinSixMonths = monthsElapsed < 6;
+    const fullyPaid = totalPaid >= 200;
+
+    res.json({ eligible: withinSixMonths && !fullyPaid, withinSixMonths, fullyPaid, totalPaid, remaining });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

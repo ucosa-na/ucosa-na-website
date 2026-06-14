@@ -18,22 +18,24 @@ const ENDOW_ALLOWED    = [5000, 15000]; // $50 or $150
 // ── Member payment: create PaymentIntent (supports combined dues + endowment) ─
 router.post('/create-intent', requireAuth, async (req, res) => {
   try {
-    const { payDues, endowmentAmount, levyAmount } = req.body;
-    const payEndow = ENDOW_ALLOWED.includes(endowmentAmount);
-    const payLevy  = Number.isInteger(levyAmount) && levyAmount >= 100;
+    const { payDues, endowmentAmount, levyAmount, devLevyAmount } = req.body;
+    const payEndow   = ENDOW_ALLOWED.includes(endowmentAmount);
+    const payLevy    = Number.isInteger(levyAmount) && levyAmount >= 100;
+    const payDevLevy = Number.isInteger(devLevyAmount) && devLevyAmount >= 100;
 
-    if (!payDues && !payEndow && !payLevy) {
+    if (!payDues && !payEndow && !payLevy && !payDevLevy) {
       return res.status(400).json({ error: 'Select at least one payment option.' });
     }
     if (endowmentAmount && !payEndow) {
       return res.status(400).json({ error: 'Invalid endowment amount.' });
     }
 
-    const total = (payDues ? DUES_AMOUNT : 0) + (payEndow ? endowmentAmount : 0) + (payLevy ? levyAmount : 0);
+    const total = (payDues ? DUES_AMOUNT : 0) + (payEndow ? endowmentAmount : 0) + (payLevy ? levyAmount : 0) + (payDevLevy ? devLevyAmount : 0);
     const parts = [];
-    if (payDues)  parts.push('Annual Dues ($100)');
-    if (payEndow) parts.push(`Endowment Fund ($${endowmentAmount / 100})`);
-    if (payLevy)  parts.push(`Levy ($${levyAmount / 100})`);
+    if (payDues)    parts.push('Annual Dues ($100)');
+    if (payEndow)   parts.push(`Endowment Fund ($${endowmentAmount / 100})`);
+    if (payLevy)    parts.push(`Levy ($${levyAmount / 100})`);
+    if (payDevLevy) parts.push(`Development Fee ($${devLevyAmount / 100})`);
     const description = `UCOSA-NA — ${parts.join(' + ')} — ${req.user.email}`;
 
     const intent = await getStripe().paymentIntents.create({
@@ -57,7 +59,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 // ── Member payment: confirm, record in DB, send receipt ──────────────────────
 router.post('/member-confirm', requireAuth, async (req, res) => {
   try {
-    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear, levyAmount, levyYear, levyType, levyNote } = req.body;
+    const { paymentIntentId, payDues, duesYear, endowmentAmount, endowYear, levyAmount, levyYear, levyType, levyNote, devLevyAmount, devLevyYear } = req.body;
     if (!paymentIntentId) return res.status(400).json({ error: 'Missing paymentIntentId.' });
 
     const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
@@ -120,6 +122,17 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
         [req.user.id, type, yr, levyAmt, today, noteText, req.user.id]
       );
       items.push({ label: `${type} (${yr})`, amount: `$${levyAmt}` });
+    }
+
+    if (Number.isInteger(devLevyAmount) && devLevyAmount >= 100) {
+      const devAmt = (devLevyAmount / 100).toFixed(2);
+      const yr     = devLevyYear || currentYear;
+      await db.query(
+        `INSERT INTO special_levies (user_id, type, year, amount, paid_date, notes, recorded_by)
+         VALUES ($1, 'Development Levy', $2, $3, $4, 'Online payment via Stripe', $5)`,
+        [req.user.id, yr, devAmt, today, req.user.id]
+      );
+      items.push({ label: `Development Fee (${yr})`, amount: `$${devAmt}` });
     }
 
     const total = (intent.amount / 100).toFixed(2);

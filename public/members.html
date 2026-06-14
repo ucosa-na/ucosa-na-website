@@ -339,13 +339,14 @@
     .payment-section h2 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 6px; }
     .payment-section p.pay-sub { font-size: 0.88rem; color: #888; margin-bottom: 20px; }
     .pay-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-    #card-levy { grid-column: 1 / -1; }
+    #card-levy, #card-devlevy { grid-column: 1 / -1; }
     .pay-type-card {
       border: 2px solid #e0e0e0; border-radius: 10px; padding: 18px 16px; cursor: pointer;
       transition: border-color 0.2s, background 0.2s; text-align: center;
     }
     .pay-type-card:hover { border-color: #2e7d32; background: #f6fbf6; }
     .pay-type-card.selected { border-color: #2e7d32; background: #f0f9f0; }
+    .pay-type-card.disabled { opacity: 0.45; pointer-events: none; background: #f5f5f5; border-color: #ccc; cursor: not-allowed; }
     .pay-type-card .pay-label { font-weight: 700; font-size: 0.95rem; color: #1a1a2e; margin-bottom: 6px; }
     .pay-type-card .pay-amount { font-size: 1.4rem; font-weight: 800; color: #2e7d32; }
     .pay-type-card .pay-desc { font-size: 0.78rem; color: #888; margin-top: 4px; }
@@ -785,21 +786,44 @@
       if (!token) { window.location.href = '/login.html'; return; }
 
       try {
-        const [meRes, finRes, notesRes, endowRes, leviesRes] = await Promise.all([
-          fetch('/api/auth/me',                  { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch('/api/member/financials',        { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch('/api/meeting-notes',            { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch('/api/member/endowment',         { headers: { 'Authorization': 'Bearer ' + token } }),
-          fetch('/api/admin/special-levies',     { headers: { 'Authorization': 'Bearer ' + token } }),
+        const [meRes, finRes, notesRes, endowRes, leviesRes, devLevyStatusRes] = await Promise.all([
+          fetch('/api/auth/me',                      { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/member/financials',            { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/meeting-notes',                { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/member/endowment',             { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/admin/special-levies',         { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/member/dev-levy-status',       { headers: { 'Authorization': 'Bearer ' + token } }),
         ]);
 
         if (meRes.status === 401 || meRes.status === 403) { logout(); return; }
 
-        const user         = await meRes.json();
-        const records      = finRes.ok     ? await finRes.json()     : [];
-        const notes        = notesRes.ok   ? await notesRes.json()   : [];
-        const endowRecords = endowRes.ok   ? await endowRes.json()   : [];
-        const levies       = leviesRes.ok  ? await leviesRes.json()  : [];
+        const user           = await meRes.json();
+        const records        = finRes.ok            ? await finRes.json()            : [];
+        const notes          = notesRes.ok          ? await notesRes.json()          : [];
+        const endowRecords   = endowRes.ok          ? await endowRes.json()          : [];
+        const levies         = leviesRes.ok         ? await leviesRes.json()         : [];
+        const devLevyStatus  = devLevyStatusRes.ok  ? await devLevyStatusRes.json()  : null;
+
+        // Apply dev levy card eligibility
+        const devLevyCard = document.getElementById('card-devlevy');
+        const devLevyDesc = document.getElementById('devlevy-desc');
+        const devLevyAmtDisplay = document.getElementById('devlevy-amount-display');
+        if (devLevyStatus && devLevyStatus.eligible) {
+          devLevyCard.classList.remove('disabled');
+          const remaining = devLevyStatus.remaining.toFixed(2);
+          devLevyAmtDisplay.textContent = `$${remaining} remaining`;
+          devLevyDesc.textContent = `Mandatory one-time development levy. $${devLevyStatus.totalPaid.toFixed(2)} paid of $200.00 total.`;
+          const input = document.getElementById('devlevy-custom-amt');
+          if (input) input.max = remaining;
+        } else if (devLevyStatus) {
+          devLevyCard.classList.add('disabled');
+          if (devLevyStatus.fullyPaid) {
+            devLevyDesc.textContent = 'Development levy fully paid ($200.00). Thank you!';
+            devLevyAmtDisplay.textContent = '$0 remaining';
+          } else if (!devLevyStatus.withinSixMonths) {
+            devLevyDesc.textContent = `Development fee enrollment period closed (6 months from joining). Contact admin if needed.`;
+          }
+        }
 
         if (user.mustChangePassword) {
           window.location.href = '/change-password.html?required=1';
@@ -907,6 +931,21 @@
                     </div>
                   </div>
                 </div>
+                <div class="pay-type-card disabled" id="card-devlevy" onclick="togglePayType('devlevy')">
+                  <div class="pay-label">&#127959; Development Fee</div>
+                  <div class="pay-amount" id="devlevy-amount-display">$200</div>
+                  <div class="pay-desc" id="devlevy-desc">Mandatory one-time development levy for new members ($200 total)</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;" onclick="event.stopPropagation()">
+                    <div>
+                      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Amount ($) — remaining balance shown above</label>
+                      <input type="number" id="devlevy-custom-amt" min="1" placeholder="e.g. 50" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;outline:none;" oninput="updateDevLevyAmt(this.value)">
+                    </div>
+                    <div>
+                      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Year</label>
+                      <select id="devlevy-year" style="width:100%;border:1.5px solid #d0d0d0;border-radius:6px;padding:5px 8px;font-size:13px;background:#fff;cursor:pointer;"></select>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div id="stripe-card-wrap">
                 <div id="pay-summary"></div>
@@ -1011,17 +1050,23 @@
     // ── Stripe Payment ──
     const STRIPE_PK = 'pk_live_51Tb5GIHyhqRuzEBbuDKXikErVAKPWonL9Uq2a7hu8bU8gtBtjPmkNWkyFdfW5cvlw7Ysb9dsfzbHOt7rRwFO6XVo002eYPcLWq';
     let stripeInstance, cardElement;
-    let payDues = false, endowmentAmount = 5000, levyAmountCents = 0;
+    let payDues = false, endowmentAmount = 5000, levyAmountCents = 0, devLevyAmountCents = 0;
 
     function populateYearSelects() {
       const cur = new Date().getFullYear();
       const opts = Array.from({ length: 7 }, (_, i) => cur - 3 + i)
         .map(y => `<option value="${y}"${y === cur ? ' selected' : ''}>${y}</option>`)
         .join('');
-      ['dues-year', 'endow-year', 'levy-year'].forEach(id => {
+      ['dues-year', 'endow-year', 'levy-year', 'devlevy-year'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = opts;
       });
+    }
+
+    function updateDevLevyAmt(val) {
+      const dollars = parseFloat(val);
+      devLevyAmountCents = (!isNaN(dollars) && dollars >= 1) ? Math.round(dollars * 100) : 0;
+      updateSummary();
     }
 
     function updateLevyAmt(val) {
@@ -1051,13 +1096,17 @@
       } else if (type === 'levy') {
         const was = document.getElementById('card-levy').classList.contains('selected');
         document.getElementById('card-levy').classList.toggle('selected', !was);
+      } else if (type === 'devlevy') {
+        const was = document.getElementById('card-devlevy').classList.contains('selected');
+        document.getElementById('card-devlevy').classList.toggle('selected', !was);
       } else {
         const was = document.getElementById('card-endowment').classList.contains('selected');
         document.getElementById('card-endowment').classList.toggle('selected', !was);
       }
-      const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
-      const levySelected  = document.getElementById('card-levy').classList.contains('selected');
-      const anySelected   = payDues || endowSelected || levySelected;
+      const endowSelected   = document.getElementById('card-endowment').classList.contains('selected');
+      const levySelected    = document.getElementById('card-levy').classList.contains('selected');
+      const devLevySelected = document.getElementById('card-devlevy').classList.contains('selected');
+      const anySelected     = payDues || endowSelected || levySelected || devLevySelected;
       const wrap = document.getElementById('stripe-card-wrap');
       wrap.style.display = anySelected ? 'block' : 'none';
       if (anySelected) initStripe();
@@ -1075,9 +1124,10 @@
 
     function updateSummary() {
       const el = document.getElementById('pay-summary');
-      const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
-      const levySelected  = document.getElementById('card-levy').classList.contains('selected');
-      if (!payDues && !endowSelected && !levySelected) { el.style.display = 'none'; return; }
+      const endowSelected   = document.getElementById('card-endowment').classList.contains('selected');
+      const levySelected    = document.getElementById('card-levy').classList.contains('selected');
+      const devLevySelected = document.getElementById('card-devlevy').classList.contains('selected');
+      if (!payDues && !endowSelected && !levySelected && !devLevySelected) { el.style.display = 'none'; return; }
       const parts = [];
       let total = 0;
       if (payDues)       { parts.push('Annual Dues ($100.00)'); total += 10000; }
@@ -1087,16 +1137,25 @@
         parts.push(`${type} ($${(levyAmountCents/100).toFixed(2)})`);
         total += levyAmountCents;
       }
+      if (devLevySelected && devLevyAmountCents > 0) {
+        parts.push(`Development Fee ($${(devLevyAmountCents/100).toFixed(2)})`);
+        total += devLevyAmountCents;
+      }
       el.style.display = 'block';
       el.innerHTML = `Paying <strong>$${(total/100).toFixed(2)}</strong> for: ${parts.join(' + ')}`;
     }
 
     async function submitPayment() {
-      const endowSelected = document.getElementById('card-endowment').classList.contains('selected');
-      const levySelected  = document.getElementById('card-levy').classList.contains('selected');
-      if (!payDues && !endowSelected && !levySelected) return;
+      const endowSelected   = document.getElementById('card-endowment').classList.contains('selected');
+      const levySelected    = document.getElementById('card-levy').classList.contains('selected');
+      const devLevySelected = document.getElementById('card-devlevy').classList.contains('selected');
+      if (!payDues && !endowSelected && !levySelected && !devLevySelected) return;
       if (levySelected && levyAmountCents < 100) {
         document.getElementById('card-errors').textContent = 'Please enter a levy/contribution amount (minimum $1).';
+        return;
+      }
+      if (devLevySelected && devLevyAmountCents < 100) {
+        document.getElementById('card-errors').textContent = 'Please enter a development fee amount (minimum $1).';
         return;
       }
       const cardName    = document.getElementById('card-name').value.trim();
@@ -1111,7 +1170,7 @@
         const res   = await fetch('/api/payment/create-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ payDues, endowmentAmount: endowSelected ? endowmentAmount : 0, levyAmount: levySelected ? levyAmountCents : 0 }),
+          body: JSON.stringify({ payDues, endowmentAmount: endowSelected ? endowmentAmount : 0, levyAmount: levySelected ? levyAmountCents : 0, devLevyAmount: devLevySelected ? devLevyAmountCents : 0 }),
         });
         const data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Payment error.'; btn.disabled = false; btn.textContent = 'Pay Now'; return; }
@@ -1146,6 +1205,8 @@
               levyYear,
               levyType,
               levyNote,
+              devLevyAmount: devLevySelected ? devLevyAmountCents : 0,
+              devLevyYear: parseInt(document.getElementById('devlevy-year').value, 10),
             }),
           });
 
