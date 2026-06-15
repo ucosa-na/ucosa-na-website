@@ -352,7 +352,7 @@
     </div>
 
     <!-- Section 7: Fin Sec / President Approval (read-only, shown after review) -->
-    <div class="form-card" id="approvalSection" style="display:none;">
+    <div class="form-card" id="approvalSection">
       <h3>Local Chapter Fin Sec / President Approval</h3>
 
       <!-- Fin Sec -->
@@ -542,34 +542,27 @@
     }
     if (data.terms_accepted) document.getElementById('terms_accepted').checked = true;
 
-    // Populate approval section (read-only view)
-    const hasApproval = data.finsec_status || data.president_status || data.finsec_commencement_correct !== null && data.finsec_commencement_correct !== undefined;
-    if (hasApproval) {
-      document.getElementById('approvalSection').style.display = 'block';
-
-      // Fin Sec
-      if (data.finsec_commencement_correct !== null && data.finsec_commencement_correct !== undefined) {
-        const val = data.finsec_commencement_correct === true || data.finsec_commencement_correct === 'true' ? 'true' : 'false';
-        const r = document.querySelector(`input[name="finsec_commencement_view"][value="${val}"]`);
-        if (r) r.checked = true;
-      }
-      if (data.finsec_status) {
-        const r = document.querySelector(`input[name="finsec_status_view"][value="${data.finsec_status}"]`);
-        if (r) r.checked = true;
-      }
-      if (data.finsec_reason) document.getElementById('finsec_reason_view').value = data.finsec_reason;
-      if (data.finsec_signature) document.getElementById('finsec_signature_view').value = data.finsec_signature;
-      if (data.finsec_date) document.getElementById('finsec_date_view').value = data.finsec_date;
-
-      // President
-      if (data.president_status) {
-        const r = document.querySelector(`input[name="president_status_view"][value="${data.president_status}"]`);
-        if (r) r.checked = true;
-      }
-      if (data.president_reason) document.getElementById('president_reason_view').value = data.president_reason;
-      if (data.president_signature) document.getElementById('president_approval_sig_view').value = data.president_signature;
-      if (data.president_approval_date) document.getElementById('president_approval_date_view').value = data.president_approval_date;
+    // Populate approval section (read-only)
+    if (data.finsec_commencement_correct !== null && data.finsec_commencement_correct !== undefined) {
+      const val = data.finsec_commencement_correct === true || data.finsec_commencement_correct === 'true' ? 'true' : 'false';
+      const r = document.querySelector(`input[name="finsec_commencement_view"][value="${val}"]`);
+      if (r) r.checked = true;
     }
+    if (data.finsec_status) {
+      const r = document.querySelector(`input[name="finsec_status_view"][value="${data.finsec_status}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.finsec_reason) document.getElementById('finsec_reason_view').value = data.finsec_reason;
+    if (data.finsec_signature) document.getElementById('finsec_signature_view').value = data.finsec_signature;
+    if (data.finsec_date) document.getElementById('finsec_date_view').value = data.finsec_date;
+
+    if (data.president_status) {
+      const r = document.querySelector(`input[name="president_status_view"][value="${data.president_status}"]`);
+      if (r) r.checked = true;
+    }
+    if (data.president_reason) document.getElementById('president_reason_view').value = data.president_reason;
+    if (data.president_signature) document.getElementById('president_approval_sig_view').value = data.president_signature;
+    if (data.president_approval_date) document.getElementById('president_approval_date_view').value = data.president_approval_date;
   }
 
   // Check if already submitted
@@ -607,6 +600,7 @@
             }
           }
         } else {
+          fillForm(data);
           showSubmitted(data.status);
         }
       }
