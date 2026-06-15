@@ -244,6 +244,10 @@
       </div>
       <div class="form-row">
         <div class="form-group">
+          <label>Relationship</label>
+          <input type="text" id="ben1_relation" placeholder="e.g. Spouse, Child, Sibling"/>
+        </div>
+        <div class="form-group">
           <label>Social Security # (Last 4 digits)</label>
           <input type="text" id="ben1_ssn_last4" maxlength="4" placeholder="e.g. 1234"/>
         </div>
@@ -434,7 +438,7 @@
     const fields = [
       'applicant_name','birth_date','commencement_date','ssn_last4','street_address','city','state','zip_code','email',
       'alt_address','alt_city','alt_state','alt_zip','alt_phone','alt_email',
-      'ben1_name','ben1_birth_date','ben1_ssn_last4','ben1_phone','ben1_email',
+      'ben1_name','ben1_birth_date','ben1_relation','ben1_ssn_last4','ben1_phone','ben1_email',
       'applicant_signature','signature_date','president_name','president_signature','president_date'
     ];
     fields.forEach(id => {
@@ -555,6 +559,7 @@
       ben1_name:            document.getElementById('ben1_name').value.trim(),
       ben1_birth_date:      document.getElementById('ben1_birth_date').value,
       ben1_sex,
+      ben1_relation:        document.getElementById('ben1_relation').value.trim(),
       ben1_ssn_last4:       document.getElementById('ben1_ssn_last4').value.trim(),
       ben1_phone:           document.getElementById('ben1_phone').value.trim(),
       ben1_email:           document.getElementById('ben1_email').value.trim(),
