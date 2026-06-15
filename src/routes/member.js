@@ -99,7 +99,7 @@ router.post('/endowment-submit', requireAuth, async (req, res) => {
 router.get('/fund-application', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, status, admin_comment, submitted_at FROM member_fund_applications WHERE user_id = $1`,
+      `SELECT * FROM member_fund_applications WHERE user_id = $1`,
       [req.user.id]
     );
     res.json(rows[0] || null);
