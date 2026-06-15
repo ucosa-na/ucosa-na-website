@@ -1954,22 +1954,40 @@ router.get('/fund-applications/:id', excoOrAdmin, async (req, res) => {
 
 // PUT /api/admin/fund-applications/:id — update office-use fields (status/approval)
 router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
-  const { status, admin_approved, admin_comment, admin_signature, admin_date } = req.body;
+  const {
+    status,
+    admin_approved, admin_comment, admin_signature, admin_date,
+    finsec_commencement_correct, finsec_status, finsec_reason, finsec_signature, finsec_date,
+    president_status, president_reason, president_signature, president_approval_date,
+  } = req.body;
   const VALID = ['pending','approved','denied'];
   if (status && !VALID.includes(status)) return res.status(400).json({ error: 'Invalid status' });
   try {
     const { rows } = await pool.query(`
       UPDATE member_fund_applications
-      SET status           = COALESCE($1, status),
-          admin_approved   = $2,
-          admin_comment    = $3,
-          admin_signature  = $4,
-          admin_date       = $5,
-          updated_at       = NOW(),
-          updated_by       = $6
+      SET status                       = COALESCE($1, status),
+          admin_approved               = $2,
+          admin_comment                = $3,
+          admin_signature              = $4,
+          admin_date                   = $5,
+          finsec_commencement_correct  = $8,
+          finsec_status                = $9,
+          finsec_reason                = $10,
+          finsec_signature             = $11,
+          finsec_date                  = $12,
+          president_status             = $13,
+          president_reason             = $14,
+          president_signature          = $15,
+          president_approval_date      = $16,
+          updated_at                   = NOW(),
+          updated_by                   = $6
       WHERE id = $7 RETURNING *`,
       [status || null, admin_approved ?? null, admin_comment || null,
-       admin_signature || null, admin_date || null, req.user.id, req.params.id]
+       admin_signature || null, admin_date || null, req.user.id, req.params.id,
+       finsec_commencement_correct ?? null, finsec_status || null, finsec_reason || null,
+       finsec_signature || null, finsec_date || null,
+       president_status || null, president_reason || null,
+       president_signature || null, president_approval_date || null]
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
     await logAudit(req.user.id, req.user.email, 'FUND_APP_UPDATED', 'FUND_APPLICATION',

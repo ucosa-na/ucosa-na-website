@@ -297,6 +297,18 @@ pool.query(`
   `)
 ).then(() =>
   pool.query(`ALTER TABLE special_levies ADD COLUMN IF NOT EXISTS amount_due NUMERIC(10,2) DEFAULT 200;`)
+).then(() =>
+  pool.query(`
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS finsec_commencement_correct BOOLEAN DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS finsec_status TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS finsec_reason TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS finsec_signature TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS finsec_date DATE DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS president_status TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS president_reason TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS president_signature TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS president_approval_date DATE DEFAULT NULL;
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
