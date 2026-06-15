@@ -425,9 +425,10 @@
 
   // Pre-fill member info from stored user
   const storedUser = JSON.parse(localStorage.getItem('ucosa_user') || '{}');
-  if (storedUser.full_name) document.getElementById('applicant_name').value      = storedUser.full_name;
-  if (storedUser.full_name) document.getElementById('applicant_signature').value = storedUser.full_name;
-  if (storedUser.email)     document.getElementById('email').value               = storedUser.email;
+  const memberName = storedUser.fullName || storedUser.full_name || '';
+  if (memberName) document.getElementById('applicant_name').value      = memberName;
+  if (memberName) document.getElementById('applicant_signature').value = memberName;
+  if (storedUser.email) document.getElementById('email').value         = storedUser.email;
 
   // Auto-sign president signature when president name is typed
   document.getElementById('president_name').addEventListener('input', function() {
@@ -523,7 +524,6 @@
       ['street_address', 'Street address'],
       ['city', 'City'],
       ['email', 'Email'],
-      ['applicant_signature', 'Applicant signature'],
       ['signature_date', 'Signature date'],
     ];
     for (const [id, label] of required) {
