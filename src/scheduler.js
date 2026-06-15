@@ -355,7 +355,7 @@ async function sendInactivityReminders() {
 async function sendEnrollmentOpenNotifications() {
   const year = new Date().getFullYear();
   const enrollDeadline = year === 2026 ? 'August 15' : 'March 15';
-  const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – March 15';
+  const enrollPeriod   = year === 2026 ? 'June 14 – August 15' : 'January 1 – March 15';
 
   log.info(`Scheduler: sending endowment enrollment open notifications for ${year} (${enrollPeriod})`);
 
@@ -464,8 +464,8 @@ cron.schedule('0 9 1 * *', sendBirthdayEmails, { timezone: 'America/New_York' })
 // January 1st at 9:00 AM — endowment enrollment open (2027+)
 cron.schedule('0 9 1 1 *', sendEnrollmentOpenNotifications, { timezone: 'America/New_York' });
 
-// June 15th at 9:00 AM — endowment enrollment open (2026 special window)
-cron.schedule('0 9 15 6 *', sendEnrollmentOpenNotifications, { timezone: 'America/New_York' });
+// June 14th at 9:00 AM — endowment enrollment open (2026 special window)
+cron.schedule('0 9 14 6 *', sendEnrollmentOpenNotifications, { timezone: 'America/New_York' });
 
 log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 15 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
 
