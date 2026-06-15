@@ -384,6 +384,18 @@ router.post('/test-email', adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/admin/enrollment/notify — manually trigger enrollment open notifications
+router.post('/enrollment/notify', adminOnly, async (req, res) => {
+  try {
+    const { sendEnrollmentOpenNotifications } = require('../scheduler');
+    await sendEnrollmentOpenNotifications();
+    res.json({ ok: true, message: 'Enrollment open notifications dispatched to all active members.' });
+  } catch (err) {
+    log.error(`Manual enrollment notification error: ${err.message}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/test-fund-submission — test fund application submission notification
 router.post('/test-fund-submission', adminOnly, async (req, res) => {
   const { email, phone, name } = req.body;

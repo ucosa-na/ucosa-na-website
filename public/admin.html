@@ -681,6 +681,7 @@
           <a href="#testEmail">Test Email</a>
           <a href="#testSms">Test SMS</a>
           <a href="#testFundNotifications">Test Fund Notifications</a>
+          <a href="#enrollmentNotify">Enrollment Notification</a>
           <a href="#siteMaintenance">Site Maintenance</a>
           <a href="#auditLog">Audit Log</a>
           <a href="#fundApplicationsSection">Member's Endowment Fund Applications</a>
@@ -939,6 +940,19 @@
           <button onclick="testFundNotification('submission')" style="padding:10px 24px;background:#1565c0;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">&#9993; Test Submission Notification</button>
           <button onclick="testFundNotification('approval')" style="padding:10px 24px;background:#2e7d32;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">&#10003; Test Approval Notification</button>
         </div>
+      </section>
+
+      <!-- ENROLLMENT OPEN NOTIFICATION -->
+      <section id="enrollmentNotify">
+        <h2>&#128233; Endowment Enrollment — Send Open Notification</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:16px;">
+          Manually send the enrollment open email <strong>and</strong> SMS to all active members.
+          Use this to test before June 15 or to re-send if needed.
+        </p>
+        <div id="enrollNotifyMsg" class="msg" style="display:none;margin-bottom:14px;font-size:15px;"></div>
+        <button id="enrollNotifyBtn" onclick="sendEnrollmentNotification()" style="padding:12px 28px;background:#7b2152;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
+          &#128233; Send Enrollment Open Notification to All Members
+        </button>
       </section>
 
       <!-- MEMBERS LIST -->
@@ -2313,7 +2327,7 @@
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
-      const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
+      const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
@@ -3489,6 +3503,29 @@
         errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = 'Send Test SMS';
+      }
+    }
+
+    async function sendEnrollmentNotification() {
+      const btn   = document.getElementById('enrollNotifyBtn');
+      const msgEl = document.getElementById('enrollNotifyMsg');
+      msgEl.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/enrollment/notify', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken() },
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? data.message : (data.error || 'Failed to send notifications.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error';
+        msgEl.textContent = 'Network error — server unreachable.';
+        msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '📨 Send Enrollment Open Notification to All Members';
       }
     }
 
