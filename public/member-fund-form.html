@@ -366,16 +366,32 @@
   const isEditMode = new URLSearchParams(window.location.search).get('edit') === '1';
   const isViewMode = new URLSearchParams(window.location.search).get('view') === '1';
 
-  // Enrollment period: January 1–30 only (view mode is always accessible)
+  // Enrollment period:
+  //   2026 only  — June 15 – August 15, 2026
+  //   2027+      — January 1 – January 30 each year
   (function checkEnrollmentPeriod() {
     if (isViewMode) return; // approved PDF view always accessible
     const now   = new Date();
-    const month = now.getMonth(); // 0 = January
+    const year  = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed: 0=Jan, 5=Jun, 7=Aug
     const day   = now.getDate();
-    const open  = (month === 0 && day >= 1 && day <= 30);
+
+    let open = false;
+    let nextOpenMsg = '';
+    if (year === 2026) {
+      // Special 2026 window: June 15 – August 15
+      open = (month === 5 && day >= 15) || (month === 6) || (month === 7 && day <= 15);
+      nextOpenMsg = open ? '' : (month < 5 || (month === 5 && day < 15))
+        ? 'The 2026 enrollment window opens <strong>June 15, 2026</strong>.'
+        : 'The next enrollment period opens <strong>January 1, 2027</strong>.';
+    } else {
+      // 2027+: January 1–30
+      open = (month === 0 && day >= 1 && day <= 30);
+      const nextYear = (month === 0 && day <= 30) ? year : year + 1;
+      nextOpenMsg = `The next enrollment period opens <strong>January 1, ${nextYear}</strong>.`;
+    }
+
     if (!open) {
-      const year     = now.getFullYear();
-      const nextYear = month === 0 && day < 1 ? year : year + 1;
       const pageWrap = document.getElementById('pageWrap');
       pageWrap.innerHTML = `
         <div style="max-width:620px;margin:60px auto;text-align:center;padding:0 20px;">
@@ -385,10 +401,10 @@
             <h2 style="font-size:24px;color:#7b2152;margin:0 0 12px;">Enrollment Period Closed</h2>
             <p style="font-size:16px;color:#555;line-height:1.7;margin:0 0 16px;">
               The <strong>UCOSA-NA Member's Endowment Fund</strong> enrollment period runs
-              <strong>January 1 – January 30</strong> each year.
+              <strong>June 15 – August 15, 2026</strong>, then <strong>January 1 – January 30</strong> each year from 2027 onwards.
             </p>
             <p style="font-size:15px;color:#888;margin:0 0 24px;">
-              The next enrollment period opens <strong>January 1, ${nextYear}</strong>.
+              ${nextOpenMsg}
               You will receive an email notification when enrollment opens.
             </p>
             <a href="/members.html" style="display:inline-block;background:#7b2152;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:700;">
