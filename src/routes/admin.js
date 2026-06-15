@@ -22,6 +22,7 @@ const anyPriv         = requireRole('admin', 'fin-role', 'security-role', 'pro-r
 const proOrAdmin      = requireRole('admin', 'pro-role');
 const welfareOrAdmin  = requireRole('admin', 'welfare');
 const excoOrAdmin     = requireRole('admin', 'exco');
+const fundAppAccess   = requireRole('admin', 'exco', 'fin-role');
 
 const router = express.Router();
 
@@ -1923,12 +1924,15 @@ router.delete('/email-failures', adminOnly, async (req, res) => {
 });
 
 // GET /api/admin/fund-applications — list all member fund applications
-router.get('/fund-applications', excoOrAdmin, async (req, res) => {
+router.get('/fund-applications', fundAppAccess, async (req, res) => {
   try {
+    // exco (President) only sees applications that fin sec has already approved
+    const roleFilter = req.user.role === 'exco' ? `WHERE mfa.finsec_status = 'approved'` : '';
     const { rows } = await pool.query(`
       SELECT mfa.*, u.full_name AS member_full_name, u.email AS member_email
       FROM member_fund_applications mfa
       JOIN users u ON u.id = mfa.user_id
+      ${roleFilter}
       ORDER BY mfa.submitted_at DESC
     `);
     res.json(rows);
@@ -1938,11 +1942,12 @@ router.get('/fund-applications', excoOrAdmin, async (req, res) => {
 });
 
 // GET /api/admin/fund-applications/:id — get single application
-router.get('/fund-applications/:id', excoOrAdmin, async (req, res) => {
+router.get('/fund-applications/:id', fundAppAccess, async (req, res) => {
   try {
+    const roleFilter = req.user.role === 'exco' ? `AND mfa.finsec_status = 'approved'` : '';
     const { rows } = await pool.query(
       `SELECT mfa.*, u.full_name AS member_full_name FROM member_fund_applications mfa
-       JOIN users u ON u.id = mfa.user_id WHERE mfa.id = $1`,
+       JOIN users u ON u.id = mfa.user_id WHERE mfa.id = $1 ${roleFilter}`,
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
@@ -1953,19 +1958,45 @@ router.get('/fund-applications/:id', excoOrAdmin, async (req, res) => {
 });
 
 // PUT /api/admin/fund-applications/:id — update office-use fields (status/approval)
-router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
-  const {
-    status,
-    admin_approved, admin_comment, admin_signature, admin_date,
-    finsec_commencement_correct, finsec_status, finsec_reason, finsec_signature, finsec_date,
-    president_status, president_reason, president_signature, president_approval_date,
-  } = req.body;
+router.put('/fund-applications/:id', fundAppAccess, async (req, res) => {
+  const b = req.body;
   const VALID = ['pending','approved','denied'];
-  if (status && !VALID.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  if (b.status && !VALID.includes(b.status)) return res.status(400).json({ error: 'Invalid status' });
   try {
+    // Fetch current record to detect transitions
+    const { rows: prev } = await pool.query(`SELECT * FROM member_fund_applications WHERE id = $1`, [req.params.id]);
+    if (!prev.length) return res.status(404).json({ error: 'Not found' });
+    const old = prev[0];
+    const role = req.user.role;
+
+    // Guard: exco can only act after fin sec approves
+    if (role === 'exco' && old.finsec_status !== 'approved') {
+      return res.status(403).json({ error: 'Fin Sec must approve before the President can act.' });
+    }
+
+    // Role-based field restrictions
+    const canEditFinsec    = role !== 'exco';
+    const canEditPresident = role !== 'fin-role';
+
+    const newFinsecCorrect = canEditFinsec ? (b.finsec_commencement_correct ?? old.finsec_commencement_correct) : old.finsec_commencement_correct;
+    const newFinsecStatus  = canEditFinsec ? (b.finsec_status  || old.finsec_status)     : old.finsec_status;
+    const newFinsecReason  = canEditFinsec ? (b.finsec_reason  ?? old.finsec_reason)     : old.finsec_reason;
+    const newFinsecSig     = canEditFinsec ? (b.finsec_signature || old.finsec_signature) : old.finsec_signature;
+    const newFinsecDate    = canEditFinsec ? (b.finsec_date    || old.finsec_date)        : old.finsec_date;
+
+    const newPresidentStatus = canEditPresident ? (b.president_status || old.president_status)           : old.president_status;
+    const newPresidentReason = canEditPresident ? (b.president_reason ?? old.president_reason)           : old.president_reason;
+    const newPresidentSig    = canEditPresident ? (b.president_signature || old.president_signature)     : old.president_signature;
+    const newPresidentDate   = canEditPresident ? (b.president_approval_date || old.president_approval_date) : old.president_approval_date;
+
+    // Auto-set overall status from president's decision
+    let newStatus = b.status || old.status || 'pending';
+    if (newPresidentStatus === 'approved' && old.president_status !== 'approved') newStatus = 'approved';
+    else if (newPresidentStatus === 'denied' && old.president_status !== 'denied') newStatus = 'denied';
+
     const { rows } = await pool.query(`
       UPDATE member_fund_applications
-      SET status                       = COALESCE($1, status),
+      SET status                       = $1,
           admin_approved               = $2,
           admin_comment                = $3,
           admin_signature              = $4,
@@ -1982,20 +2013,47 @@ router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
           updated_at                   = NOW(),
           updated_by                   = $6
       WHERE id = $7 RETURNING *`,
-      [status || null, admin_approved ?? null, admin_comment || null,
-       admin_signature || null, admin_date || null, req.user.id, req.params.id,
-       finsec_commencement_correct ?? null, finsec_status || null, finsec_reason || null,
-       finsec_signature || null, finsec_date || null,
-       president_status || null, president_reason || null,
-       president_signature || null, president_approval_date || null]
+      [newStatus,
+       b.admin_approved ?? old.admin_approved, b.admin_comment ?? old.admin_comment,
+       b.admin_signature || old.admin_signature, b.admin_date || old.admin_date,
+       req.user.id, req.params.id,
+       newFinsecCorrect, newFinsecStatus, newFinsecReason, newFinsecSig, newFinsecDate,
+       newPresidentStatus, newPresidentReason, newPresidentSig, newPresidentDate]
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
     await logAudit(req.user.id, req.user.email, 'FUND_APP_UPDATED', 'FUND_APPLICATION',
       rows[0].id, rows[0].applicant_name, { status: rows[0].status });
     res.json(rows[0]);
 
-    // Notify member by email + SMS when status is approved or denied
-    if (rows[0].status === 'approved' || rows[0].status === 'denied') {
+    // Notify President (exco) when Fin Sec first approves
+    if (newFinsecStatus === 'approved' && old.finsec_status !== 'approved') {
+      try {
+        const { rows: presRows } = await pool.query(
+          `SELECT full_name, email, phone FROM users WHERE role = 'exco' AND is_active = TRUE`
+        );
+        const memberName = rows[0].applicant_name || 'a member';
+        for (const p of presRows) {
+          if (p.email) {
+            sendEmail({
+              to: p.email,
+              subject: 'Endowment Fund Application Ready for Your Approval — UCOSA-NA',
+              html: `<p>Dear ${p.full_name || 'President'},</p>
+                     <p>The <strong>Member's Endowment Fund Application</strong> submitted by <strong>${memberName}</strong> has been reviewed and approved by the Financial Secretary.</p>
+                     <p>Please log in to the Admin Panel to review and give your approval.</p>
+                     <p>Thank you,<br/>UCOSA-NA</p>`
+            }).catch(() => {});
+          }
+          const phone = normalizePhone(p.phone);
+          if (phone) {
+            sendSMS(phone, `Dear ${p.full_name || 'President'}, the endowment fund application by ${memberName} has been approved by the Fin Sec and is ready for your approval. Please log in to the Admin Panel. — UCOSA-NA`).catch(() => {});
+          }
+        }
+      } catch(_) {}
+    }
+
+    // Notify member when President decides
+    if (newPresidentStatus !== old.president_status &&
+        (newPresidentStatus === 'approved' || newPresidentStatus === 'denied')) {
       try {
         const { rows: uRows } = await pool.query(
           `SELECT u.full_name, u.email, u.phone FROM users u
@@ -2004,23 +2062,23 @@ router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
         );
         const u = uRows[0] || {};
         const name = rows[0].applicant_name || u.full_name || 'Member';
-        const reason = rows[0].admin_comment ? `<p><strong>Reason:</strong> ${rows[0].admin_comment}</p>` : '';
-        const smsReason = rows[0].admin_comment ? ` Reason: ${rows[0].admin_comment}.` : '';
+        const reason = rows[0].president_reason ? `<p><strong>Reason:</strong> ${rows[0].president_reason}</p>` : '';
+        const smsReason = rows[0].president_reason ? ` Reason: ${rows[0].president_reason}.` : '';
 
-        if (rows[0].status === 'approved') {
+        if (newPresidentStatus === 'approved') {
           if (u.email) {
             sendEmail({
               to: u.email,
               subject: 'Fund Application Approved — UCOSA-NA',
               html: `<p>Dear ${name},</p>
-                     <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
+                     <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong> by the Chapter President.</p>
                      <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
                      <p>Thank you,<br/>UCOSA-NA</p>`
             }).catch(() => {});
           }
           const phone = normalizePhone(u.phone);
           if (phone) {
-            sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been APPROVED. You are now enrolled for bereavement coverage. — UCOSA-NA`).catch(() => {});
+            sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been APPROVED by the Chapter President. You are now enrolled for bereavement coverage. — UCOSA-NA`).catch(() => {});
           }
         } else {
           if (u.email) {
@@ -2028,7 +2086,7 @@ router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
               to: u.email,
               subject: 'Fund Application Denied — UCOSA-NA',
               html: `<p>Dear ${name},</p>
-                     <p>We regret to inform you that your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#c62828;">denied</strong>.</p>
+                     <p>We regret to inform you that your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#c62828;">denied</strong> by the Chapter President.</p>
                      ${reason}
                      <p>You may log in to your member portal, update your application, and resubmit for review.</p>
                      <p>Thank you,<br/>UCOSA-NA</p>`
@@ -2036,7 +2094,7 @@ router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
           }
           const phone = normalizePhone(u.phone);
           if (phone) {
-            sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been DENIED.${smsReason} Please log in to update and resubmit your application. — UCOSA-NA`).catch(() => {});
+            sendSMS(phone, `Dear ${name}, your UCOSA-NA Member's Endowment Fund Application has been DENIED by the Chapter President.${smsReason} Please log in to update and resubmit. — UCOSA-NA`).catch(() => {});
           }
         }
       } catch(_) {}

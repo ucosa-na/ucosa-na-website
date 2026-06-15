@@ -1389,41 +1389,41 @@
             <div style="font-size:13px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px;">13–14. Fin Sec / President Approval</div>
 
             <!-- Fin Sec -->
-            <div style="border:1px solid #e0c97a;border-radius:8px;padding:14px 16px;margin-bottom:14px;background:#fffde7;">
-              <div style="font-size:13px;font-weight:700;color:#7b5800;margin-bottom:12px;border-bottom:1px solid #e0c97a;padding-bottom:6px;">Fin Sec</div>
+            <div id="finsecApprovalDiv" style="border:1px solid #e0c97a;border-radius:8px;padding:14px 16px;margin-bottom:14px;background:#fffde7;">
+              <div style="font-size:13px;font-weight:700;color:#7b5800;margin-bottom:12px;border-bottom:1px solid #e0c97a;padding-bottom:6px;">13. Fin Sec</div>
               <div style="margin-bottom:10px;">
                 <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px;">1. Is Commencement Date correct?</label>
                 <div style="display:flex;gap:20px;">
-                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecCommencementCorrect" class="exco-allowed" value="true"/> Yes</label>
-                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecCommencementCorrect" class="exco-allowed" value="false"/> No</label>
+                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecCommencementCorrect" value="true"/> Yes</label>
+                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecCommencementCorrect" value="false"/> No</label>
                 </div>
               </div>
               <div style="margin-bottom:10px;">
                 <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px;">2. Decision</label>
                 <div style="display:flex;gap:20px;">
-                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecStatus" class="exco-allowed" value="approved"/> Approved</label>
-                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecStatus" class="exco-allowed" value="denied"/> Denied</label>
+                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecStatus" value="approved"/> Approved</label>
+                  <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="finsecStatus" value="denied"/> Denied</label>
                 </div>
               </div>
               <div style="margin-bottom:10px;">
                 <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px;">Reason</label>
-                <textarea id="detailFinsecReason" class="exco-allowed" rows="2" placeholder="Reason (if denied)" style="width:100%;padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
+                <textarea id="detailFinsecReason" rows="2" placeholder="Reason (if denied)" style="width:100%;padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
               </div>
               <div style="display:flex;gap:12px;flex-wrap:wrap;">
                 <div style="display:flex;flex-direction:column;flex:1;min-width:140px;">
                   <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Fin Sec Signature</label>
-                  <input type="text" id="detailFinsecSig" class="exco-allowed" placeholder="Type full name" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
+                  <input type="text" id="detailFinsecSig" placeholder="Type full name" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
                 </div>
                 <div style="display:flex;flex-direction:column;min-width:140px;">
                   <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Date</label>
-                  <input type="date" id="detailFinsecDate" class="exco-allowed" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
+                  <input type="date" id="detailFinsecDate" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
                 </div>
               </div>
             </div>
 
             <!-- President -->
-            <div style="border:1px solid #c8a96e;border-radius:8px;padding:14px 16px;margin-bottom:14px;background:#fdf6ec;">
-              <div style="font-size:13px;font-weight:700;color:#7b2152;margin-bottom:12px;border-bottom:1px solid #c8a96e;padding-bottom:6px;">President</div>
+            <div id="presidentApprovalDiv" style="border:1px solid #c8a96e;border-radius:8px;padding:14px 16px;margin-bottom:14px;background:#fdf6ec;">
+              <div style="font-size:13px;font-weight:700;color:#7b2152;margin-bottom:12px;border-bottom:1px solid #c8a96e;padding-bottom:6px;">14. President</div>
               <div style="margin-bottom:10px;">
                 <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px;">Decision</label>
                 <div style="display:flex;gap:20px;">
@@ -2421,6 +2421,7 @@
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
       const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
       const proAdminSections = ['fundApplicationsSection'];
+      const finFundSections  = ['fundApplicationsSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
@@ -2437,7 +2438,7 @@
       });
       proAdminSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isPro || isExco) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isPro || isExco || isFin) ? '' : 'none';
       });
 
       // Exco sees everything but read-only — lock all inputs/buttons except fund app approval
@@ -2683,6 +2684,22 @@
         }
         document.getElementById('fundAppDetail').style.display = 'block';
         document.getElementById('fundAppDetail').scrollIntoView({ behavior: 'smooth' });
+
+        // Apply role-based section access
+        const userRole = JSON.parse(localStorage.getItem('ucosa_user') || '{}').role || '';
+        const finsecDiv    = document.getElementById('finsecApprovalDiv');
+        const presidentDiv = document.getElementById('presidentApprovalDiv');
+        if (userRole === 'fin-role') {
+          // Fin sec can edit finsec section only
+          if (finsecDiv) finsecDiv.querySelectorAll('input,textarea,select').forEach(el => el.disabled = false);
+          if (presidentDiv) presidentDiv.querySelectorAll('input,textarea,select').forEach(el => { el.disabled = true; el.style.opacity = '0.5'; });
+          document.getElementById('detailStatus').disabled  = true;
+          document.getElementById('detailComment').disabled = true;
+        } else if (userRole === 'exco') {
+          // President (exco) can edit president section only; finsec is already locked by CSS
+          if (presidentDiv) presidentDiv.querySelectorAll('input,textarea,select').forEach(el => el.disabled = false);
+        }
+        // admin: no restrictions — everything editable
       } catch(err) {
         alert('Error: ' + err.message);
       }

@@ -170,6 +170,30 @@ router.post('/fund-application', requireAuth, async (req, res) => {
       }
     } catch(_) {}
 
+    // Notify all Fin Sec (fin-role) users that a new application is awaiting review
+    try {
+      const { rows: finRows } = await pool.query(
+        `SELECT full_name, email, phone FROM users WHERE role = 'fin-role' AND is_active = TRUE`
+      );
+      const memberName = f.applicant_name || 'A member';
+      for (const fin of finRows) {
+        if (fin.email) {
+          sendEmail({
+            to: fin.email,
+            subject: 'New Endowment Fund Application Submitted — UCOSA-NA',
+            html: `<p>Dear ${fin.full_name || 'Financial Secretary'},</p>
+                   <p><strong>${memberName}</strong> has submitted a <strong>Member's Endowment Fund Application</strong> that requires your review.</p>
+                   <p>Please log in to the Admin Panel to review the application.</p>
+                   <p>Thank you,<br/>UCOSA-NA</p>`
+          }).catch(() => {});
+        }
+        const finPhone = normalizePhone(fin.phone);
+        if (finPhone) {
+          sendSMS(finPhone, `Dear ${fin.full_name || 'Fin Sec'}, ${memberName} has submitted an endowment fund application awaiting your review. Please log in to the Admin Panel. — UCOSA-NA`).catch(() => {});
+        }
+      }
+    } catch(_) {}
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
