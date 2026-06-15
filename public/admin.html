@@ -982,14 +982,39 @@
       <!-- ENROLLMENT OPEN NOTIFICATION -->
       <section id="enrollmentNotify">
         <h2>&#128233; Endowment Enrollment — Send Open Notification</h2>
-        <p style="color:#555;font-size:19px;margin-bottom:16px;">
-          Manually send the enrollment open email <strong>and</strong> SMS to all active members.
-          Use this to test before June 15 or to re-send if needed.
-        </p>
         <div id="enrollNotifyMsg" class="msg" style="display:none;margin-bottom:14px;font-size:15px;"></div>
-        <button id="enrollNotifyBtn" onclick="sendEnrollmentNotification()" style="padding:12px 28px;background:#7b2152;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
-          &#128233; Send Enrollment Open Notification to All Members
-        </button>
+
+        <!-- Test single recipient -->
+        <div style="background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
+          <div style="font-size:15px;font-weight:700;color:#0d47a1;margin-bottom:12px;">&#129514; Test — Send to a Single Recipient</div>
+          <p style="color:#555;font-size:14px;margin:0 0 14px;">Use this to verify the email/SMS before sending to all members.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Name (for greeting)</label>
+              <input type="text" id="enrollTestName" placeholder="Test Member" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Email</label>
+              <input type="email" id="enrollTestEmail" placeholder="test@example.com" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:180px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Phone</label>
+              <input type="tel" id="enrollTestPhone" placeholder="+12015551234" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+          </div>
+          <button id="enrollTestBtn" onclick="sendEnrollmentTest()" style="padding:10px 24px;background:#0d47a1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
+            &#129514; Send Test Notification
+          </button>
+        </div>
+
+        <!-- Send to all members -->
+        <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:10px;padding:20px 24px;">
+          <div style="font-size:15px;font-weight:700;color:#b45309;margin-bottom:8px;">&#128233; Send to ALL Active Members</div>
+          <p style="color:#555;font-size:14px;margin:0 0 14px;">This will email and text every active member. Only do this when ready to go live.</p>
+          <button id="enrollNotifyBtn" onclick="sendEnrollmentNotification()" style="padding:12px 28px;background:#7b2152;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
+            &#128233; Send Enrollment Open Notification to All Members
+          </button>
+        </div>
       </section>
 
       <!-- MEMBERS LIST -->
@@ -3649,6 +3674,34 @@
         errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = 'Send Test SMS';
+      }
+    }
+
+    async function sendEnrollmentTest() {
+      const btn   = document.getElementById('enrollTestBtn');
+      const msgEl = document.getElementById('enrollNotifyMsg');
+      const email = document.getElementById('enrollTestEmail').value.trim();
+      const phone = document.getElementById('enrollTestPhone').value.trim();
+      const name  = document.getElementById('enrollTestName').value.trim();
+      msgEl.style.display = 'none';
+      if (!email && !phone) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Enter at least an email or phone number.'; msgEl.style.display = 'block'; return;
+      }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/enrollment/notify-test', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, phone, name }),
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? ('✅ Test sent — ' + data.message) : (data.error || 'Failed.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '🧪 Send Test Notification';
       }
     }
 
