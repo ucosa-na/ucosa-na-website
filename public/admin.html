@@ -639,6 +639,22 @@
       section { padding: 22px 18px; }
       .form-row { flex-direction: column; }
     }
+
+    /* Exco (President) — read-only: lock all inputs and hide all action buttons
+       except fund application approval controls */
+    body[data-role="exco"] input:not(.exco-allowed),
+    body[data-role="exco"] select:not(.exco-allowed),
+    body[data-role="exco"] textarea:not(.exco-allowed) {
+      pointer-events: none;
+      background: #f5f5f5 !important;
+      color: #777 !important;
+      cursor: not-allowed !important;
+    }
+    body[data-role="exco"] button:not(.exco-allowed),
+    body[data-role="exco"] .btn-primary:not(.exco-allowed),
+    body[data-role="exco"] .btn-secondary:not(.exco-allowed) {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -1364,29 +1380,29 @@
             <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
               <div style="display:flex;flex-direction:column;flex:1;min-width:140px;">
                 <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Status</label>
-                <select id="detailStatus" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;">
+                <select id="detailStatus" class="exco-allowed" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;">
                   <option value="pending">Pending</option>
                   <option value="approved">Approved</option>
                   <option value="denied">Denied</option>
                 </select>
               </div>
               <div style="display:flex;flex-direction:column;flex:1;min-width:140px;">
-                <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Admin Signature</label>
-                <input type="text" id="detailAdminSig" placeholder="Type full name" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
+                <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">President's Signature</label>
+                <input type="text" id="detailAdminSig" class="exco-allowed" placeholder="Type full name" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
               </div>
               <div style="display:flex;flex-direction:column;min-width:140px;">
                 <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Date</label>
-                <input type="date" id="detailAdminDate" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
+                <input type="date" id="detailAdminDate" class="exco-allowed" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;"/>
               </div>
             </div>
             <div style="display:flex;flex-direction:column;margin-bottom:14px;">
               <label style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px;">Comment</label>
-              <textarea id="detailComment" rows="3" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
+              <textarea id="detailComment" class="exco-allowed" rows="3" style="padding:7px 10px;border:1.5px solid #dde3f0;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button onclick="saveFundApp()" style="padding:8px 24px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">&#10003; Save Changes</button>
+              <button class="exco-allowed" onclick="saveFundApp()" style="padding:8px 24px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">&#10003; Save Changes</button>
               <button onclick="deleteFundApp()" style="padding:8px 20px;background:#c62828;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">&#128465; Delete Application</button>
-              <button onclick="document.getElementById('fundAppDetail').style.display='none';" style="padding:8px 18px;background:#888;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Close</button>
+              <button class="exco-allowed" onclick="document.getElementById('fundAppDetail').style.display='none';" style="padding:8px 18px;background:#888;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Close</button>
             </div>
           </div>
         </div>
@@ -2330,9 +2346,10 @@
       const isSec      = role === 'security-role';
       const isPro      = role === 'pro-role';
       const isWelfare  = role === 'welfare';
+      const isExco     = role === 'exco';
 
       // Role label in header
-      const roleLabels = { admin: 'Admin', 'fin-role': 'Fin-Sec', 'security-role': 'Secretary', 'pro-role': 'PRO', welfare: 'Welfare' };
+      const roleLabels = { admin: 'Admin', 'fin-role': 'Fin-Sec', 'security-role': 'Secretary', 'pro-role': 'PRO', welfare: 'Welfare', exco: 'President' };
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
@@ -2344,20 +2361,25 @@
 
       secSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isSec) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isSec || isExco) ? '' : 'none';
       });
       finSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isFin) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isFin || isExco) ? '' : 'none';
       });
       adminSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = isAdmin ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isExco) ? '' : 'none';
       });
       proAdminSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isPro) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isPro || isExco) ? '' : 'none';
       });
+
+      // Exco sees everything but read-only — lock all inputs/buttons except fund app approval
+      if (isExco) {
+        document.body.setAttribute('data-role', 'exco');
+      }
       allPrivSections.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = (isAdmin || isPro) ? '' : 'none';
@@ -2371,22 +2393,22 @@
 
       // Sidebar link visibility
       document.querySelectorAll('.sidebar-sec').forEach(el => {
-        el.style.display = (isAdmin || isSec) ? '' : 'none';
+        el.style.display = (isAdmin || isSec || isExco) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-fin').forEach(el => {
-        el.style.display = (isAdmin || isFin) ? '' : 'none';
+        el.style.display = (isAdmin || isFin || isExco) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-admin').forEach(el => {
-        el.style.display = isAdmin ? '' : 'none';
+        el.style.display = (isAdmin || isExco) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-pro-admin').forEach(el => {
-        el.style.display = (isAdmin || isPro) ? '' : 'none';
+        el.style.display = (isAdmin || isPro || isExco) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-pro').forEach(el => {
         el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-welfare').forEach(el => {
-        el.style.display = (isAdmin || isWelfare) ? '' : 'none';
+        el.style.display = (isAdmin || isWelfare || isExco) ? '' : 'none';
       });
     }
 
@@ -4668,6 +4690,20 @@
 
       if (user.role === 'pro-role') {
         loadFundApps();
+      }
+
+      if (user.role === 'exco') {
+        loadFundApps();
+        loadDues();
+        loadEndowment();
+        loadExpenses();
+        loadDonations();
+        loadSpecialLevies();
+        loadLevyRecords();
+        loadDevLevies();
+        loadLogs();
+        loadMeetingNotes();
+        loadWelfareMembers();
       }
     })();
 

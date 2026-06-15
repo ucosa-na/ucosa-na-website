@@ -18,9 +18,10 @@ const csvUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 
 const adminOnly       = requireRole('admin');
 const finOrAdmin      = requireRole('admin', 'fin-role');
 const secOrAdmin      = requireRole('admin', 'security-role');
-const anyPriv         = requireRole('admin', 'fin-role', 'security-role', 'pro-role', 'welfare');
+const anyPriv         = requireRole('admin', 'fin-role', 'security-role', 'pro-role', 'welfare', 'exco');
 const proOrAdmin      = requireRole('admin', 'pro-role');
 const welfareOrAdmin  = requireRole('admin', 'welfare');
+const excoOrAdmin     = requireRole('admin', 'exco');
 
 const router = express.Router();
 
@@ -204,7 +205,7 @@ router.post('/users', secOrAdmin, async (req, res) => {
     return res.status(400).json({ error: 'First name, last name, email, and phone number are required' });
   }
 
-  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'welfare', 'admin'];
+  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'welfare', 'exco', 'admin'];
   const assignedRole = role && validRoles.includes(role) ? role : 'member';
 
   // Only admins can create admin accounts
@@ -546,7 +547,7 @@ router.post('/users/bulk-import', secOrAdmin, csvUpload.single('file'), async (r
     return idx !== -1 ? (row[idx] || '').trim() : '';
   };
 
-  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'welfare'];
+  const validRoles = ['member', 'fin-role', 'security-role', 'pro-role', 'welfare', 'exco'];
   const created = [], skipped = [], failed = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -728,9 +729,9 @@ router.put('/users/:id', secOrAdmin, async (req, res) => {
 // PUT /api/admin/users/:id/role — change a member's role (admin only)
 router.put('/users/:id/role', adminOnly, async (req, res) => {
   const { role } = req.body;
-  const validRoles = ['admin', 'member', 'fin-role', 'security-role', 'pro-role', 'welfare'];
+  const validRoles = ['admin', 'member', 'fin-role', 'security-role', 'pro-role', 'welfare', 'exco'];
   if (!role || !validRoles.includes(role)) {
-    return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role, pro-role' });
+    return res.status(400).json({ error: 'Valid role required: admin, member, fin-role, security-role, pro-role, welfare, exco' });
   }
   try {
     const { rows: before } = await pool.query('SELECT full_name, role FROM users WHERE id = $1', [req.params.id]);
@@ -1922,7 +1923,7 @@ router.delete('/email-failures', adminOnly, async (req, res) => {
 });
 
 // GET /api/admin/fund-applications — list all member fund applications
-router.get('/fund-applications', proOrAdmin, async (req, res) => {
+router.get('/fund-applications', excoOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT mfa.*, u.full_name AS member_full_name, u.email AS member_email
@@ -1937,7 +1938,7 @@ router.get('/fund-applications', proOrAdmin, async (req, res) => {
 });
 
 // GET /api/admin/fund-applications/:id — get single application
-router.get('/fund-applications/:id', proOrAdmin, async (req, res) => {
+router.get('/fund-applications/:id', excoOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT mfa.*, u.full_name AS member_full_name FROM member_fund_applications mfa
@@ -1951,8 +1952,8 @@ router.get('/fund-applications/:id', proOrAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/admin/fund-applications/:id — update office-use fields
-router.put('/fund-applications/:id', proOrAdmin, async (req, res) => {
+// PUT /api/admin/fund-applications/:id — update office-use fields (status/approval)
+router.put('/fund-applications/:id', excoOrAdmin, async (req, res) => {
   const { status, admin_approved, admin_comment, admin_signature, admin_date } = req.body;
   const VALID = ['pending','approved','denied'];
   if (status && !VALID.includes(status)) return res.status(400).json({ error: 'Invalid status' });
