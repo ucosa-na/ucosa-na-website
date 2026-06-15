@@ -349,27 +349,42 @@ async function sendInactivityReminders() {
   log.info(`Scheduler: 90-day inactivity reminders dispatched to ${members.length} member(s)`);
 }
 
-// ── Endowment Fund Enrollment Open (January 1st) ──────────────────────────────
+// ── Endowment Fund Enrollment Open notification (email + SMS) ─────────────────
+// Triggered June 15 for 2026, January 1 from 2027 onwards
 
-async function sendEnrollmentOpenEmails() {
+async function sendEnrollmentOpenNotifications() {
   const year = new Date().getFullYear();
-  log.info(`Scheduler: sending endowment enrollment open emails for ${year}`);
+  const enrollDeadline = year === 2026 ? 'August 15' : 'March 15';
+  const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – March 15';
+
+  log.info(`Scheduler: sending endowment enrollment open notifications for ${year} (${enrollPeriod})`);
+
+  let members;
   try {
-    const { rows: members } = await pool.query(`
-      SELECT u.id, u.full_name, u.email
+    const { rows } = await pool.query(`
+      SELECT u.id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
       FROM users u
-      WHERE u.is_active = TRUE AND u.role != 'admin' AND u.email IS NOT NULL
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.is_active = TRUE AND u.role != 'admin'
       ORDER BY u.full_name ASC
     `);
-    if (!members.length) { log.info('Scheduler: no active members for enrollment email'); return; }
+    members = rows;
+  } catch (err) {
+    log.error(`Scheduler: failed to fetch members for enrollment notification — ${err.message}`);
+    return;
+  }
 
-    const enrollDeadline = year === 2026 ? 'August 15' : 'March 15';
-    const enrollPeriod   = year === 2026 ? 'June 15 – August 15' : 'January 1 – March 15';
+  if (!members.length) { log.info('Scheduler: no active members for enrollment notification'); return; }
 
-    const results = await Promise.allSettled(members.map(m => sendEmail({
-      to: m.email,
-      subject: `UCOSA-NA Member's Endowment Fund — Enrollment Now Open (${year})`,
-      html: `
+  log.info(`Scheduler: sending enrollment notifications to ${members.length} member(s)`);
+
+  for (const m of members) {
+    // Email
+    if (m.email) {
+      sendEmail({
+        to: m.email,
+        subject: `UCOSA-NA Member's Endowment Fund — Enrollment Now Open (${year})`,
+        html: `
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
 <style>
   body{font-family:'Segoe UI',Arial,sans-serif;background:#fdf6ec;margin:0;padding:0}
@@ -400,11 +415,10 @@ async function sendEnrollmentOpenEmails() {
     <p>We are pleased to announce that the <strong>UCOSA-NA Member's Endowment Fund (UCOSA-MF)</strong> enrollment period is now open for <strong>${year}</strong>.</p>
     <div class="info-box">
       <strong style="color:#0d47a1;">Enrollment Period: ${enrollPeriod}, ${year}</strong><br/>
-      <span style="font-size:14px;color:#444;">Applications submitted after ${enrollDeadline} will not be accepted until the next enrollment period.</span>
+      <span style="font-size:14px;color:#444;">Applications submitted after ${enrollDeadline}, ${year} will not be accepted until the next enrollment period.</span>
     </div>
-    <p>For existing enrollment, you can change your selections. <strong>All members who wish to participate</strong> in the UCOSA-MF should fill out the enrollment form before <strong>${enrollDeadline}, ${year}</strong>.</p>
     <p>The UCOSA-MF provides financial assistance to enrolled members and their designated beneficiaries during times of bereavement. Benefits range from <strong>$250 up to $5,000</strong> depending on your continuous enrollment period, with a maximum lifetime benefit of <strong>$10,000</strong>.</p>
-    <p>To enroll, log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong> using the buttons below.</p>
+    <p>To enroll, log in to your Member Portal and complete the <strong>Member's Endowment Fund Application</strong> using the button below.</p>
     <div class="cta">
       <a href="https://ucosa-na.org/member-fund-form.html">Complete Endowment Fund Application</a>
       <a href="https://ucosa-na.org/members.html" style="background:#0d47a1;">Log In to Member Portal</a>
@@ -415,14 +429,19 @@ async function sendEnrollmentOpenEmails() {
   <div class="ftr">&copy; ${year} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
 </div>
 </body></html>`.trim(),
-    })));
+      }).catch(err => log.error(`Scheduler: enrollment email failed for ${m.email}: ${err.message}`));
+    }
 
-    const sent   = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
-    log.info(`Scheduler: enrollment open emails — ${sent} sent, ${failed} failed`);
-  } catch (err) {
-    log.error(`Scheduler: sendEnrollmentOpenEmails error: ${err.message}`);
+    // SMS
+    if (m.phone) {
+      sendSMS(m.phone,
+        `Dear ${m.full_name}, the UCOSA-NA Endowment Fund enrollment is now OPEN (${enrollPeriod}, ${year}).\n` +
+        `Apply here: https://ucosa-na.org/member-fund-form.html\n— UCOSA-NA`
+      ).catch(err => log.error(`Scheduler: enrollment SMS failed for ${m.phone}: ${err.message}`));
+    }
   }
+
+  log.info(`Scheduler: enrollment open notifications dispatched to ${members.length} member(s)`);
 }
 
 // ── Register cron jobs ────────────────────────────────────────────────────────
@@ -442,9 +461,12 @@ cron.schedule('0 8 * * *', sendInactivityReminders, { timezone: 'America/New_Yor
 // 1st of every month at 9:00 AM — birthday emails
 cron.schedule('0 9 1 * *', sendBirthdayEmails, { timezone: 'America/New_York' });
 
-// January 1st at 9:00 AM — endowment fund enrollment open notification
-cron.schedule('0 9 1 1 *', sendEnrollmentOpenEmails, { timezone: 'America/New_York' });
+// January 1st at 9:00 AM — endowment enrollment open (2027+)
+cron.schedule('0 9 1 1 *', sendEnrollmentOpenNotifications, { timezone: 'America/New_York' });
 
-log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open email, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
+// June 15th at 9:00 AM — endowment enrollment open (2026 special window)
+cron.schedule('0 9 15 6 *', sendEnrollmentOpenNotifications, { timezone: 'America/New_York' });
 
-module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenEmails };
+log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 15 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
+
+module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications };

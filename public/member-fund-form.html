@@ -368,7 +368,7 @@
 
   // Enrollment period:
   //   2026 only  — June 15 – August 15, 2026
-  //   2027+      — January 1 – January 30 each year
+  //   2027+      — January 1 – March 15 each year
   (function checkEnrollmentPeriod() {
     if (isViewMode) return; // approved PDF view always accessible
     const now   = new Date();
@@ -385,9 +385,9 @@
         ? 'The 2026 enrollment window opens <strong>June 15, 2026</strong>.'
         : 'The next enrollment period opens <strong>January 1, 2027</strong>.';
     } else {
-      // 2027+: January 1–30
-      open = (month === 0 && day >= 1 && day <= 30);
-      const nextYear = (month === 0 && day <= 30) ? year : year + 1;
+      // 2027+: January 1 – March 15
+      open = (month === 0) || (month === 1) || (month === 2 && day <= 15);
+      const nextYear = open ? year : year + 1;
       nextOpenMsg = `The next enrollment period opens <strong>January 1, ${nextYear}</strong>.`;
     }
 
@@ -401,7 +401,7 @@
             <h2 style="font-size:24px;color:#7b2152;margin:0 0 12px;">Enrollment Period Closed</h2>
             <p style="font-size:16px;color:#555;line-height:1.7;margin:0 0 16px;">
               The <strong>UCOSA-NA Member's Endowment Fund</strong> enrollment period runs
-              <strong>June 15 – August 15, 2026</strong>, then <strong>January 1 – January 30</strong> each year from 2027 onwards.
+              <strong>June 15 – August 15, 2026</strong>, then <strong>January 1 – March 15</strong> each year from 2027 onwards.
             </p>
             <p style="font-size:15px;color:#888;margin:0 0 24px;">
               ${nextOpenMsg}
