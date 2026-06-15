@@ -328,36 +328,13 @@
       </div>
     </div>
 
-    <!-- Section 6: Chapter President -->
-    <div class="form-card">
-      <h3>13–14. Local Chapter President</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label>13. Chapter President's Name</label>
-          <input type="text" id="president_name"/>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>14. President's Signature</label>
-          <input type="text" id="president_signature" readonly
-            style="font-family:'Brush Script MT',cursive;font-size:20px;color:#1a1a6e;background:#f5f5ff;border:1.5px solid #b0b8e0;border-radius:6px;padding:8px 12px;cursor:not-allowed;"/>
-          <div style="font-size:11px;color:#888;margin-top:3px;">Auto-signed from President's Name above</div>
-        </div>
-        <div class="form-group" style="max-width:180px;">
-          <label>Date</label>
-          <input type="date" id="president_date"/>
-        </div>
-      </div>
-    </div>
-
     <!-- Section 7: Fin Sec / President Approval (read-only, shown after review) -->
     <div class="form-card" id="approvalSection">
-      <h3>Local Chapter Fin Sec / President Approval</h3>
+      <h3>13–14. Local Chapter Fin Sec / President Approval</h3>
 
       <!-- Fin Sec -->
       <div style="background:#f8f9ff;border:1px solid #c8d0e8;border-radius:8px;padding:16px 20px;margin-bottom:16px;">
-        <h4 style="margin:0 0 12px;color:#1a3a5c;font-size:15px;">Financial Secretary Review</h4>
+        <h4 style="margin:0 0 12px;color:#1a3a5c;font-size:15px;">13. Financial Secretary Review</h4>
         <div class="form-row">
           <div class="form-group">
             <label>Is Commencement Date correct?</label>
@@ -403,7 +380,7 @@
 
       <!-- President -->
       <div style="background:#f8f9ff;border:1px solid #c8d0e8;border-radius:8px;padding:16px 20px;">
-        <h4 style="margin:0 0 12px;color:#1a3a5c;font-size:15px;">Chapter President Approval</h4>
+        <h4 style="margin:0 0 12px;color:#1a3a5c;font-size:15px;">14. Chapter President Approval</h4>
         <div class="form-row">
           <div class="form-group">
             <label>Decision</label>
@@ -516,17 +493,12 @@
   if (memberName) document.getElementById('applicant_signature').value = memberName;
   if (storedUser.email) document.getElementById('email').value         = storedUser.email;
 
-  // Auto-sign president signature when president name is typed
-  document.getElementById('president_name').addEventListener('input', function() {
-    document.getElementById('president_signature').value = this.value;
-  });
-
-  function fillForm(data) {
+function fillForm(data) {
     const fields = [
       'applicant_name','birth_date','commencement_date','ssn_last4','street_address','city','state','zip_code','email',
       'alt_address','alt_city','alt_state','alt_zip','alt_phone','alt_email',
       'ben1_name','ben1_birth_date','ben1_relation','ben1_ssn_last4','ben1_phone','ben1_email',
-      'applicant_signature','signature_date','president_name','president_signature','president_date'
+      'applicant_signature','signature_date'
     ];
     fields.forEach(id => {
       const el = document.getElementById(id);
@@ -675,9 +647,6 @@
       terms_accepted:       true,
       applicant_signature:  document.getElementById('applicant_signature').value.trim(),
       signature_date:       document.getElementById('signature_date').value,
-      president_name:       document.getElementById('president_name').value.trim(),
-      president_signature:  document.getElementById('president_signature').value.trim(),
-      president_date:       document.getElementById('president_date').value || null,
     };
 
     const btn = document.getElementById('submitBtn');
