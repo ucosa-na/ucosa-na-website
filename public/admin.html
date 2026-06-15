@@ -691,6 +691,17 @@
         </div>
       </div>
 
+      <!-- Fund Applications (admin + pro-role) -->
+      <div class="sidebar-pro-admin" id="sidebarFundApps">
+        <div class="sidebar-group-label group-admin open" onclick="toggleSidebarGroup('groupFundAppsItems', this)">
+          <span>&#128196; Fund Applications</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupFundAppsItems">
+          <a href="#fundApplicationsSection">Member's Endowment Fund Applications</a>
+        </div>
+      </div>
+
       <!-- Broadcast sub-menu (admin + fin-role + security-role + pro-role) -->
       <div class="sidebar-pro" id="sidebarGroupBroadcast">
         <div class="sidebar-group-label group-admin open" onclick="toggleSidebarGroup('groupBroadcastItems', this)">
@@ -2327,7 +2338,8 @@
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
-      const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection', 'fundApplicationsSection'];
+      const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
+      const proAdminSections = ['fundApplicationsSection'];
       const allPrivSections  = ['smsBroadcast', 'emailBroadcast', 'inviteBroadcast'];
 
       secSections.forEach(id => {
@@ -2341,6 +2353,10 @@
       adminSections.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isAdmin ? '' : 'none';
+      });
+      proAdminSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
       allPrivSections.forEach(id => {
         const el = document.getElementById(id);
@@ -2362,6 +2378,9 @@
       });
       document.querySelectorAll('.sidebar-admin').forEach(el => {
         el.style.display = isAdmin ? '' : 'none';
+      });
+      document.querySelectorAll('.sidebar-pro-admin').forEach(el => {
+        el.style.display = (isAdmin || isPro) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-pro').forEach(el => {
         el.style.display = (isAdmin || isPro) ? '' : 'none';
@@ -4629,6 +4648,7 @@
         setInterval(fetchMetrics, 10000);
         loadAuditLog();
         loadEmailFailures();
+        loadFundApps();
       }
 
       if (['admin', 'fin-role'].includes(user.role)) {
@@ -4644,6 +4664,10 @@
       if (['admin', 'security-role'].includes(user.role)) {
         loadLogs();
         loadMeetingNotes();
+      }
+
+      if (user.role === 'pro-role') {
+        loadFundApps();
       }
     })();
 

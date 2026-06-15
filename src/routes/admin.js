@@ -1922,7 +1922,7 @@ router.delete('/email-failures', adminOnly, async (req, res) => {
 });
 
 // GET /api/admin/fund-applications — list all member fund applications
-router.get('/fund-applications', adminOnly, async (req, res) => {
+router.get('/fund-applications', proOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT mfa.*, u.full_name AS member_full_name, u.email AS member_email
@@ -1937,7 +1937,7 @@ router.get('/fund-applications', adminOnly, async (req, res) => {
 });
 
 // GET /api/admin/fund-applications/:id — get single application
-router.get('/fund-applications/:id', adminOnly, async (req, res) => {
+router.get('/fund-applications/:id', proOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT mfa.*, u.full_name AS member_full_name FROM member_fund_applications mfa
@@ -1952,7 +1952,7 @@ router.get('/fund-applications/:id', adminOnly, async (req, res) => {
 });
 
 // PUT /api/admin/fund-applications/:id — update office-use fields
-router.put('/fund-applications/:id', adminOnly, async (req, res) => {
+router.put('/fund-applications/:id', proOrAdmin, async (req, res) => {
   const { status, admin_approved, admin_comment, admin_signature, admin_date } = req.body;
   const VALID = ['pending','approved','denied'];
   if (status && !VALID.includes(status)) return res.status(400).json({ error: 'Invalid status' });
