@@ -359,23 +359,6 @@
             </div>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Reason</label>
-            <textarea id="finsec_reason_view" rows="2" disabled style="background:#f5f5f5;width:100%;resize:none;border-radius:6px;border:1px solid #ccc;padding:8px;"></textarea>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Fin Sec Signature</label>
-            <input type="text" id="finsec_signature_view" readonly
-              style="font-family:'Brush Script MT',cursive;font-size:20px;color:#1a1a6e;background:#f5f5ff;border:1.5px solid #b0b8e0;border-radius:6px;padding:8px 12px;cursor:not-allowed;width:100%;"/>
-          </div>
-          <div class="form-group" style="max-width:180px;">
-            <label>Date</label>
-            <input type="date" id="finsec_date_view" disabled style="background:#f5f5f5;width:100%;"/>
-          </div>
-        </div>
       </div>
 
       <!-- President -->
@@ -524,9 +507,6 @@ function fillForm(data) {
       const r = document.querySelector(`input[name="finsec_status_view"][value="${data.finsec_status}"]`);
       if (r) r.checked = true;
     }
-    if (data.finsec_reason) document.getElementById('finsec_reason_view').value = data.finsec_reason;
-    if (data.finsec_signature) document.getElementById('finsec_signature_view').value = data.finsec_signature;
-    if (data.finsec_date) document.getElementById('finsec_date_view').value = data.finsec_date;
 
     if (data.president_status) {
       const r = document.querySelector(`input[name="president_status_view"][value="${data.president_status}"]`);
