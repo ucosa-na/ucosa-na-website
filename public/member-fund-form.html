@@ -347,23 +347,6 @@
               </label>
             </div>
           </div>
-          <div class="form-group">
-            <label>Decision</label>
-            <div style="display:flex;gap:20px;margin-top:6px;">
-              <label style="font-weight:normal;display:flex;align-items:center;gap:6px;">
-                <input type="radio" name="finsec_status_view" value="approved" disabled> Approved
-              </label>
-              <label style="font-weight:normal;display:flex;align-items:center;gap:6px;">
-                <input type="radio" name="finsec_status_view" value="denied" disabled> Denied
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Reason for Denial</label>
-            <textarea id="finsec_reason_view" rows="2" disabled style="background:#f5f5f5;width:100%;resize:none;border-radius:6px;border:1px solid #ccc;padding:8px;"></textarea>
-          </div>
         </div>
       </div>
 
@@ -509,12 +492,6 @@ function fillForm(data) {
       const r = document.querySelector(`input[name="finsec_commencement_view"][value="${val}"]`);
       if (r) r.checked = true;
     }
-    if (data.finsec_status) {
-      const r = document.querySelector(`input[name="finsec_status_view"][value="${data.finsec_status}"]`);
-      if (r) r.checked = true;
-    }
-    if (data.finsec_reason) document.getElementById('finsec_reason_view').value = data.finsec_reason;
-
     if (data.president_status) {
       const r = document.querySelector(`input[name="president_status_view"][value="${data.president_status}"]`);
       if (r) r.checked = true;
