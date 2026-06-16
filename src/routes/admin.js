@@ -386,6 +386,96 @@ router.post('/test-email', adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/admin/meeting/invite — send monthly Zoom meeting invite to all active members
+router.post('/meeting/invite', secOrAdmin, async (req, res) => {
+  const { meeting_date } = req.body;
+  if (!meeting_date) return res.status(400).json({ error: 'meeting_date is required.' });
+
+  const dateObj = new Date(meeting_date + 'T00:00:00');
+  const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  try {
+    const { rows: members } = await pool.query(
+      `SELECT u.id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+       FROM users u
+       LEFT JOIN member_profiles p ON p.user_id = u.id
+       WHERE u.is_active = TRUE AND u.role != 'admin'
+       ORDER BY u.full_name ASC`
+    );
+    if (!members.length) return res.json({ ok: true, message: 'No active members found.' });
+
+    let emailCount = 0, smsCount = 0;
+    for (const m of members) {
+      if (m.email) {
+        sendEmail({
+          to: m.email,
+          subject: `UCOSA-NA Monthly General Meeting — ${formatted}`,
+          html: `
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0eb;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px}
+  .hdr h1{color:#f5e6d0;font-size:22px;margin:0;letter-spacing:.04em}
+  .hdr p{color:#d4a0b8;font-size:12px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.1em}
+  .body{padding:32px 36px;color:#333;font-size:15px;line-height:1.8}
+  .body p{margin:0 0 14px}
+  .invite-box{background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:8px;padding:20px 24px;margin:20px 0}
+  .invite-box h2{color:#1a3a8f;font-size:16px;margin:0 0 14px;border-bottom:1px solid #c5d0f5;padding-bottom:8px}
+  .invite-box .row{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+  .invite-box .label{font-weight:700;color:#444;min-width:110px}
+  .cta{text-align:center;margin:24px 0}
+  .cta a{background:#2d8cff;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:15px;display:inline-block}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+</style></head><body>
+<div class="wrap">
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>UCOSA-NA Monthly General Meeting</h1>
+    <p>You're Invited</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${m.full_name}</strong>,</p>
+    <p>You are cordially invited to the <strong>UCOSA North America Monthly General Zoom Meeting</strong>. We look forward to your participation.</p>
+    <div class="invite-box">
+      <h2>&#128197; Meeting Details</h2>
+      <div class="row"><span class="label">Topic:</span><span>UCOSA North America Monthly General Zoom Meeting</span></div>
+      <div class="row"><span class="label">Date:</span><span>${formatted}</span></div>
+      <div class="row"><span class="label">Time:</span><span>5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)</span></div>
+      <div class="row"><span class="label">Meeting ID:</span><span>882 7418 8382</span></div>
+      <div class="row"><span class="label">Passcode:</span><span>161773</span></div>
+    </div>
+    <div class="cta">
+      <a href="https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09">&#128249; Join Zoom Meeting</a>
+    </div>
+    <p style="font-size:13px;color:#888;text-align:center;">Or copy this link into your browser:<br/>
+      <a href="https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09" style="color:#2d8cff;word-break:break-all;">
+        https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09
+      </a>
+    </p>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; ${new Date().getFullYear()} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim(),
+        }).then(() => emailCount++).catch(() => {});
+      }
+      const phone = normalizePhone(m.phone);
+      if (phone) {
+        sendSMS(phone,
+          `Dear ${m.full_name}, you are invited to the UCOSA-NA Monthly General Zoom Meeting on ${formatted} at 5:00 PM Eastern. Join: https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09 | ID: 882 7418 8382 | Passcode: 161773 — UCOSA-NA`
+        ).then(() => smsCount++).catch(() => {});
+      }
+    }
+    res.json({ ok: true, message: `Meeting invites sent — ${emailCount} email(s), ${smsCount} SMS(es) to ${members.length} member(s).` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/enrollment/notify — manually trigger enrollment open notifications
 router.post('/enrollment/notify', adminOnly, async (req, res) => {
   try {

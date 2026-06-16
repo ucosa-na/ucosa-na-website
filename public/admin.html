@@ -768,6 +768,7 @@
           <a href="#bulkImport">Bulk Import</a>
           <a href="#membersList">Member List</a>
           <a href="#unactivatedSection">Unactivated Members</a>
+          <a href="#meetingInvite">Meeting Invite</a>
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
         </div>
@@ -1124,6 +1125,39 @@
               <tr class="empty-row"><td colspan="7">Click Refresh to load…</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- MONTHLY MEETING INVITE -->
+      <section id="meetingInvite">
+        <h2>&#128249; Monthly Meeting Invite</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">
+          Send the monthly Zoom meeting invitation to all active members via email and SMS.
+        </p>
+        <div id="meetingInviteMsg" class="msg" style="display:none;margin-bottom:16px;font-size:15px;"></div>
+
+        <div style="background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:10px;padding:24px 28px;max-width:680px;">
+          <div style="font-size:15px;font-weight:700;color:#1a3a8f;margin-bottom:16px;">&#128197; Meeting Details (fixed)</div>
+
+          <div style="background:#fff;border:1px solid #c5d0f5;border-radius:8px;padding:16px 20px;margin-bottom:20px;font-size:14px;line-height:2;color:#333;">
+            <strong>Topic:</strong> UCOSA North America Monthly General Zoom Meeting<br/>
+            <strong>Join Link:</strong> <a href="https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09" target="_blank" style="color:#2d8cff;word-break:break-all;">https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09</a><br/>
+            <strong>Meeting ID:</strong> 882 7418 8382 &nbsp;&nbsp; <strong>Passcode:</strong> 161773<br/>
+            <strong>Time:</strong> 5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="font-size:15px;font-weight:700;color:#333;display:block;margin-bottom:6px;">
+              &#128197; Select Meeting Date <span style="color:#e63946;">*</span>
+            </label>
+            <input type="date" id="meetingInviteDate"
+              style="padding:10px 14px;border:1.5px solid #1a3a8f;border-radius:8px;font-size:16px;min-width:220px;"/>
+          </div>
+
+          <button id="meetingInviteBtn" onclick="sendMeetingInvite()"
+            style="padding:12px 32px;background:#1a3a8f;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
+            &#128249; Send Invite to All Members
+          </button>
         </div>
       </section>
 
@@ -2442,7 +2476,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingNotes', 'logViewer'];
+      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingInvite', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
       const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
       const proAdminSections = ['fundApplicationsSection'];
@@ -3674,6 +3708,32 @@
         errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = 'Send Test SMS';
+      }
+    }
+
+    async function sendMeetingInvite() {
+      const btn    = document.getElementById('meetingInviteBtn');
+      const msgEl  = document.getElementById('meetingInviteMsg');
+      const dateEl = document.getElementById('meetingInviteDate');
+      msgEl.style.display = 'none';
+      if (!dateEl.value) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Please select a meeting date.'; msgEl.style.display = 'block'; return;
+      }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/meeting/invite', {
+          method:  'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ meeting_date: dateEl.value }),
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? ('✅ ' + data.message) : (data.error || 'Failed to send invites.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '📹 Send Invite to All Members';
       }
     }
 
