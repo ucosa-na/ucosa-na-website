@@ -1136,24 +1136,52 @@
         </p>
         <div id="meetingInviteMsg" class="msg" style="display:none;margin-bottom:16px;font-size:15px;"></div>
 
-        <div style="background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:10px;padding:24px 28px;max-width:680px;">
-          <div style="font-size:15px;font-weight:700;color:#1a3a8f;margin-bottom:16px;">&#128197; Meeting Details (fixed)</div>
+        <!-- Fixed meeting details -->
+        <div style="background:#fff;border:1.5px solid #c5d0f5;border-radius:8px;padding:16px 20px;margin-bottom:20px;max-width:680px;font-size:14px;line-height:2;color:#333;">
+          <div style="font-size:13px;font-weight:700;color:#1a3a8f;margin-bottom:8px;">&#128197; Fixed Meeting Details</div>
+          <strong>Topic:</strong> UCOSA North America Monthly General Zoom Meeting<br/>
+          <strong>Join Link:</strong> <a href="https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09" target="_blank" style="color:#2d8cff;word-break:break-all;">https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09</a><br/>
+          <strong>Meeting ID:</strong> 882 7418 8382 &nbsp;&nbsp; <strong>Passcode:</strong> 161773<br/>
+          <strong>Time:</strong> 5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)
+        </div>
 
-          <div style="background:#fff;border:1px solid #c5d0f5;border-radius:8px;padding:16px 20px;margin-bottom:20px;font-size:14px;line-height:2;color:#333;">
-            <strong>Topic:</strong> UCOSA North America Monthly General Zoom Meeting<br/>
-            <strong>Join Link:</strong> <a href="https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09" target="_blank" style="color:#2d8cff;word-break:break-all;">https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09</a><br/>
-            <strong>Meeting ID:</strong> 882 7418 8382 &nbsp;&nbsp; <strong>Passcode:</strong> 161773<br/>
-            <strong>Time:</strong> 5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)
+        <!-- Shared date picker -->
+        <div style="margin-bottom:20px;max-width:680px;">
+          <label style="font-size:15px;font-weight:700;color:#333;display:block;margin-bottom:6px;">
+            &#128197; Select Meeting Date <span style="color:#e63946;">*</span>
+          </label>
+          <input type="date" id="meetingInviteDate"
+            style="padding:10px 14px;border:1.5px solid #1a3a8f;border-radius:8px;font-size:16px;min-width:220px;"/>
+        </div>
+
+        <!-- Test panel -->
+        <div style="background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:20px 24px;margin-bottom:20px;max-width:680px;">
+          <div style="font-size:15px;font-weight:700;color:#0d47a1;margin-bottom:10px;">&#129514; Test — Send to a Single Recipient</div>
+          <p style="color:#555;font-size:14px;margin:0 0 12px;">Verify the email/SMS before sending to all members.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Name</label>
+              <input type="text" id="meetingTestName" placeholder="Test Member" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Email</label>
+              <input type="email" id="meetingTestEmail" placeholder="test@example.com" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:180px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Phone</label>
+              <input type="tel" id="meetingTestPhone" placeholder="+12015551234" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
           </div>
+          <button id="meetingTestBtn" onclick="sendMeetingInviteTest()"
+            style="padding:10px 24px;background:#0d47a1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
+            &#129514; Send Test Invite
+          </button>
+        </div>
 
-          <div style="margin-bottom:20px;">
-            <label style="font-size:15px;font-weight:700;color:#333;display:block;margin-bottom:6px;">
-              &#128197; Select Meeting Date <span style="color:#e63946;">*</span>
-            </label>
-            <input type="date" id="meetingInviteDate"
-              style="padding:10px 14px;border:1.5px solid #1a3a8f;border-radius:8px;font-size:16px;min-width:220px;"/>
-          </div>
-
+        <!-- Send to all -->
+        <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:10px;padding:20px 24px;max-width:680px;">
+          <div style="font-size:15px;font-weight:700;color:#b45309;margin-bottom:8px;">&#128249; Send to ALL Active Members</div>
+          <p style="color:#555;font-size:14px;margin:0 0 14px;">This will email and text every active member. Only do this when ready.</p>
           <button id="meetingInviteBtn" onclick="sendMeetingInvite()"
             style="padding:12px 32px;background:#1a3a8f;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
             &#128249; Send Invite to All Members
@@ -3708,6 +3736,34 @@
         errEl.textContent = 'Network error — server unreachable.'; errEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = 'Send Test SMS';
+      }
+    }
+
+    async function sendMeetingInviteTest() {
+      const btn   = document.getElementById('meetingTestBtn');
+      const msgEl = document.getElementById('meetingInviteMsg');
+      const date  = document.getElementById('meetingInviteDate').value;
+      const email = document.getElementById('meetingTestEmail').value.trim();
+      const phone = document.getElementById('meetingTestPhone').value.trim();
+      const name  = document.getElementById('meetingTestName').value.trim();
+      msgEl.style.display = 'none';
+      if (!date)           { msgEl.className = 'msg error'; msgEl.textContent = 'Please select a meeting date first.'; msgEl.style.display = 'block'; return; }
+      if (!email && !phone){ msgEl.className = 'msg error'; msgEl.textContent = 'Enter at least an email or phone number.'; msgEl.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/meeting/invite-test', {
+          method:  'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ meeting_date: date, email, phone, name }),
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? ('✅ Test sent — ' + data.message) : (data.error || 'Failed.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '🧪 Send Test Invite';
       }
     }
 
