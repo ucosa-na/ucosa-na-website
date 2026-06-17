@@ -201,14 +201,16 @@ router.post('/fund-application', requireAuth, async (req, res) => {
 
 // PUT /api/member/fund-application — update own application
 router.put('/fund-application', requireAuth, async (req, res) => {
-  if (!isEnrollmentOpen()) {
-    return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications can be updated June 15 – August 15. From 2027 onward, enrollment runs January 1 – March 15 each year.' });
-  }
   try {
     const { rows: existing } = await pool.query(
       `SELECT id, status, commencement_date FROM member_fund_applications WHERE user_id = $1`, [req.user.id]
     );
     if (!existing.length) return res.status(404).json({ error: 'No application found.' });
+
+    // Denied applications may be resubmitted at any time; others require the enrollment window
+    if (existing[0].status !== 'denied' && !isEnrollmentOpen()) {
+      return res.status(403).json({ error: 'The enrollment period is closed. For 2026, applications can be updated June 15 – August 15. From 2027 onward, enrollment runs January 1 – March 15 each year.' });
+    }
     const f = req.body;
     // Preserve commencement_date if previously approved — cannot be changed after approval
     const commencementDate = existing[0].status === 'approved'
@@ -222,7 +224,10 @@ router.put('/fund-application', requireAuth, async (req, res) => {
         ben1_name=$18, ben1_relation=$19, ben2_name=$20, ben2_relation=$21, ben3_name=$22, ben3_relation=$23,
         terms_accepted=$24, applicant_signature=$25, signature_date=$26,
         president_name=$27, president_signature=$28, president_date=$29,
-        status='pending'
+        status='pending',
+        finsec_commencement_correct=NULL, finsec_status=NULL, finsec_reason=NULL,
+        finsec_signature=NULL, finsec_date=NULL,
+        president_status=NULL, president_reason=NULL, president_approval_date=NULL
       WHERE user_id=$1
       RETURNING id, status`,
       [

@@ -535,6 +535,16 @@ function fillForm(data) {
               cdEl.title = 'Commencement date cannot be changed after approval';
             }
           }
+        } else if (data.status === 'denied') {
+          fillForm(data);
+          window._isDeniedResubmit = true;
+          document.getElementById('submitBtn').textContent = 'Resubmit Application';
+          const banner = document.getElementById('submittedBanner');
+          banner.style.display = 'block';
+          banner.style.background = '#fff3e0';
+          banner.style.borderColor = '#f59e0b';
+          banner.style.color = '#7b3f00';
+          banner.innerHTML = '⚠️ Your application was <strong>denied</strong>. Please update the form below and resubmit for another review.';
         } else {
           fillForm(data);
           showSubmitted(data.status);
@@ -614,25 +624,28 @@ function fillForm(data) {
     };
 
     const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = isEditMode ? 'Updating…' : 'Submitting…';
+    const usePut = isEditMode || window._isDeniedResubmit;
+    btn.disabled = true; btn.textContent = isEditMode ? 'Updating…' : (window._isDeniedResubmit ? 'Resubmitting…' : 'Submitting…');
 
     try {
       const res  = await fetch('/api/member/fund-application', {
-        method: isEditMode ? 'PUT' : 'POST',
+        method: usePut ? 'PUT' : 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || (isEditMode ? 'Update failed' : 'Submission failed'));
+      if (!res.ok) throw new Error(data.error || (usePut ? 'Update failed' : 'Submission failed'));
       msgEl.className = 'msg success';
       msgEl.textContent = isEditMode
         ? '✅ Your application has been updated successfully. The admin will review the changes.'
-        : '✅ Your application has been submitted successfully. The executive will review and contact you.';
+        : window._isDeniedResubmit
+          ? '✅ Your application has been resubmitted successfully. The admin will review and contact you.'
+          : '✅ Your application has been submitted successfully. The executive will review and contact you.';
       msgEl.style.display = 'block';
       showSubmitted('pending');
     } catch(err) {
       msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + err.message; msgEl.style.display = 'block';
-      btn.disabled = false; btn.textContent = isEditMode ? 'Update Application' : 'Submit Application';
+      btn.disabled = false; btn.textContent = isEditMode ? 'Update Application' : (window._isDeniedResubmit ? 'Resubmit Application' : 'Submit Application');
     }
   });
 
