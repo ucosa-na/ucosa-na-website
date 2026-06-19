@@ -560,6 +560,180 @@ router.post('/meeting/invite-test', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/meeting/exec-invite — send executive meeting invite to all active executives
+router.post('/meeting/exec-invite', secOrAdmin, async (req, res) => {
+  const { meeting_date } = req.body;
+  if (!meeting_date) return res.status(400).json({ error: 'meeting_date is required.' });
+
+  const dateObj = new Date(meeting_date + 'T00:00:00');
+  const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  try {
+    const { rows: members } = await pool.query(
+      `SELECT u.id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+       FROM users u
+       LEFT JOIN member_profiles p ON p.user_id = u.id
+       WHERE u.is_active = TRUE AND u.role NOT IN ('admin', 'member')
+       ORDER BY u.full_name ASC`
+    );
+    if (!members.length) return res.json({ ok: true, message: 'No active executives found.' });
+
+    let emailCount = 0, smsCount = 0;
+    for (const m of members) {
+      if (m.email) {
+        sendEmail({
+          to: m.email,
+          subject: `UCOSA-NA Executive Meeting — ${formatted}`,
+          html: `
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0eb;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px}
+  .hdr h1{color:#f5e6d0;font-size:22px;margin:0;letter-spacing:.04em}
+  .hdr p{color:#d4a0b8;font-size:12px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.1em}
+  .body{padding:32px 36px;color:#333;font-size:15px;line-height:1.8}
+  .body p{margin:0 0 14px}
+  .invite-box{background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:8px;padding:20px 24px;margin:20px 0}
+  .invite-box h2{color:#1a3a8f;font-size:16px;margin:0 0 14px;border-bottom:1px solid #c5d0f5;padding-bottom:8px}
+  .invite-box .row{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+  .invite-box .label{font-weight:700;color:#444;min-width:110px}
+  .cta{text-align:center;margin:24px 0}
+  .cta a{background:#2d8cff;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:15px;display:inline-block}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+</style></head><body>
+<div class="wrap">
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>UCOSA-NA Executive Meeting</h1>
+    <p>You're Invited</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${m.full_name}</strong>,</p>
+    <p>You are cordially invited to the <strong>UCOSA North America Monthly Executive Zoom Meeting</strong>. We look forward to your participation.</p>
+    <div class="invite-box">
+      <h2>&#128197; Meeting Details</h2>
+      <div class="row"><span class="label">Topic:</span><span>UCOSA North America Monthly Executive Zoom Meeting</span></div>
+      <div class="row"><span class="label">Date:</span><span>${formatted}</span></div>
+      <div class="row"><span class="label">Time:</span><span>5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)</span></div>
+      <div class="row"><span class="label">Meeting ID:</span><span>812 8628 9530</span></div>
+      <div class="row"><span class="label">Passcode:</span><span>769318</span></div>
+    </div>
+    <div class="cta">
+      <a href="https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1">&#128249; Join Zoom Meeting</a>
+    </div>
+    <p style="font-size:13px;color:#888;text-align:center;">Or copy this link into your browser:<br/>
+      <a href="https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1" style="color:#2d8cff;word-break:break-all;">
+        https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1
+      </a>
+    </p>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; ${new Date().getFullYear()} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim(),
+        }).then(() => emailCount++).catch(() => {});
+      }
+      const phone = normalizePhone(m.phone);
+      if (phone) {
+        sendSMS(phone,
+          `Dear ${m.full_name}, you are invited to the UCOSA-NA Monthly Executive Zoom Meeting on ${formatted} at 5:00 PM Eastern. Join: https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1 | ID: 812 8628 9530 | Passcode: 769318 — UCOSA-NA`
+        ).then(() => smsCount++).catch(() => {});
+      }
+    }
+    res.json({ ok: true, message: `Executive meeting invites sent — ${emailCount} email(s), ${smsCount} SMS(es) to ${members.length} executive(s).` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/meeting/exec-invite-test — send executive meeting invite to a single recipient for testing
+router.post('/meeting/exec-invite-test', secOrAdmin, async (req, res) => {
+  const { meeting_date, email, phone, name } = req.body;
+  if (!meeting_date) return res.status(400).json({ error: 'meeting_date is required.' });
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone.' });
+
+  const dateObj   = new Date(meeting_date + 'T00:00:00');
+  const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const memberName = name || 'Executive';
+  const results = [];
+
+  try {
+    if (email) {
+      await sendEmail({
+        to: email,
+        subject: `[TEST] UCOSA-NA Executive Meeting — ${formatted}`,
+        html: `
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0eb;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px}
+  .hdr h1{color:#f5e6d0;font-size:22px;margin:0;letter-spacing:.04em}
+  .hdr p{color:#d4a0b8;font-size:12px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.1em}
+  .body{padding:32px 36px;color:#333;font-size:15px;line-height:1.8}
+  .body p{margin:0 0 14px}
+  .invite-box{background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:8px;padding:20px 24px;margin:20px 0}
+  .invite-box h2{color:#1a3a8f;font-size:16px;margin:0 0 14px;border-bottom:1px solid #c5d0f5;padding-bottom:8px}
+  .invite-box .row{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+  .invite-box .label{font-weight:700;color:#444;min-width:110px}
+  .cta{text-align:center;margin:24px 0}
+  .cta a{background:#2d8cff;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:15px;display:inline-block}
+  .test-banner{background:#ff6f00;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:700;}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+</style></head><body>
+<div class="wrap">
+  <div class="test-banner">⚠️ THIS IS A TEST MESSAGE — Not sent to all executives</div>
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>UCOSA-NA Executive Meeting</h1>
+    <p>You're Invited</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${memberName}</strong>,</p>
+    <p>You are cordially invited to the <strong>UCOSA North America Monthly Executive Zoom Meeting</strong>. We look forward to your participation.</p>
+    <div class="invite-box">
+      <h2>&#128197; Meeting Details</h2>
+      <div class="row"><span class="label">Topic:</span><span>UCOSA North America Monthly Executive Zoom Meeting</span></div>
+      <div class="row"><span class="label">Date:</span><span>${formatted}</span></div>
+      <div class="row"><span class="label">Time:</span><span>5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)</span></div>
+      <div class="row"><span class="label">Meeting ID:</span><span>812 8628 9530</span></div>
+      <div class="row"><span class="label">Passcode:</span><span>769318</span></div>
+    </div>
+    <div class="cta">
+      <a href="https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1">&#128249; Join Zoom Meeting</a>
+    </div>
+    <p style="font-size:13px;color:#888;text-align:center;">Or copy this link into your browser:<br/>
+      <a href="https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1" style="color:#2d8cff;word-break:break-all;">
+        https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1
+      </a>
+    </p>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; ${new Date().getFullYear()} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim(),
+      });
+      results.push(`Email sent to ${email}`);
+    }
+    if (phone) {
+      const e164 = normalizePhone(phone);
+      if (!e164) return res.status(400).json({ error: 'Invalid phone number format.' });
+      await sendSMS(e164, `[TEST] Dear ${memberName}, you are invited to the UCOSA-NA Monthly Executive Zoom Meeting on ${formatted} at 5:00 PM Eastern. Join: https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1 | ID: 812 8628 9530 | Passcode: 769318 — UCOSA-NA`);
+      results.push(`SMS sent to ${phone}`);
+    }
+    res.json({ ok: true, message: results.join(' | ') });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/enrollment/notify — manually trigger enrollment open notifications
 router.post('/enrollment/notify', adminOnly, async (req, res) => {
   try {

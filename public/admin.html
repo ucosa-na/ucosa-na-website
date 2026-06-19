@@ -769,6 +769,7 @@
           <a href="#membersList">Member List</a>
           <a href="#unactivatedSection">Unactivated Members</a>
           <a href="#meetingInvite">Meeting Invite</a>
+          <a href="#execMeetingInvite">Exec Meeting Invite</a>
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
         </div>
@@ -1185,6 +1186,67 @@
           <button id="meetingInviteBtn" onclick="sendMeetingInvite()"
             style="padding:12px 32px;background:#1a3a8f;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
             &#128249; Send Invite to All Members
+          </button>
+        </div>
+      </section>
+
+      <!-- EXECUTIVE MEETING INVITE -->
+      <section id="execMeetingInvite">
+        <h2>&#128249; Executive Meeting Invite</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">
+          Send the monthly Executive Zoom meeting invitation to all current executives via email and SMS.
+        </p>
+        <div id="execMeetingInviteMsg" class="msg" style="display:none;margin-bottom:16px;font-size:15px;"></div>
+
+        <!-- Fixed meeting details -->
+        <div style="background:#fff;border:1.5px solid #c5d0f5;border-radius:8px;padding:16px 20px;margin-bottom:20px;max-width:680px;font-size:14px;line-height:2;color:#333;">
+          <div style="font-size:13px;font-weight:700;color:#1a3a8f;margin-bottom:8px;">&#128197; Fixed Meeting Details</div>
+          <strong>Topic:</strong> UCOSA North America Monthly Executive Zoom Meeting<br/>
+          <strong>Join Link:</strong> <a href="https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1" target="_blank" style="color:#2d8cff;word-break:break-all;">https://us02web.zoom.us/j/81286289530?pwd=5j26VaveMT6pICO7drgHKMk4Tg29NH.1</a><br/>
+          <strong>Meeting ID:</strong> 812 8628 9530 &nbsp;&nbsp; <strong>Passcode:</strong> 769318<br/>
+          <strong>Time:</strong> 5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)
+        </div>
+
+        <!-- Shared date picker -->
+        <div style="margin-bottom:20px;max-width:680px;">
+          <label style="font-size:15px;font-weight:700;color:#333;display:block;margin-bottom:6px;">
+            &#128197; Select Meeting Date <span style="color:#e63946;">*</span>
+          </label>
+          <input type="date" id="execMeetingInviteDate"
+            style="padding:10px 14px;border:1.5px solid #1a3a8f;border-radius:8px;font-size:16px;min-width:220px;"/>
+        </div>
+
+        <!-- Test panel -->
+        <div style="background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:20px 24px;margin-bottom:20px;max-width:680px;">
+          <div style="font-size:15px;font-weight:700;color:#0d47a1;margin-bottom:10px;">&#129514; Test — Send to a Single Recipient</div>
+          <p style="color:#555;font-size:14px;margin:0 0 12px;">Verify the email/SMS before sending to all executives.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Name</label>
+              <input type="text" id="execMeetingTestName" placeholder="Test Executive" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Email</label>
+              <input type="email" id="execMeetingTestEmail" placeholder="test@example.com" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:180px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Phone</label>
+              <input type="tel" id="execMeetingTestPhone" placeholder="+12015551234" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+          </div>
+          <button id="execMeetingTestBtn" onclick="sendExecMeetingInviteTest()"
+            style="padding:10px 24px;background:#0d47a1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
+            &#129514; Send Test Invite
+          </button>
+        </div>
+
+        <!-- Send to all executives -->
+        <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:10px;padding:20px 24px;max-width:680px;">
+          <div style="font-size:15px;font-weight:700;color:#b45309;margin-bottom:8px;">&#128249; Send to ALL Active Executives</div>
+          <p style="color:#555;font-size:14px;margin:0 0 14px;">This will email and text every active executive. Only do this when ready.</p>
+          <button id="execMeetingInviteBtn" onclick="sendExecMeetingInvite()"
+            style="padding:12px 32px;background:#1a3a8f;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
+            &#128249; Send Invite to All Executives
           </button>
         </div>
       </section>
@@ -2504,7 +2566,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingInvite', 'meetingNotes', 'logViewer'];
+      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingInvite', 'execMeetingInvite', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
       const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
       const proAdminSections = ['fundApplicationsSection'];
@@ -3790,6 +3852,60 @@
         msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = '📹 Send Invite to All Members';
+      }
+    }
+
+    async function sendExecMeetingInviteTest() {
+      const btn   = document.getElementById('execMeetingTestBtn');
+      const msgEl = document.getElementById('execMeetingInviteMsg');
+      const date  = document.getElementById('execMeetingInviteDate').value;
+      const email = document.getElementById('execMeetingTestEmail').value.trim();
+      const phone = document.getElementById('execMeetingTestPhone').value.trim();
+      const name  = document.getElementById('execMeetingTestName').value.trim();
+      msgEl.style.display = 'none';
+      if (!date)           { msgEl.className = 'msg error'; msgEl.textContent = 'Please select a meeting date first.'; msgEl.style.display = 'block'; return; }
+      if (!email && !phone){ msgEl.className = 'msg error'; msgEl.textContent = 'Enter at least an email or phone number.'; msgEl.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/meeting/exec-invite-test', {
+          method:  'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ meeting_date: date, email, phone, name }),
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? ('✅ Test sent — ' + data.message) : (data.error || 'Failed.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '🧪 Send Test Invite';
+      }
+    }
+
+    async function sendExecMeetingInvite() {
+      const btn    = document.getElementById('execMeetingInviteBtn');
+      const msgEl  = document.getElementById('execMeetingInviteMsg');
+      const dateEl = document.getElementById('execMeetingInviteDate');
+      msgEl.style.display = 'none';
+      if (!dateEl.value) {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Please select a meeting date.'; msgEl.style.display = 'block'; return;
+      }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/meeting/exec-invite', {
+          method:  'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ meeting_date: dateEl.value }),
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? ('✅ ' + data.message) : (data.error || 'Failed to send invites.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '📹 Send Invite to All Executives';
       }
     }
 
