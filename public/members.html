@@ -475,6 +475,21 @@
         const deleteBtn    = document.getElementById('fundAppDeleteBtn');
         const deniedNote   = document.getElementById('fundAppDeniedNote');
         const deniedReason = document.getElementById('fundAppDeniedReason');
+        const statusBadge  = document.getElementById('fundAppStatusBadge');
+        if (data && data.id && statusBadge) {
+          const s = data.status || 'pending';
+          const badgeStyles = {
+            pending:  { bg: '#fff8e1', color: '#b45309', border: '#f59e0b', label: 'Submitted: Pending' },
+            approved: { bg: '#e8f5e9', color: '#1b5e20', border: '#4caf50', label: 'Submitted: Approved' },
+            denied:   { bg: '#fdecea', color: '#b71c1c', border: '#ef9a9a', label: 'Submitted: Denied'   },
+          };
+          const style = badgeStyles[s] || badgeStyles.pending;
+          statusBadge.textContent = style.label;
+          statusBadge.style.background   = style.bg;
+          statusBadge.style.color        = style.color;
+          statusBadge.style.border       = `1.5px solid ${style.border}`;
+          statusBadge.style.display      = 'inline-block';
+        }
         if (data && data.id && btn) {
           btn.dataset.submitted = '1';
           btn.style.opacity = '0.45';
@@ -953,6 +968,7 @@
                   onmouseover="if(!this.dataset.submitted)this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                   &#128196; Fill Out &amp; Submit Application
                 </a>
+                <span id="fundAppStatusBadge" style="display:none;padding:10px 20px;border-radius:8px;font-size:15px;font-weight:700;"></span>
                 <span id="fundAppApprovedBtn" style="display:none;align-items:center;gap:8px;background:#1b5e20;color:#fff;padding:12px 26px;border-radius:8px;font-size:15px;font-weight:700;">&#9989; Form Submitted and Approved</span>
                 <a id="fundAppDownloadBtn" href="/member-fund-form.html?view=1" style="display:none;align-items:center;gap:8px;background:#0277bd;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:700;">&#11015; Download PDF</a>
                 <a id="fundAppUpdateBtn" href="/member-fund-form.html?edit=1" style="display:none;align-items:center;gap:8px;background:#1565c0;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px;font-weight:700;">&#9998; Update</a>
