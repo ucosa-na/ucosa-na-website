@@ -801,13 +801,14 @@
       if (!token) { window.location.href = '/login.html'; return; }
 
       try {
-        const [meRes, finRes, notesRes, endowRes, leviesRes, devLevyStatusRes] = await Promise.all([
+        const [meRes, finRes, notesRes, endowRes, leviesRes, devLevyStatusRes, fundAppRes] = await Promise.all([
           fetch('/api/auth/me',                      { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch('/api/member/financials',            { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch('/api/meeting-notes',                { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch('/api/member/endowment',             { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch('/api/admin/special-levies',         { headers: { 'Authorization': 'Bearer ' + token } }),
           fetch('/api/member/dev-levy-status',       { headers: { 'Authorization': 'Bearer ' + token } }),
+          fetch('/api/member/fund-application',      { headers: { 'Authorization': 'Bearer ' + token } }),
         ]);
 
         if (meRes.status === 401 || meRes.status === 403) { logout(); return; }
@@ -818,6 +819,7 @@
         const endowRecords   = endowRes.ok          ? await endowRes.json()          : [];
         const levies         = leviesRes.ok         ? await leviesRes.json()         : [];
         const devLevyStatus  = devLevyStatusRes.ok  ? await devLevyStatusRes.json()  : null;
+        const fundApp        = fundAppRes.ok        ? await fundAppRes.json()        : null;
 
         if (user.mustChangePassword) {
           window.location.href = '/change-password.html?required=1';
@@ -1031,6 +1033,55 @@
         document.getElementById('mainLayout').style.display = 'flex';
         filterDues('all');
         populateYearSelects();
+
+        // Update fund application badge and buttons (must run after content.innerHTML is set)
+        if (fundApp && fundApp.id) {
+          const cardBtn     = document.getElementById('fundAppCardBtn');
+          const badge       = document.getElementById('fundAppStatusBadge');
+          const approvedBtn = document.getElementById('fundAppApprovedBtn');
+          const downloadBtn = document.getElementById('fundAppDownloadBtn');
+          const updateBtn   = document.getElementById('fundAppUpdateBtn');
+          const deleteBtn   = document.getElementById('fundAppDeleteBtn');
+          const note        = document.getElementById('fundAppCardNote');
+          const statusVal   = document.getElementById('fundAppCardStatusVal');
+          const deniedNote  = document.getElementById('fundAppDeniedNote');
+          const deniedReason= document.getElementById('fundAppDeniedReason');
+          const s = fundApp.status || 'pending';
+
+          if (cardBtn) {
+            cardBtn.dataset.submitted = '1';
+            cardBtn.style.opacity = '0.45';
+            cardBtn.style.pointerEvents = 'none';
+            cardBtn.style.cursor = 'default';
+            cardBtn.style.background = '#9e9e9e';
+          }
+          if (badge) {
+            const badgeStyles = {
+              pending:  { bg: '#fff8e1', color: '#b45309', border: '#f59e0b', label: 'Submitted: Pending'  },
+              approved: { bg: '#e8f5e9', color: '#1b5e20', border: '#4caf50', label: 'Submitted: Approved' },
+              denied:   { bg: '#fdecea', color: '#b71c1c', border: '#ef9a9a', label: 'Submitted: Denied'   },
+            };
+            const st = badgeStyles[s] || badgeStyles.pending;
+            badge.textContent = st.label;
+            badge.style.background = st.bg;
+            badge.style.color      = st.color;
+            badge.style.border     = '1.5px solid ' + st.border;
+            badge.style.display    = 'inline-block';
+          }
+          if (s === 'approved') {
+            if (approvedBtn) approvedBtn.style.display = 'inline-flex';
+            if (downloadBtn) downloadBtn.style.display = 'inline-flex';
+            if (updateBtn)   updateBtn.style.display   = 'inline-flex';
+            if (deleteBtn)   deleteBtn.style.display   = 'inline-flex';
+          }
+          if (s === 'denied') {
+            if (updateBtn)    updateBtn.style.display    = 'inline-flex';
+            if (deniedNote)   deniedNote.style.display   = 'block';
+            if (deniedReason) deniedReason.textContent   = fundApp.admin_comment || 'No reason provided.';
+          }
+          if (note)      note.style.display = 'block';
+          if (statusVal) statusVal.textContent = s;
+        }
 
         // Apply dev levy card eligibility (must run after content.innerHTML is set)
         const devLevyCard = document.getElementById('card-devlevy');
