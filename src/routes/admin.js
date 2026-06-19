@@ -633,8 +633,8 @@ router.post('/meeting/exec-invite', secOrAdmin, async (req, res) => {
        FROM executives e
        JOIN users u ON u.id = e.user_id
        LEFT JOIN member_profiles p ON p.user_id = u.id
-       WHERE u.is_active = TRUE
-         AND (e.status = 'current' OR e.position = 'President')
+       WHERE (e.status = 'current' AND u.is_active = TRUE)
+          OR e.position = 'President'
        ORDER BY u.id, e.status ASC`
     );
     if (!members.length) return res.json({ ok: true, message: 'No current executives found. Add executives in the Executives section first.' });

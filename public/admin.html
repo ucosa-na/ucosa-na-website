@@ -1265,6 +1265,8 @@
                   <th style="padding:10px 12px;text-align:left;">Position</th>
                   <th style="padding:10px 12px;text-align:left;">Term Start</th>
                   <th style="padding:10px 12px;text-align:left;">Term End</th>
+                  <th style="padding:10px 12px;text-align:left;">Email</th>
+                  <th style="padding:10px 12px;text-align:left;">Phone</th>
                   <th style="padding:10px 12px;text-align:center;">Actions</th>
                 </tr>
               </thead>
@@ -3976,7 +3978,7 @@
 
       const ptbody = document.getElementById('pastExecsTbody');
       if (!past.length) {
-        ptbody.innerHTML = '<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;">No past executives.</td></tr>';
+        ptbody.innerHTML = '<tr><td colspan="7" style="padding:16px;text-align:center;color:#888;">No past executives.</td></tr>';
       } else {
         ptbody.innerHTML = past.map(e => `
           <tr style="border-bottom:1px solid #eee;color:#555;">
@@ -3984,6 +3986,8 @@
             <td style="padding:10px 12px;">${e.position}</td>
             <td style="padding:10px 12px;">${e.term_start ? e.term_start.slice(0,10) : '—'}</td>
             <td style="padding:10px 12px;">${e.term_end ? e.term_end.slice(0,10) : '—'}</td>
+            <td style="padding:10px 12px;">${e.email || '—'}</td>
+            <td style="padding:10px 12px;">${e.phone || '—'}</td>
             <td style="padding:10px 12px;text-align:center;">
               <button onclick="markExecCurrent(${e.id})" style="padding:5px 12px;background:#2d8cff;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;">Reinstate</button>
               <button onclick="removeExec(${e.id})" style="padding:5px 12px;background:#e63946;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Remove</button>
