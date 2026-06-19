@@ -629,12 +629,13 @@ router.post('/meeting/exec-invite', secOrAdmin, async (req, res) => {
 
   try {
     const { rows: members } = await pool.query(
-      `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone, e.position
+      `SELECT DISTINCT ON (u.id) u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone, e.position
        FROM executives e
        JOIN users u ON u.id = e.user_id
        LEFT JOIN member_profiles p ON p.user_id = u.id
-       WHERE e.status = 'current' AND u.is_active = TRUE
-       ORDER BY u.full_name ASC`
+       WHERE u.is_active = TRUE
+         AND (e.status = 'current' OR e.position = 'President')
+       ORDER BY u.id, e.status ASC`
     );
     if (!members.length) return res.json({ ok: true, message: 'No current executives found. Add executives in the Executives section first.' });
 
