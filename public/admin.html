@@ -769,6 +769,7 @@
           <a href="#membersList">Member List</a>
           <a href="#unactivatedSection">Unactivated Members</a>
           <a href="#meetingInvite">Meeting Invite</a>
+          <a href="#executivesSection">Executives</a>
           <a href="#execMeetingInvite">Exec Meeting Invite</a>
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
@@ -1187,6 +1188,80 @@
             style="padding:12px 32px;background:#1a3a8f;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">
             &#128249; Send Invite to All Members
           </button>
+        </div>
+      </section>
+
+      <!-- EXECUTIVES MANAGEMENT -->
+      <section id="executivesSection">
+        <h2>&#127970; Executives</h2>
+        <p style="color:#555;font-size:19px;margin-bottom:20px;">Manage current and past executives. Current executives receive executive meeting invites.</p>
+        <div id="execMsg" class="msg" style="display:none;margin-bottom:16px;font-size:15px;"></div>
+
+        <!-- Add Executive -->
+        <div style="background:#f0f7ff;border:1.5px solid #90caf9;border-radius:10px;padding:20px 24px;margin-bottom:24px;max-width:780px;">
+          <div style="font-size:15px;font-weight:700;color:#0d47a1;margin-bottom:14px;">&#43; Add Executive</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="flex:2;min-width:200px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Member <span style="color:#e63946;">*</span></label>
+              <select id="execMemberSelect" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;">
+                <option value="">— select member —</option>
+              </select>
+            </div>
+            <div style="flex:2;min-width:180px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Position <span style="color:#e63946;">*</span></label>
+              <input type="text" id="execPosition" placeholder="e.g. President, Secretary" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;min-width:150px;">
+              <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:4px;">Term Start</label>
+              <input type="date" id="execTermStart" style="width:100%;padding:9px 12px;border:1.5px solid #dde3f0;border-radius:7px;font-size:14px;box-sizing:border-box;"/>
+            </div>
+          </div>
+          <button onclick="addExecutive()" style="padding:10px 24px;background:#0d47a1;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Add Executive</button>
+        </div>
+
+        <!-- Current Executives -->
+        <div style="max-width:780px;margin-bottom:24px;">
+          <div style="font-size:15px;font-weight:700;color:#333;margin-bottom:10px;">&#9989; Current Executives</div>
+          <div id="currentExecsTable" style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <thead>
+                <tr style="background:#7b2152;color:#fff;">
+                  <th style="padding:10px 12px;text-align:left;">Name</th>
+                  <th style="padding:10px 12px;text-align:left;">Position</th>
+                  <th style="padding:10px 12px;text-align:left;">Term Start</th>
+                  <th style="padding:10px 12px;text-align:left;">Email</th>
+                  <th style="padding:10px 12px;text-align:left;">Phone</th>
+                  <th style="padding:10px 12px;text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="currentExecsTbody">
+                <tr><td colspan="6" style="padding:16px;text-align:center;color:#888;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Past Executives -->
+        <div style="max-width:780px;">
+          <div style="font-size:15px;font-weight:700;color:#333;margin-bottom:10px;cursor:pointer;" onclick="togglePastExecs()">
+            &#128203; Past Executives <span id="pastExecsChevron" style="font-size:12px;">&#9654;</span>
+          </div>
+          <div id="pastExecsTable" style="overflow-x:auto;display:none;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <thead>
+                <tr style="background:#555;color:#fff;">
+                  <th style="padding:10px 12px;text-align:left;">Name</th>
+                  <th style="padding:10px 12px;text-align:left;">Position</th>
+                  <th style="padding:10px 12px;text-align:left;">Term Start</th>
+                  <th style="padding:10px 12px;text-align:left;">Term End</th>
+                  <th style="padding:10px 12px;text-align:center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pastExecsTbody">
+                <tr><td colspan="5" style="padding:16px;text-align:center;color:#888;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -2566,7 +2641,7 @@
       document.getElementById('headerRole').textContent = roleLabels[role] || role;
 
       // Section visibility
-      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingInvite', 'execMeetingInvite', 'meetingNotes', 'logViewer'];
+      const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingInvite', 'executivesSection', 'execMeetingInvite', 'meetingNotes', 'logViewer'];
       const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
       const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
       const proAdminSections = ['fundApplicationsSection'];
@@ -3855,6 +3930,143 @@
       }
     }
 
+    // ── Executives Management ──────────────────────────────────────────
+    let _execsList = [];
+
+    async function loadExecutives() {
+      try {
+        const res = await fetch('/api/admin/executives', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        _execsList = await res.json();
+        renderExecs();
+      } catch { /* silent */ }
+    }
+
+    function renderExecs() {
+      const current = _execsList.filter(e => e.status === 'current');
+      const past    = _execsList.filter(e => e.status === 'past');
+
+      const tbody = document.getElementById('currentExecsTbody');
+      if (!current.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:16px;text-align:center;color:#888;">No current executives. Add one above.</td></tr>';
+      } else {
+        tbody.innerHTML = current.map(e => `
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:10px 12px;">${e.full_name}</td>
+            <td style="padding:10px 12px;">${e.position}</td>
+            <td style="padding:10px 12px;">${e.term_start ? e.term_start.slice(0,10) : '—'}</td>
+            <td style="padding:10px 12px;">${e.email || '—'}</td>
+            <td style="padding:10px 12px;">${e.phone || '—'}</td>
+            <td style="padding:10px 12px;text-align:center;white-space:nowrap;">
+              <button onclick="markExecPast(${e.id})" style="padding:5px 12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;">Mark Past</button>
+              <button onclick="removeExec(${e.id})" style="padding:5px 12px;background:#e63946;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Remove</button>
+            </td>
+          </tr>`).join('');
+      }
+
+      const ptbody = document.getElementById('pastExecsTbody');
+      if (!past.length) {
+        ptbody.innerHTML = '<tr><td colspan="5" style="padding:16px;text-align:center;color:#888;">No past executives.</td></tr>';
+      } else {
+        ptbody.innerHTML = past.map(e => `
+          <tr style="border-bottom:1px solid #eee;color:#555;">
+            <td style="padding:10px 12px;">${e.full_name}</td>
+            <td style="padding:10px 12px;">${e.position}</td>
+            <td style="padding:10px 12px;">${e.term_start ? e.term_start.slice(0,10) : '—'}</td>
+            <td style="padding:10px 12px;">${e.term_end ? e.term_end.slice(0,10) : '—'}</td>
+            <td style="padding:10px 12px;text-align:center;">
+              <button onclick="markExecCurrent(${e.id})" style="padding:5px 12px;background:#2d8cff;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;">Reinstate</button>
+              <button onclick="removeExec(${e.id})" style="padding:5px 12px;background:#e63946;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Remove</button>
+            </td>
+          </tr>`).join('');
+      }
+    }
+
+    function togglePastExecs() {
+      const el = document.getElementById('pastExecsTable');
+      const ch = document.getElementById('pastExecsChevron');
+      const open = el.style.display !== 'none';
+      el.style.display = open ? 'none' : 'block';
+      ch.innerHTML = open ? '&#9654;' : '&#9660;';
+    }
+
+    async function populateExecMemberDropdown() {
+      try {
+        const res = await fetch('/api/admin/users', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const users = await res.json();
+        const sel = document.getElementById('execMemberSelect');
+        const active = users.filter(u => u.is_active);
+        active.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id;
+          opt.textContent = u.full_name + (u.email ? ` (${u.email})` : '');
+          sel.appendChild(opt);
+        });
+      } catch { /* silent */ }
+    }
+
+    async function addExecutive() {
+      const msgEl    = document.getElementById('execMsg');
+      const user_id  = document.getElementById('execMemberSelect').value;
+      const position = document.getElementById('execPosition').value.trim();
+      const term_start = document.getElementById('execTermStart').value;
+      msgEl.style.display = 'none';
+      if (!user_id)  { msgEl.className='msg error'; msgEl.textContent='Please select a member.'; msgEl.style.display='block'; return; }
+      if (!position) { msgEl.className='msg error'; msgEl.textContent='Please enter a position.'; msgEl.style.display='block'; return; }
+      try {
+        const res = await fetch('/api/admin/executives', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id, position, term_start: term_start || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) { msgEl.className='msg error'; msgEl.textContent=data.error||'Failed.'; msgEl.style.display='block'; return; }
+        document.getElementById('execMemberSelect').value = '';
+        document.getElementById('execPosition').value = '';
+        document.getElementById('execTermStart').value = '';
+        msgEl.className='msg success'; msgEl.textContent='✅ Executive added.'; msgEl.style.display='block';
+        loadExecutives();
+      } catch { msgEl.className='msg error'; msgEl.textContent='Network error.'; msgEl.style.display='block'; }
+    }
+
+    async function markExecPast(id) {
+      const exec = _execsList.find(e => e.id === id);
+      if (!exec) return;
+      const today = new Date().toISOString().slice(0,10);
+      try {
+        await fetch(`/api/admin/executives/${id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ position: exec.position, status: 'past', term_end: today }),
+        });
+        loadExecutives();
+      } catch { /* silent */ }
+    }
+
+    async function markExecCurrent(id) {
+      const exec = _execsList.find(e => e.id === id);
+      if (!exec) return;
+      try {
+        await fetch(`/api/admin/executives/${id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ position: exec.position, status: 'current', term_end: null }),
+        });
+        loadExecutives();
+      } catch { /* silent */ }
+    }
+
+    async function removeExec(id) {
+      if (!confirm('Remove this executive from the list?')) return;
+      try {
+        await fetch(`/api/admin/executives/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + getToken() },
+        });
+        loadExecutives();
+      } catch { /* silent */ }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     async function sendExecMeetingInviteTest() {
       const btn   = document.getElementById('execMeetingTestBtn');
       const msgEl = document.getElementById('execMeetingInviteMsg');
@@ -5076,6 +5288,8 @@
       if (['admin', 'security-role'].includes(user.role)) {
         loadLogs();
         loadMeetingNotes();
+        loadExecutives();
+        populateExecMemberDropdown();
       }
 
       if (user.role === 'pro-role') {
@@ -5094,6 +5308,13 @@
         loadLogs();
         loadMeetingNotes();
         loadWelfareMembers();
+        loadExecutives();
+        populateExecMemberDropdown();
+      }
+
+      if (user.role === 'admin') {
+        loadExecutives();
+        populateExecMemberDropdown();
       }
     })();
 

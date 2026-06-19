@@ -309,6 +309,18 @@ pool.query(`
     ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS president_signature TEXT DEFAULT NULL;
     ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS president_approval_date DATE DEFAULT NULL;
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS executives (
+      id         SERIAL PRIMARY KEY,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      position   TEXT NOT NULL,
+      status     TEXT NOT NULL DEFAULT 'current' CHECK (status IN ('current', 'past')),
+      term_start DATE DEFAULT CURRENT_DATE,
+      term_end   DATE DEFAULT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

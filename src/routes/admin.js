@@ -560,6 +560,65 @@ router.post('/meeting/invite-test', secOrAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/executives — list all executives with member info
+router.get('/executives', secOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT e.id, e.user_id, e.position, e.status, e.term_start, e.term_end, e.created_at,
+             u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone, u.is_active
+      FROM executives e
+      JOIN users u ON u.id = e.user_id
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      ORDER BY e.status ASC, u.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/executives — add an executive
+router.post('/executives', secOrAdmin, async (req, res) => {
+  const { user_id, position, term_start } = req.body;
+  if (!user_id || !position) return res.status(400).json({ error: 'user_id and position are required.' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO executives (user_id, position, status, term_start)
+       VALUES ($1, $2, 'current', $3) RETURNING *`,
+      [user_id, position.trim(), term_start || null]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/executives/:id — update executive (position, status, term_end)
+router.put('/executives/:id', secOrAdmin, async (req, res) => {
+  const { position, status, term_end } = req.body;
+  if (!position || !status) return res.status(400).json({ error: 'position and status are required.' });
+  try {
+    const { rows } = await pool.query(
+      `UPDATE executives SET position=$1, status=$2, term_end=$3 WHERE id=$4 RETURNING *`,
+      [position.trim(), status, term_end || null, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Executive not found.' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/executives/:id — remove executive
+router.delete('/executives/:id', secOrAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM executives WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/meeting/exec-invite — send executive meeting invite to all active executives
 router.post('/meeting/exec-invite', secOrAdmin, async (req, res) => {
   const { meeting_date } = req.body;
@@ -570,13 +629,14 @@ router.post('/meeting/exec-invite', secOrAdmin, async (req, res) => {
 
   try {
     const { rows: members } = await pool.query(
-      `SELECT u.id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
-       FROM users u
+      `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone, e.position
+       FROM executives e
+       JOIN users u ON u.id = e.user_id
        LEFT JOIN member_profiles p ON p.user_id = u.id
-       WHERE u.is_active = TRUE AND u.role NOT IN ('admin', 'member')
+       WHERE e.status = 'current' AND u.is_active = TRUE
        ORDER BY u.full_name ASC`
     );
-    if (!members.length) return res.json({ ok: true, message: 'No active executives found.' });
+    if (!members.length) return res.json({ ok: true, message: 'No current executives found. Add executives in the Executives section first.' });
 
     let emailCount = 0, smsCount = 0;
     for (const m of members) {
