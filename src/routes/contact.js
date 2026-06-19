@@ -11,11 +11,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
   }
 
-  if (!process.env.SENDGRID_API_KEY || !process.env.EMAIL_USER) {
-    return res.status(500).json({ error: 'Email service not configured on server.' });
-  }
-
-  try {
+try {
     await sendEmail({
       to: 'ucosa.northamerica@gmail.com',
       replyTo: email,
