@@ -971,6 +971,82 @@ router.post('/test-fund-approval', adminOnly, async (req, res) => {
   res.json(results);
 });
 
+// POST /api/admin/test-payment-receipt — test Stripe dues payment receipt email
+router.post('/test-payment-receipt', adminOnly, async (req, res) => {
+  const { email, name } = req.body;
+  if (!email) return res.status(400).json({ error: 'Provide an email address.' });
+  const memberName = name || 'Test Member';
+  const fakeRef = 'pi_test_' + Date.now();
+  const fakeRows = `<tr><td style="padding:6px 12px;">Annual Dues (2026)</td><td style="padding:6px 12px;font-weight:700;color:#1b5e20;">$100.00</td></tr>`;
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Payment Receipt — UCOSA-NA',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;">
+          <div style="background:#7b2152;text-align:center;padding:24px 32px;">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase;">UCOSA North America</div>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;">
+            <p>Dear <strong>${memberName}</strong>,</p>
+            <p>Thank you! Your payment has been successfully processed. Here is your receipt:</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <thead><tr style="background:#7b2152;color:#fff;"><th style="padding:10px 12px;text-align:left;">Description</th><th style="padding:10px 12px;text-align:left;">Amount</th></tr></thead>
+              <tbody>${fakeRows}</tbody>
+              <tfoot><tr style="border-top:2px solid #eee;"><td style="padding:10px 12px;font-weight:700;">Total Paid</td><td style="padding:10px 12px;font-weight:700;color:#1b5e20;">$100.00</td></tr></tfoot>
+            </table>
+            <p style="font-size:13px;color:#888;">Reference: ${fakeRef}</p>
+            <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+            <p style="margin-top:20px;">Thank you for your continued support of UCOSA-NA and Ugbeka College.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`
+    });
+    res.json({ email: `Test payment receipt sent to ${email}` });
+  } catch (err) {
+    res.json({ email: `Email failed: ${err.message}` });
+  }
+});
+
+// POST /api/admin/test-donation-receipt — test donor confirmation email
+router.post('/test-donation-receipt', adminOnly, async (req, res) => {
+  const { email, name } = req.body;
+  if (!email) return res.status(400).json({ error: 'Provide an email address.' });
+  const donorName = name || 'Test Donor';
+  const fakeRef = 'pi_test_' + Date.now();
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Thank You for Your Donation — UCOSA-NA',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;">
+          <div style="background:#7b2152;text-align:center;padding:24px 32px;">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase;">UCOSA North America</div>
+          </div>
+          <div style="background:#fdf6ec;padding:28px 32px;">
+            <p>Dear <strong>${donorName}</strong>,</p>
+            <p>Your generous donation of <strong>$50.00</strong> to the Ugbeka College Old Students' Association of North America has been received.</p>
+            <p>Your contribution goes directly toward supporting students at Ugbeka College — funding the computer laboratory, school supplies, and educational resources that open doors for the next generation.</p>
+            <div style="background:#fff;border-left:4px solid #c8a96e;padding:14px 18px;border-radius:4px;margin:20px 0;">
+              <strong>Donation Receipt</strong><br>
+              Donor: ${donorName}<br>
+              Amount: $50.00<br>
+              Reference: ${fakeRef}<br>
+              Date: ${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}
+            </div>
+            <p style="color:#888;font-size:13px;">On behalf of all our students and alumni, thank you for making a difference.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`
+    });
+    res.json({ email: `Test donation receipt sent to ${email}` });
+  } catch (err) {
+    res.json({ email: `Email failed: ${err.message}` });
+  }
+});
+
 // GET /api/admin/users — list all members with profile data
 router.get('/users', anyPriv, async (req, res) => {
   try {
