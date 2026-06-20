@@ -1071,8 +1071,14 @@
           if (s === 'approved') {
             if (approvedBtn) approvedBtn.style.display = 'inline-flex';
             if (downloadBtn) downloadBtn.style.display = 'inline-flex';
-            if (updateBtn)   updateBtn.style.display   = 'inline-flex';
-            if (deleteBtn)   deleteBtn.style.display   = 'inline-flex';
+            if (updateBtn) {
+              updateBtn.style.display      = 'inline-flex';
+              updateBtn.style.opacity      = '0.45';
+              updateBtn.style.pointerEvents= 'none';
+              updateBtn.style.cursor       = 'default';
+              updateBtn.title              = 'Updates are locked until the next enrollment period.';
+            }
+            if (deleteBtn) deleteBtn.style.display = 'none';
           }
           if (s === 'denied') {
             if (updateBtn)    updateBtn.style.display    = 'inline-flex';
