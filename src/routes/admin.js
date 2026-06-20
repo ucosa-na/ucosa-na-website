@@ -895,10 +895,18 @@ router.post('/test-fund-submission', adminOnly, async (req, res) => {
       await sendEmail({
         to: email,
         subject: 'Fund Application Received — UCOSA-NA',
-        html: `<p>Dear ${memberName},</p>
-               <p>Your <strong>Member's Endowment Fund Application</strong> has been received successfully.</p>
-               <p>The admin will review your application and you will be notified of the outcome.</p>
-               <p>Thank you,<br/>UCOSA-NA</p>`
+        html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+                 <div style="background:#7b2152;text-align:center;padding:24px 32px">
+                   <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+                   <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+                 </div>
+                 <div style="background:#f9f9f9;padding:32px">
+                   <p>Dear ${memberName},</p>
+                   <p>Your <strong>Member's Endowment Fund Application</strong> has been received successfully.</p>
+                   <p>The admin will review your application and you will be notified of the outcome.</p>
+                   <p>Thank you,<br/>UCOSA-NA</p>
+                 </div>
+               </div>`
       });
       results.email = `Test submission email sent to ${email}`;
     } catch (err) {
@@ -931,10 +939,18 @@ router.post('/test-fund-approval', adminOnly, async (req, res) => {
       await sendEmail({
         to: email,
         subject: 'Fund Application Approved — UCOSA-NA',
-        html: `<p>Dear ${memberName},</p>
-               <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
-               <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
-               <p>Thank you,<br/>UCOSA-NA</p>`
+        html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+                 <div style="background:#7b2152;text-align:center;padding:24px 32px">
+                   <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+                   <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+                 </div>
+                 <div style="background:#f9f9f9;padding:32px">
+                   <p>Dear ${memberName},</p>
+                   <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong>.</p>
+                   <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
+                   <p>Thank you,<br/>UCOSA-NA</p>
+                 </div>
+               </div>`
       });
       results.email = `Test approval email sent to ${email}`;
     } catch (err) {
@@ -2522,10 +2538,18 @@ router.put('/fund-applications/:id', fundAppAccess, async (req, res) => {
             sendEmail({
               to: p.email,
               subject: 'Endowment Fund Application Ready for Your Approval — UCOSA-NA',
-              html: `<p>Dear ${p.full_name || 'President'},</p>
-                     <p>The <strong>Member's Endowment Fund Application</strong> submitted by <strong>${memberName}</strong> has been reviewed and approved by the Financial Secretary.</p>
-                     <p>Please log in to the Admin Panel to review and give your approval.</p>
-                     <p>Thank you,<br/>UCOSA-NA</p>`
+              html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+                       <div style="background:#7b2152;text-align:center;padding:24px 32px">
+                         <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+                         <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+                       </div>
+                       <div style="background:#f9f9f9;padding:32px">
+                         <p>Dear ${p.full_name || 'President'},</p>
+                         <p>The <strong>Member's Endowment Fund Application</strong> submitted by <strong>${memberName}</strong> has been reviewed and approved by the Financial Secretary.</p>
+                         <p>Please log in to the Admin Panel to review and give your approval.</p>
+                         <p>Thank you,<br/>UCOSA-NA</p>
+                       </div>
+                     </div>`
             }).catch(() => {});
           }
           const phone = normalizePhone(p.phone);
@@ -2555,10 +2579,18 @@ router.put('/fund-applications/:id', fundAppAccess, async (req, res) => {
             sendEmail({
               to: u.email,
               subject: 'Fund Application Approved — UCOSA-NA',
-              html: `<p>Dear ${name},</p>
-                     <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong> by the Chapter President.</p>
-                     <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
-                     <p>Thank you,<br/>UCOSA-NA</p>`
+              html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+                       <div style="background:#7b2152;text-align:center;padding:24px 32px">
+                         <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+                         <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+                       </div>
+                       <div style="background:#f9f9f9;padding:32px">
+                         <p>Dear ${name},</p>
+                         <p>Congratulations! Your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#1b5e20;">approved</strong> by the Chapter President.</p>
+                         <p>Welcome to the UCOSA-NA Members' Fund. You are now enrolled for bereavement coverage.</p>
+                         <p>Thank you,<br/>UCOSA-NA</p>
+                       </div>
+                     </div>`
             }).catch(() => {});
           }
           const phone = normalizePhone(u.phone);
@@ -2570,11 +2602,19 @@ router.put('/fund-applications/:id', fundAppAccess, async (req, res) => {
             sendEmail({
               to: u.email,
               subject: 'Fund Application Denied — UCOSA-NA',
-              html: `<p>Dear ${name},</p>
-                     <p>We regret to inform you that your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#c62828;">denied</strong> by the Chapter President.</p>
-                     ${reason}
-                     <p>You may log in to your member portal, update your application, and resubmit for review.</p>
-                     <p>Thank you,<br/>UCOSA-NA</p>`
+              html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+                       <div style="background:#7b2152;text-align:center;padding:24px 32px">
+                         <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+                         <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+                       </div>
+                       <div style="background:#f9f9f9;padding:32px">
+                         <p>Dear ${name},</p>
+                         <p>We regret to inform you that your <strong>Member's Endowment Fund Application</strong> has been <strong style="color:#c62828;">denied</strong> by the Chapter President.</p>
+                         ${reason}
+                         <p>You may log in to your member portal, update your application, and resubmit for review.</p>
+                         <p>Thank you,<br/>UCOSA-NA</p>
+                       </div>
+                     </div>`
             }).catch(() => {});
           }
           const phone = normalizePhone(u.phone);
