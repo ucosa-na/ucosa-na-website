@@ -444,6 +444,181 @@ async function sendEnrollmentOpenNotifications() {
   log.info(`Scheduler: enrollment open notifications dispatched to ${members.length} member(s)`);
 }
 
+// ── General Meeting Auto-Reminders ────────────────────────────────────────────
+
+const GENERAL_ZOOM_LINK = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
+const GENERAL_ZOOM_ID   = '882 7418 8382';
+const GENERAL_ZOOM_PASS = '161773';
+
+function getLastSundayOfMonth(year, month) {
+  const lastDay = new Date(year, month + 1, 0); // last calendar day of month
+  const lastSunday = new Date(lastDay);
+  lastSunday.setDate(lastDay.getDate() - lastDay.getDay()); // rewind to Sunday
+  return lastSunday;
+}
+
+function fmtMeetingDate(date) {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'America/New_York',
+  });
+}
+
+function generalMeetingHtml(memberName, formatted, badgeHtml, introPara) {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0eb;margin:0;padding:0}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px}
+  .hdr h1{color:#f5e6d0;font-size:22px;margin:0;letter-spacing:.04em}
+  .hdr p{color:#d4a0b8;font-size:12px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.1em}
+  .body{padding:32px 36px;color:#333;font-size:15px;line-height:1.8}
+  .body p{margin:0 0 14px}
+  .invite-box{background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:8px;padding:20px 24px;margin:20px 0}
+  .invite-box h2{color:#1a3a8f;font-size:16px;margin:0 0 14px;border-bottom:1px solid #c5d0f5;padding-bottom:8px}
+  .invite-box .row{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+  .invite-box .label{font-weight:700;color:#444;min-width:110px}
+  .cta{text-align:center;margin:24px 0}
+  .cta a{background:#2d8cff;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:15px;display:inline-block}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:16px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+</style></head><body>
+<div class="wrap">
+  ${badgeHtml}
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <h1>UCOSA-NA Monthly General Meeting</h1>
+    <p>${formatted}</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${memberName}</strong>,</p>
+    ${introPara}
+    <div class="invite-box">
+      <h2>&#128197; Meeting Details</h2>
+      <div class="row"><span class="label">Topic:</span><span>UCOSA North America Monthly General Zoom Meeting</span></div>
+      <div class="row"><span class="label">Date:</span><span>${formatted}</span></div>
+      <div class="row"><span class="label">Time:</span><span>5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)</span></div>
+      <div class="row"><span class="label">Meeting ID:</span><span>${GENERAL_ZOOM_ID}</span></div>
+      <div class="row"><span class="label">Passcode:</span><span>${GENERAL_ZOOM_PASS}</span></div>
+    </div>
+    <div class="cta">
+      <a href="${GENERAL_ZOOM_LINK}">&#128249; Join Zoom Meeting</a>
+    </div>
+    <p style="font-size:13px;color:#888;text-align:center;">Or copy this link:<br/>
+      <a href="${GENERAL_ZOOM_LINK}" style="color:#2d8cff;word-break:break-all;">${GENERAL_ZOOM_LINK}</a>
+    </p>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; ${new Date().getFullYear()} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim();
+}
+
+async function sendGeneralMeetingNotices(meetingDate, type) {
+  const formatted = fmtMeetingDate(meetingDate);
+
+  let subject, badgeHtml, introPara, smsFn;
+
+  if (type === 'invite') {
+    subject   = `UCOSA-NA Monthly General Meeting — ${formatted}`;
+    badgeHtml = '';
+    introPara = `<p>You are cordially invited to the <strong>UCOSA North America Monthly General Zoom Meeting</strong>. We look forward to your participation.</p>`;
+    smsFn     = n => `Dear ${n}, you are invited to the UCOSA-NA Monthly General Meeting on ${formatted} at 5:00 PM Eastern. Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 3) {
+    subject   = `Reminder: UCOSA-NA General Meeting in 3 Days — ${formatted}`;
+    badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 3 Days</div>`;
+    introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>3 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+    smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is in 3 days on ${formatted} at 5:00 PM Eastern. Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 1) {
+    subject   = `Reminder: UCOSA-NA General Meeting is Tomorrow — ${formatted}`;
+    badgeHtml = `<div style="background:#c62828;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting is TOMORROW</div>`;
+    introPara = `<p>This is a reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is <strong>tomorrow</strong>, <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>. Please make sure you have the details ready.</p>`;
+    smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is TOMORROW, ${formatted} at 5:00 PM Eastern. Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 'hour') {
+    subject   = `Meeting Starts in 1 Hour — UCOSA-NA General Meeting Today`;
+    badgeHtml = `<div style="background:#1b5e20;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING STARTS IN 1 HOUR — Join Now!</div>`;
+    introPara = `<p>The <strong>UCOSA-NA Monthly General Zoom Meeting</strong> starts in <strong>1 hour</strong> at <strong>5:00 PM Eastern</strong> today, <strong>${formatted}</strong>. Please join on time.</p>`;
+    smsFn     = n => `UCOSA-NA: Dear ${n}, the Monthly General Meeting starts in 1 HOUR at 5:00 PM Eastern today. Join now: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
+  } else {
+    return;
+  }
+
+  let members;
+  try {
+    const { rows } = await pool.query(`
+      SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM users u
+      LEFT JOIN member_profiles p ON p.user_id = u.id
+      WHERE u.is_active = TRUE AND u.role != 'admin'
+      ORDER BY u.full_name ASC
+    `);
+    members = rows;
+  } catch (err) {
+    log.error(`General meeting notice (${type}): DB query failed — ${err.message}`);
+    return;
+  }
+
+  log.info(`General meeting notice (${type}): sending to ${members.length} member(s) for ${formatted}`);
+
+  let emailCount = 0, smsCount = 0;
+  for (const m of members) {
+    if (m.email) {
+      sendEmail({ to: m.email, subject, html: generalMeetingHtml(m.full_name, formatted, badgeHtml, introPara) })
+        .then(() => emailCount++).catch(err => log.error(`General meeting email failed for ${m.email}: ${err.message}`));
+    }
+    if (m.phone) {
+      sendSMS(m.phone, smsFn(m.full_name))
+        .then(() => smsCount++).catch(err => log.error(`General meeting SMS failed for ${m.phone}: ${err.message}`));
+    }
+  }
+
+  log.info(`General meeting notice (${type}): dispatched — ${emailCount} email(s), ${smsCount} SMS(es)`);
+}
+
+// Daily check: fires 7-day invite, 3-day reminder, or 1-day reminder
+async function checkGeneralMeetingDayReminders() {
+  try {
+    const etStr  = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const etNow  = new Date(etStr);
+    const year   = etNow.getFullYear();
+    const month  = etNow.getMonth();
+    const today  = new Date(year, month, etNow.getDate());
+    const lastSun = getLastSundayOfMonth(year, month);
+    const meeting = new Date(lastSun.getFullYear(), lastSun.getMonth(), lastSun.getDate());
+    const diffDays = Math.round((meeting - today) / 86400000);
+
+    if      (diffDays === 7) await sendGeneralMeetingNotices(lastSun, 'invite');
+    else if (diffDays === 3) await sendGeneralMeetingNotices(lastSun, 3);
+    else if (diffDays === 1) await sendGeneralMeetingNotices(lastSun, 1);
+    else log.info(`General meeting day check: ${diffDays} day(s) to meeting — no notice needed`);
+  } catch (err) {
+    log.error(`checkGeneralMeetingDayReminders failed: ${err.message}`);
+  }
+}
+
+// Sunday 4 PM check: fires 1-hour notice if today is the last Sunday
+async function checkGeneralMeetingHourReminder() {
+  try {
+    const etStr  = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const etNow  = new Date(etStr);
+    const year   = etNow.getFullYear();
+    const month  = etNow.getMonth();
+    const today  = new Date(year, month, etNow.getDate());
+    const lastSun = getLastSundayOfMonth(year, month);
+    const meeting = new Date(lastSun.getFullYear(), lastSun.getMonth(), lastSun.getDate());
+
+    if (today.getTime() === meeting.getTime()) {
+      await sendGeneralMeetingNotices(lastSun, 'hour');
+    } else {
+      log.info('General meeting hour check: not meeting day, skipping');
+    }
+  } catch (err) {
+    log.error(`checkGeneralMeetingHourReminder failed: ${err.message}`);
+  }
+}
+
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
 // January 1st at 00:01 AM — populate annual dues records for all active members
@@ -467,6 +642,12 @@ cron.schedule('0 9 1 1 *', sendEnrollmentOpenNotifications, { timezone: 'America
 // June 14th at 9:00 AM — endowment enrollment open (2026 special window)
 cron.schedule('0 9 14 6 *', sendEnrollmentOpenNotifications, { timezone: 'America/New_York' });
 
-log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 15 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, 1st-of-month 9AM birthday emails)');
+// Daily at 9:00 AM ET — check for general meeting 7-day invite / 3-day / 1-day reminders
+cron.schedule('0 9 * * *', checkGeneralMeetingDayReminders, { timezone: 'America/New_York' });
 
-module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications };
+// Every Sunday at 4:00 PM ET — 1-hour notice before 5:00 PM general meeting
+cron.schedule('0 16 * * 0', checkGeneralMeetingHourReminder, { timezone: 'America/New_York' });
+
+log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 14 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, daily 9AM general meeting day reminders, Sunday 4PM general meeting hour notice, 1st-of-month 9AM birthday emails)');
+
+module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications, checkGeneralMeetingDayReminders, checkGeneralMeetingHourReminder };
