@@ -166,15 +166,16 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
       to: req.user.email,
       subject: 'Payment Receipt — UCOSA-NA',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
-          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
-            <h1 style="color:#fff;margin:0;font-size:22px;">Payment Received</h1>
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;">
+          <div style="background:#7b2152;text-align:center;padding:24px 32px;">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase;">UCOSA North America</div>
           </div>
-          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+          <div style="background:#f9f9f9;padding:28px 32px;">
             <p>Dear <strong>${req.user.fullName || req.user.email}</strong>,</p>
             <p>Thank you! Your payment has been successfully processed. Here is your receipt:</p>
             <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-              <thead><tr style="background:#1a1a2e;color:#fff;"><th style="padding:10px 12px;text-align:left;">Description</th><th style="padding:10px 12px;text-align:left;">Amount</th></tr></thead>
+              <thead><tr style="background:#7b2152;color:#fff;"><th style="padding:10px 12px;text-align:left;">Description</th><th style="padding:10px 12px;text-align:left;">Amount</th></tr></thead>
               <tbody>${rows}</tbody>
               <tfoot><tr style="border-top:2px solid #eee;"><td style="padding:10px 12px;font-weight:700;">Total Paid</td><td style="padding:10px 12px;font-weight:700;color:#1b5e20;">$${total}</td></tr></tfoot>
             </table>
@@ -241,14 +242,16 @@ router.post('/donate-confirm', async (req, res) => {
       to: email,
       subject: 'Thank You for Your Donation — UCOSA-NA',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
-          <div style="background:#2e7d32;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
-            <h1 style="color:#fff;margin:0;font-size:22px;">Thank You, ${name}!</h1>
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;">
+          <div style="background:#7b2152;text-align:center;padding:24px 32px;">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase;">UCOSA North America</div>
           </div>
-          <div style="background:#fdf6ec;padding:28px 32px;border-radius:0 0 10px 10px;">
+          <div style="background:#fdf6ec;padding:28px 32px;">
+            <p>Dear <strong>${name}</strong>,</p>
             <p>Your generous donation of <strong>$${amount}</strong> to the Ugbeka College Old Students' Association of North America has been received.</p>
             <p>Your contribution goes directly toward supporting students at Ugbeka College — funding the computer laboratory, school supplies, and educational resources that open doors for the next generation.</p>
-            <div style="background:#f0f9f0;border-left:4px solid #2e7d32;padding:14px 18px;border-radius:4px;margin:20px 0;">
+            <div style="background:#fff;border-left:4px solid #c8a96e;padding:14px 18px;border-radius:4px;margin:20px 0;">
               <strong>Donation Receipt</strong><br>
               Donor: ${name}<br>
               Amount: $${amount}<br>
