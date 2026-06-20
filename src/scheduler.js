@@ -8,6 +8,21 @@ const { sendEmail } = require('./mailer');
 const DUE_MONTH = 5;   // May
 const DUE_DAY   = 3;
 
+// ── General Meeting Zoom constants (reused across all notifications) ───────────
+const GENERAL_ZOOM_LINK = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
+const GENERAL_ZOOM_ID   = '882 7418 8382';
+const GENERAL_ZOOM_PASS = '161773';
+
+function zoomMeetingBlock() {
+  return `
+    <div style="background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:8px;padding:16px 20px;margin:24px 0 8px;">
+      <p style="font-weight:700;color:#1a3a8f;margin:0 0 8px;font-size:14px;">Monthly General Meeting — Last Sunday of Every Month</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#333;">Time: 5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#333;">Meeting ID: ${GENERAL_ZOOM_ID} &nbsp;|&nbsp; Passcode: ${GENERAL_ZOOM_PASS}</p>
+      <a href="${GENERAL_ZOOM_LINK}" style="color:#2d8cff;font-size:13px;font-weight:600;">Join Zoom Meeting &rarr;</a>
+    </div>`;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getTwilioClient() {
@@ -63,6 +78,7 @@ function duesReminderHtml(name, year, dueDate, amount, status) {
           </tbody>
         </table>
         <p><em>If you've already made your payment, please ignore this message &mdash; and thank you!</em></p>
+        ${zoomMeetingBlock()}
         <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
       </div>
     </div>`;
@@ -142,7 +158,9 @@ async function sendAdvanceReminders() {
       sendSMS(m.phone,
         `UCOSA-NA Dues Reminder\n` +
         `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due in 30 days, on ${dueDate}.\n` +
-        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!`
+        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!\n\n` +
+        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
       ).catch(err => log.error(`Scheduler: advance reminder SMS failed for ${m.phone}: ${err.message}`));
     }
   }
@@ -182,7 +200,9 @@ async function sendDueDateReminders() {
       sendSMS(m.phone,
         `UCOSA-NA Dues Due Today\n` +
         `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due today, ${dueDate}.\n` +
-        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!`
+        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!\n\n` +
+        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
       ).catch(err => log.error(`Scheduler: due-date reminder SMS failed for ${m.phone}: ${err.message}`));
     }
   }
@@ -244,7 +264,8 @@ async function sendBirthdayEmails() {
                 Amen. 🕊️
               </p>
             </div>
-            <p style="color:#888;font-size:13px;margin-top:20px;">With love and warm regards,<br><strong>UCOSA-North America Executive</strong></p>
+            ${zoomMeetingBlock()}
+            <p style="color:#888;font-size:13px;margin-top:12px;">With love and warm regards,<br><strong>UCOSA-North America Executive</strong></p>
           </div>
         </div>
       `,
@@ -252,10 +273,11 @@ async function sendBirthdayEmails() {
 
     if (m.phone) {
       sendSMS(m.phone,
-        `🎂 Happy Birthday, ${m.member_name}!\n` +
+        `Happy Birthday, ${m.member_name}!\n` +
         `Welcome to your birthday month of ${monthName}!\n\n` +
         `On behalf of the entire UCOSA-NA family, we wish you a wonderful birthday month filled with joy, good health, and blessings.\n\n` +
-        `🙏 May God bless and keep you always. Amen.\n\n` +
+        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}\n\n` +
         `— UCOSA-North America`
       ).catch(err => log.error(`Scheduler: birthday SMS failed for ${m.phone}: ${err.message}`));
     }
@@ -324,7 +346,8 @@ async function sendInactivityReminders() {
             <p>If you have any questions or need assistance logging in, contact us at
               <a href="mailto:ucosa.northamerica@gmail.com">ucosa.northamerica@gmail.com</a>.
             </p>
-            <p style="color:#888;font-size:0.85em;margin-top:24px;">— UCOSA-North America Executive</p>
+            ${zoomMeetingBlock()}
+            <p style="color:#888;font-size:0.85em;margin-top:12px;">— UCOSA-North America Executive</p>
           </div>
         </div>
       `,
@@ -335,7 +358,9 @@ async function sendInactivityReminders() {
       sendSMS(m.phone,
         `UCOSA-NA: Hi ${m.full_name}, we observed you have not logged in to your UCOSA account in 90 days.\n` +
         `Please log in to see what is happening and check your account status.\n` +
-        `Login: https://ucosa-na.org`
+        `Login: https://ucosa-na.org\n\n` +
+        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
       ).catch(err => log.error(`Scheduler: inactivity SMS failed for ${m.phone}: ${err.message}`));
     }
 
@@ -423,6 +448,12 @@ async function sendEnrollmentOpenNotifications() {
       <a href="https://ucosa-na.org/member-fund-form.html">Complete Endowment Fund Application</a>
       <a href="https://ucosa-na.org/members.html" style="background:#0d47a1;">Log In to Member Portal</a>
     </div>
+    <div style="background:#f0f4ff;border:1.5px solid #1a3a8f;border-radius:8px;padding:16px 20px;margin:24px 0 8px;">
+      <p style="font-weight:700;color:#1a3a8f;margin:0 0 8px;font-size:14px;">Monthly General Meeting — Last Sunday of Every Month</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#333;">Time: 5:00 PM Eastern &nbsp;|&nbsp; 4:00 PM Central (US &amp; Canada)</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#333;">Meeting ID: ${GENERAL_ZOOM_ID} &nbsp;|&nbsp; Passcode: ${GENERAL_ZOOM_PASS}</p>
+      <a href="${GENERAL_ZOOM_LINK}" style="color:#2d8cff;font-size:13px;font-weight:600;">Join Zoom Meeting &rarr;</a>
+    </div>
     <p>With warmth and fellowship,</p>
     <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org" style="color:#7b2152;">www.ucosa-na.org</a></p>
   </div>
@@ -436,7 +467,9 @@ async function sendEnrollmentOpenNotifications() {
     if (m.phone) {
       sendSMS(m.phone,
         `Dear ${m.full_name}, the UCOSA-NA Endowment Fund enrollment is now OPEN (${enrollPeriod}, ${year}).\n` +
-        `Apply here: https://ucosa-na.org/member-fund-form.html\n— UCOSA-NA`
+        `Apply here: https://ucosa-na.org/member-fund-form.html\n\n` +
+        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}\n— UCOSA-NA`
       ).catch(err => log.error(`Scheduler: enrollment SMS failed for ${m.phone}: ${err.message}`));
     }
   }
@@ -445,10 +478,6 @@ async function sendEnrollmentOpenNotifications() {
 }
 
 // ── General Meeting Auto-Reminders ────────────────────────────────────────────
-
-const GENERAL_ZOOM_LINK = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
-const GENERAL_ZOOM_ID   = '882 7418 8382';
-const GENERAL_ZOOM_PASS = '161773';
 
 function getLastSundayOfMonth(year, month) {
   const lastDay = new Date(year, month + 1, 0); // last calendar day of month
