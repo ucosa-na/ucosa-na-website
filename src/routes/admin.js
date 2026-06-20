@@ -1047,6 +1047,127 @@ router.post('/test-donation-receipt', adminOnly, async (req, res) => {
   }
 });
 
+// ── Scheduler notification test endpoints ─────────────────────────────────────
+const {
+  duesReminderHtml: schedulerDuesReminderHtml,
+  zoomMeetingBlock,
+  generalMeetingHtml,
+  fmtMeetingDate,
+  getLastSundayOfMonth,
+} = require('../scheduler');
+
+// POST /api/admin/test-dues-reminder — test dues reminder email (with Zoom block)
+router.post('/test-dues-reminder', adminOnly, async (req, res) => {
+  const { email, phone, name } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone.' });
+  const memberName = name || 'Test Member';
+  const year = new Date().getFullYear();
+  const results = { email: null, sms: null };
+  if (email) {
+    try {
+      await sendEmail({ to: email, subject: `Annual Dues Reminder`, html: schedulerDuesReminderHtml(memberName, year, `June 1, ${year}`, '$100.00', 'unpaid') });
+      results.email = `Test dues reminder sent to ${email}`;
+    } catch (err) { results.email = `Email failed: ${err.message}`; }
+  }
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      const ZOOM = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
+      const sent = await sendSMS(normalized,
+        `UCOSA-NA Dues Reminder\nDear ${memberName}, your ${year} annual dues ($100.00) are due on June 1, ${year}.\nZelle to: ucosa.northamerica@gmail.com\n\nMonthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\nJoin: ${ZOOM} | ID: 882 7418 8382 | Passcode: 161773`
+      ).catch(err => { results.sms = `SMS failed: ${err.message}`; return false; });
+      if (sent && !results.sms) results.sms = `Test dues reminder SMS sent to ${normalized}`;
+    } else { results.sms = `Invalid phone: ${phone}`; }
+  }
+  res.json(results);
+});
+
+// POST /api/admin/test-birthday-email — test birthday email (with Zoom block)
+router.post('/test-birthday-email', adminOnly, async (req, res) => {
+  const { email, phone, name } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone.' });
+  const memberName = name || 'Test Member';
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthName = MONTHS[new Date().getMonth()];
+  const ZOOM = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
+  const results = { email: null, sms: null };
+  if (email) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: `Happy Birthday, ${memberName}! — UCOSA-NA`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+            <div style="background:#7b2152;text-align:center;padding:28px 32px">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            </div>
+            <div style="background:#fdf6ec;padding:32px;text-align:center">
+              <div style="font-size:60px;line-height:1;">🎂</div>
+              <h2 style="color:#7b2152;margin:12px 0 4px;font-size:26px;">Happy Birthday, ${memberName}!</h2>
+              <p style="color:#555;font-size:16px;margin:0 0 20px;">Welcome to your birthday month of <strong>${monthName}</strong>!</p>
+              <p style="color:#333;text-align:left">On behalf of the entire UCOSA-NA family, we wish you a wonderful and joyful birthday month filled with joy, good health, and blessings.</p>
+              ${zoomMeetingBlock()}
+              <p style="color:#888;font-size:13px;margin-top:12px;">With love and warm regards,<br><strong>UCOSA-North America Executive</strong></p>
+            </div>
+          </div>`
+      });
+      results.email = `Test birthday email sent to ${email}`;
+    } catch (err) { results.email = `Email failed: ${err.message}`; }
+  }
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      const sent = await sendSMS(normalized,
+        `Happy Birthday, ${memberName}!\nWelcome to your birthday month of ${monthName}!\n\nOn behalf of UCOSA-NA, we wish you a wonderful birthday month!\n\nMonthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\nJoin: ${ZOOM} | ID: 882 7418 8382 | Passcode: 161773\n— UCOSA-North America`
+      ).catch(err => { results.sms = `SMS failed: ${err.message}`; return false; });
+      if (sent && !results.sms) results.sms = `Test birthday SMS sent to ${normalized}`;
+    } else { results.sms = `Invalid phone: ${phone}`; }
+  }
+  res.json(results);
+});
+
+// POST /api/admin/test-meeting-auto — test auto general meeting reminder (invite/3day/1day/hour)
+router.post('/test-meeting-auto', adminOnly, async (req, res) => {
+  const { email, name, type } = req.body;
+  if (!email) return res.status(400).json({ error: 'Provide an email.' });
+  const validTypes = ['invite', '3', '1', 'hour'];
+  const noticeType = validTypes.includes(String(type)) ? (isNaN(type) ? type : Number(type)) : 'invite';
+  const memberName = name || 'Test Member';
+
+  // Use next last Sunday of current month as the meeting date
+  const now = new Date();
+  const meetingDate = getLastSundayOfMonth(now.getFullYear(), now.getMonth());
+  const formatted = fmtMeetingDate(meetingDate);
+  const ZOOM = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
+
+  let subject, badgeHtml, introPara;
+  if (noticeType === 'invite') {
+    subject = `UCOSA-NA Monthly General Meeting — ${formatted}`;
+    badgeHtml = '';
+    introPara = `<p>You are cordially invited to the <strong>UCOSA North America Monthly General Zoom Meeting</strong>. We look forward to your participation.</p>`;
+  } else if (noticeType === 3) {
+    subject = `Reminder: UCOSA-NA General Meeting in 3 Days — ${formatted}`;
+    badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 3 Days</div>`;
+    introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>3 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+  } else if (noticeType === 1) {
+    subject = `Reminder: UCOSA-NA General Meeting is Tomorrow — ${formatted}`;
+    badgeHtml = `<div style="background:#c62828;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting is TOMORROW</div>`;
+    introPara = `<p>This is a reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is <strong>tomorrow</strong>, <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+  } else {
+    subject = `Meeting Starts in 1 Hour — UCOSA-NA General Meeting Today`;
+    badgeHtml = `<div style="background:#1b5e20;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING STARTS IN 1 HOUR — Join Now!</div>`;
+    introPara = `<p>The <strong>UCOSA-NA Monthly General Zoom Meeting</strong> starts in <strong>1 hour</strong> at <strong>5:00 PM Eastern</strong> today, <strong>${formatted}</strong>.</p>`;
+  }
+
+  try {
+    await sendEmail({ to: email, subject: `[TEST] ${subject}`, html: generalMeetingHtml(memberName, formatted, badgeHtml, introPara) });
+    res.json({ email: `Test auto-meeting notice (${noticeType}) sent to ${email}` });
+  } catch (err) {
+    res.json({ email: `Email failed: ${err.message}` });
+  }
+});
+
 // GET /api/admin/users — list all members with profile data
 router.get('/users', anyPriv, async (req, res) => {
   try {

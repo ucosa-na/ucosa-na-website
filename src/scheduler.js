@@ -679,4 +679,10 @@ cron.schedule('0 16 * * 0', checkGeneralMeetingHourReminder, { timezone: 'Americ
 
 log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 14 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, daily 9AM general meeting day reminders, Sunday 4PM general meeting hour notice, 1st-of-month 9AM birthday emails)');
 
-module.exports = { populateAnnualDues, sendAdvanceReminders, sendDueDateReminders, sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications, checkGeneralMeetingDayReminders, checkGeneralMeetingHourReminder };
+module.exports = {
+  populateAnnualDues, sendAdvanceReminders, sendDueDateReminders,
+  sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications,
+  checkGeneralMeetingDayReminders, checkGeneralMeetingHourReminder,
+  // Exported for test endpoints in admin.js
+  duesReminderHtml, zoomMeetingBlock, generalMeetingHtml, fmtMeetingDate, getLastSundayOfMonth, sendGeneralMeetingNotices,
+};
