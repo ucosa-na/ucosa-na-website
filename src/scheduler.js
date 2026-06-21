@@ -160,13 +160,16 @@ async function sendAdvanceReminders() {
     await sleep(250);
 
     if (m.phone) {
-      sendSMS(m.phone,
-        `UCOSA-NA Dues Reminder\n` +
-        `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due in 30 days, on ${dueDate}.\n` +
-        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!\n\n` +
-        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
-        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
-      ).catch(err => log.error(`Scheduler: advance reminder SMS failed for ${m.phone}: ${err.message}`));
+      try {
+        await sendSMS(m.phone,
+          `UCOSA-NA Dues Reminder\n` +
+          `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due in 30 days, on ${dueDate}.\n` +
+          `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!\n\n` +
+          `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+          `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
+        );
+      } catch (err) { log.error(`Scheduler: advance reminder SMS failed for ${m.phone}: ${err.message}`); }
+      await sleep(300);
     }
   }
 
@@ -205,13 +208,16 @@ async function sendDueDateReminders() {
     await sleep(250);
 
     if (m.phone) {
-      sendSMS(m.phone,
-        `UCOSA-NA Dues Due Today\n` +
-        `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due today, ${dueDate}.\n` +
-        `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!\n\n` +
-        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
-        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
-      ).catch(err => log.error(`Scheduler: due-date reminder SMS failed for ${m.phone}: ${err.message}`));
+      try {
+        await sendSMS(m.phone,
+          `UCOSA-NA Dues Due Today\n` +
+          `Dear ${m.full_name}, your ${year} annual dues (${amountFmt}) are due today, ${dueDate}.\n` +
+          `Payment Info: Zelle to — ucosa.northamerica@gmail.com\nIf you've already made your payment, please ignore this message — and thank you!\n\n` +
+          `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+          `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
+        );
+      } catch (err) { log.error(`Scheduler: due-date reminder SMS failed for ${m.phone}: ${err.message}`); }
+      await sleep(300);
     }
   }
 
@@ -281,14 +287,17 @@ async function sendBirthdayEmails() {
     await sleep(250);
 
     if (m.phone) {
-      sendSMS(m.phone,
-        `Happy Birthday, ${m.member_name}!\n` +
-        `Welcome to your birthday month of ${monthName}!\n\n` +
-        `On behalf of the entire UCOSA-NA family, we wish you a wonderful birthday month filled with joy, good health, and blessings.\n\n` +
-        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
-        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}\n\n` +
-        `— UCOSA-North America`
-      ).catch(err => log.error(`Scheduler: birthday SMS failed for ${m.phone}: ${err.message}`));
+      try {
+        await sendSMS(m.phone,
+          `Happy Birthday, ${m.member_name}!\n` +
+          `Welcome to your birthday month of ${monthName}!\n\n` +
+          `On behalf of the entire UCOSA-NA family, we wish you a wonderful birthday month filled with joy, good health, and blessings.\n\n` +
+          `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+          `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}\n\n` +
+          `— UCOSA-North America`
+        );
+      } catch (err) { log.error(`Scheduler: birthday SMS failed for ${m.phone}: ${err.message}`); }
+      await sleep(300);
     }
   }
 
@@ -365,13 +374,16 @@ async function sendInactivityReminders() {
 
     // SMS
     if (m.phone) {
-      sendSMS(m.phone,
-        `UCOSA-NA: Hi ${m.full_name}, we observed you have not logged in to your UCOSA account in 90 days.\n` +
-        `Please log in to see what is happening and check your account status.\n` +
-        `Login: https://ucosa-na.org\n\n` +
-        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
-        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
-      ).catch(err => log.error(`Scheduler: inactivity SMS failed for ${m.phone}: ${err.message}`));
+      try {
+        await sendSMS(m.phone,
+          `UCOSA-NA: Hi ${m.full_name}, we observed you have not logged in to your UCOSA account in 90 days.\n` +
+          `Please log in to see what is happening and check your account status.\n` +
+          `Login: https://ucosa-na.org\n\n` +
+          `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+          `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}`
+        );
+      } catch (err) { log.error(`Scheduler: inactivity SMS failed for ${m.phone}: ${err.message}`); }
+      await sleep(300);
     }
 
     // Mark reminder sent
@@ -476,12 +488,15 @@ async function sendEnrollmentOpenNotifications() {
 
     // SMS
     if (m.phone) {
-      sendSMS(m.phone,
-        `Dear ${m.full_name}, the UCOSA-NA Endowment Fund enrollment is now OPEN (${enrollPeriod}, ${year}).\n` +
-        `Apply here: https://ucosa-na.org/member-fund-form.html\n\n` +
-        `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
-        `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}\n— UCOSA-NA`
-      ).catch(err => log.error(`Scheduler: enrollment SMS failed for ${m.phone}: ${err.message}`));
+      try {
+        await sendSMS(m.phone,
+          `Dear ${m.full_name}, the UCOSA-NA Endowment Fund enrollment is now OPEN (${enrollPeriod}, ${year}).\n` +
+          `Apply here: https://ucosa-na.org/member-fund-form.html\n\n` +
+          `Monthly General Meeting — Last Sunday of every month at 5:00 PM Eastern.\n` +
+          `Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS}\n— UCOSA-NA`
+        );
+      } catch (err) { log.error(`Scheduler: enrollment SMS failed for ${m.phone}: ${err.message}`); }
+      await sleep(300);
     }
   }
 
@@ -614,8 +629,13 @@ async function sendGeneralMeetingNotices(meetingDate, type) {
       await sleep(250);
     }
     if (m.phone) {
-      sendSMS(m.phone, smsFn(m.full_name))
-        .then(() => smsCount++).catch(err => log.error(`General meeting SMS failed for ${m.phone}: ${err.message}`));
+      try {
+        await sendSMS(m.phone, smsFn(m.full_name));
+        smsCount++;
+      } catch (err) {
+        log.error(`General meeting SMS failed for ${m.phone}: ${err.message}`);
+      }
+      await sleep(300);
     }
   }
 
