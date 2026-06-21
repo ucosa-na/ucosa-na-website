@@ -480,10 +480,10 @@ async function sendEnrollmentOpenNotifications() {
 // ── General Meeting Auto-Reminders ────────────────────────────────────────────
 
 function getLastSundayOfMonth(year, month) {
-  const lastDay = new Date(year, month + 1, 0); // last calendar day of month
-  const lastSunday = new Date(lastDay);
-  lastSunday.setDate(lastDay.getDate() - lastDay.getDay()); // rewind to Sunday
-  return lastSunday;
+  // Use noon UTC to avoid date shifting when formatted in Eastern time (UTC-4/5)
+  const lastDay = new Date(Date.UTC(year, month + 1, 0, 12, 0, 0));
+  lastDay.setUTCDate(lastDay.getUTCDate() - lastDay.getUTCDay());
+  return lastDay;
 }
 
 function fmtMeetingDate(date) {

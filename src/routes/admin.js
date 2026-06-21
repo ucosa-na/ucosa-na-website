@@ -1063,8 +1063,8 @@ function _zoomBlock() {
 }
 
 function _lastSundayOfMonth(year, month) {
-  const last = new Date(year, month + 1, 0);
-  last.setDate(last.getDate() - last.getDay());
+  const last = new Date(Date.UTC(year, month + 1, 0, 12, 0, 0));
+  last.setUTCDate(last.getUTCDate() - last.getUTCDay());
   return last;
 }
 
