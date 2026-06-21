@@ -25,6 +25,8 @@ function zoomMeetingBlock() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 function getTwilioClient() {
   const sid   = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -146,14 +148,17 @@ async function sendAdvanceReminders() {
   for (const m of members) {
     const amountFmt = m.amount ? `$${parseFloat(m.amount).toFixed(2)}` : '$100.00';
 
-    // Email
-    sendEmail({
-      to:      m.email,
-      subject: `Annual Dues Reminder`,
-      html:    duesReminderHtml(m.full_name, year, dueDate, amountFmt, m.status),
-    }).catch(err => log.error(`Scheduler: advance reminder email failed for ${m.email}: ${err.message}`));
+    try {
+      await sendEmail({
+        to:      m.email,
+        subject: `Annual Dues Reminder`,
+        html:    duesReminderHtml(m.full_name, year, dueDate, amountFmt, m.status),
+      });
+    } catch (err) {
+      log.error(`Scheduler: advance reminder email failed for ${m.email}: ${err.message}`);
+    }
+    await sleep(250);
 
-    // SMS
     if (m.phone) {
       sendSMS(m.phone,
         `UCOSA-NA Dues Reminder\n` +
@@ -188,14 +193,17 @@ async function sendDueDateReminders() {
   for (const m of members) {
     const amountFmt = m.amount ? `$${parseFloat(m.amount).toFixed(2)}` : '$100.00';
 
-    // Email
-    sendEmail({
-      to:      m.email,
-      subject: `Annual Dues Reminder`,
-      html:    duesReminderHtml(m.full_name, year, dueDate, amountFmt, m.status),
-    }).catch(err => log.error(`Scheduler: due-date reminder email failed for ${m.email}: ${err.message}`));
+    try {
+      await sendEmail({
+        to:      m.email,
+        subject: `Annual Dues Reminder`,
+        html:    duesReminderHtml(m.full_name, year, dueDate, amountFmt, m.status),
+      });
+    } catch (err) {
+      log.error(`Scheduler: due-date reminder email failed for ${m.email}: ${err.message}`);
+    }
+    await sleep(250);
 
-    // SMS
     if (m.phone) {
       sendSMS(m.phone,
         `UCOSA-NA Dues Due Today\n` +
@@ -238,7 +246,7 @@ async function sendBirthdayEmails() {
   log.info(`Scheduler: ${members.length} birthday member(s) for ${monthName}`);
 
   for (const m of members) {
-    sendEmail({
+    try { await sendEmail({
       to: m.email,
       subject: `🎂 Happy Birthday, ${m.member_name}! — UCOSA-NA`,
       html: `
@@ -269,7 +277,8 @@ async function sendBirthdayEmails() {
           </div>
         </div>
       `,
-    }).catch(err => log.error(`Scheduler: birthday email failed for ${m.email}: ${err.message}`));
+    }); } catch (err) { log.error(`Scheduler: birthday email failed for ${m.email}: ${err.message}`); }
+    await sleep(250);
 
     if (m.phone) {
       sendSMS(m.phone,
@@ -320,7 +329,7 @@ async function sendInactivityReminders() {
     const lastLoginDate = new Date(m.last_login).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     // Email
-    sendEmail({
+    try { await sendEmail({
       to: m.email,
       subject: '👋 We Miss You — Please Log In to Your UCOSA-NA Account',
       html: `
@@ -351,7 +360,8 @@ async function sendInactivityReminders() {
           </div>
         </div>
       `,
-    }).catch(err => log.error(`Scheduler: inactivity email failed for ${m.email}: ${err.message}`));
+    }); } catch (err) { log.error(`Scheduler: inactivity email failed for ${m.email}: ${err.message}`); }
+    await sleep(250);
 
     // SMS
     if (m.phone) {
@@ -406,7 +416,7 @@ async function sendEnrollmentOpenNotifications() {
   for (const m of members) {
     // Email
     if (m.email) {
-      sendEmail({
+      try { await sendEmail({
         to: m.email,
         subject: `UCOSA-NA Member's Endowment Fund — Enrollment Now Open (${year})`,
         html: `
@@ -460,7 +470,8 @@ async function sendEnrollmentOpenNotifications() {
   <div class="ftr">&copy; ${year} UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
 </div>
 </body></html>`.trim(),
-      }).catch(err => log.error(`Scheduler: enrollment email failed for ${m.email}: ${err.message}`));
+      }); } catch (err) { log.error(`Scheduler: enrollment email failed for ${m.email}: ${err.message}`); }
+      await sleep(250);
     }
 
     // SMS
@@ -594,8 +605,13 @@ async function sendGeneralMeetingNotices(meetingDate, type) {
   let emailCount = 0, smsCount = 0;
   for (const m of members) {
     if (m.email) {
-      sendEmail({ to: m.email, subject, html: generalMeetingHtml(m.full_name, formatted, badgeHtml, introPara) })
-        .then(() => emailCount++).catch(err => log.error(`General meeting email failed for ${m.email}: ${err.message}`));
+      try {
+        await sendEmail({ to: m.email, subject, html: generalMeetingHtml(m.full_name, formatted, badgeHtml, introPara) });
+        emailCount++;
+      } catch (err) {
+        log.error(`General meeting email failed for ${m.email}: ${err.message}`);
+      }
+      await sleep(250);
     }
     if (m.phone) {
       sendSMS(m.phone, smsFn(m.full_name))
