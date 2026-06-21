@@ -2049,12 +2049,12 @@ router.post('/sms/broadcast', proOrAdmin, async (req, res) => {
 
     if (!rows.length) return res.status(400).json({ error: 'No members with phone numbers found' });
 
-    const results = await Promise.allSettled(
-      rows.map(m => sendSMS(m.phone, message.trim()))
-    );
-
-    const sent   = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let sent = 0, failed = 0;
+    for (const m of rows) {
+      try { await sendSMS(m.phone, message.trim()); sent++; } catch (err) { failed++; }
+      await sleep(300);
+    }
 
     res.json({ message: `SMS sent to ${sent} member(s).${failed ? ` ${failed} failed.` : ''}`, sent, failed });
   } catch (err) {
@@ -2075,30 +2075,33 @@ router.post('/email/broadcast', proOrAdmin, async (req, res) => {
     );
     if (!rows.length) return res.status(400).json({ error: 'No members found' });
 
-    const results = await Promise.allSettled(
-      rows.map(m => sendEmail({
-        to: m.email,
-        subject: subject.trim(),
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
-            <div style="background:#7b2152;text-align:center;padding:28px 32px">
-              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
-              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
-            </div>
-            <div style="background:#fdf6ec;padding:32px">
-              <p>Dear <strong>${m.full_name}</strong>,</p>
-              <div style="white-space:pre-wrap;font-size:1em;color:#333;line-height:1.7;">${message.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-              <p style="color:#888;font-size:0.85em;margin-top:32px">
-                UCOSA-North America &mdash;
-                <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>
-              </p>
-            </div>
-          </div>`,
-      }))
-    );
-
-    const sent   = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let sent = 0, failed = 0;
+    for (const m of rows) {
+      try {
+        await sendEmail({
+          to: m.email,
+          subject: subject.trim(),
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+              <div style="background:#7b2152;text-align:center;padding:28px 32px">
+                <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+                <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+              </div>
+              <div style="background:#fdf6ec;padding:32px">
+                <p>Dear <strong>${m.full_name}</strong>,</p>
+                <div style="white-space:pre-wrap;font-size:1em;color:#333;line-height:1.7;">${message.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                <p style="color:#888;font-size:0.85em;margin-top:32px">
+                  UCOSA-North America &mdash;
+                  <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>
+                </p>
+              </div>
+            </div>`,
+        });
+        sent++;
+      } catch (err) { failed++; }
+      await sleep(250);
+    }
     log.info(`Email broadcast "${subject}" sent to ${sent} member(s), ${failed} failed`);
     res.json({ message: `Email sent to ${sent} member(s).${failed ? ` ${failed} failed.` : ''}`, sent, failed });
   } catch (err) {
@@ -2196,13 +2199,16 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
 </div>
 </body></html>`.trim();
 
-  const emailResults = await Promise.allSettled(
-    parsed.map(({ fullName, email }) => sendEmail({
-      to:      `"${fullName}" <${email}>`,
-      subject: 'We Miss You — Come Back Home to UCOSA-NA',
-      html:    buildHtml(fullName),
-    }))
-  );
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  let emailSent = 0, emailFailed = 0;
+  for (const { fullName, email: to } of parsed) {
+    try {
+      await sendEmail({ to: `"${fullName}" <${to}>`, subject: 'We Miss You — Come Back Home to UCOSA-NA', html: buildHtml(fullName) });
+      emailSent++;
+    } catch (err) { emailFailed++; }
+    await sleep(250);
+  }
 
   // SMS: send only to entries that have a phone number
   const smsTargets = parsed.filter(p => p.phone);
@@ -2212,14 +2218,14 @@ router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
     `Visit us at https://ucosa-na.org and click "Request To Join" to come back home.\n\n` +
     `— UCOSA-North America`;
 
-  const smsResults = await Promise.allSettled(
-    smsTargets.map(({ fullName, phone }) => sendSMS(phone, smsBody(fullName)))
-  );
-
-  const emailSent   = emailResults.filter(r => r.status === 'fulfilled').length;
-  const emailFailed = emailResults.filter(r => r.status === 'rejected').length;
-  const smsSent     = smsResults.filter(r => r.status === 'fulfilled' && r.value).length;
-  const smsFailed   = smsResults.length - smsSent;
+  let smsSent = 0, smsFailed = 0;
+  for (const { fullName, phone } of smsTargets) {
+    try {
+      await sendSMS(phone, smsBody(fullName));
+      smsSent++;
+    } catch (err) { smsFailed++; }
+    await sleep(300);
+  }
 
   log.info(`Invite broadcast: ${emailSent} emails sent, ${emailFailed} failed; ${smsSent} SMS sent, ${smsFailed} failed; ${skipped.length} skipped`);
   res.json({
