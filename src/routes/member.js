@@ -339,4 +339,71 @@ router.get('/dev-levy-status', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/member/wallet — unified payment history across all tables
+router.get('/wallet', requireAuth, async (req, res) => {
+  try {
+    const uid = req.user.id;
+
+    const [duesRes, endowRes, leviesRes] = await Promise.all([
+      pool.query(
+        `SELECT
+           'Annual Dues'   AS category,
+           year::text      AS label,
+           amount::numeric AS amount,
+           paid_date       AS date,
+           payment_method,
+           status,
+           notes
+         FROM annual_dues
+         WHERE user_id = $1 AND status = 'paid' AND paid_date IS NOT NULL
+         ORDER BY paid_date DESC`, [uid]),
+      pool.query(
+        `SELECT
+           'Endowment Fund' AS category,
+           year::text       AS label,
+           amount::numeric  AS amount,
+           contribution_date AS date,
+           payment_method,
+           status,
+           notes
+         FROM endowment_fund
+         WHERE user_id = $1
+         ORDER BY contribution_date DESC`, [uid]),
+      pool.query(
+        `SELECT
+           type             AS category,
+           type             AS label,
+           amount::numeric  AS amount,
+           paid_date        AS date,
+           'recorded'       AS payment_method,
+           'paid'           AS status,
+           notes
+         FROM special_levies
+         WHERE user_id = $1
+         ORDER BY paid_date DESC`, [uid]),
+    ]);
+
+    const all = [
+      ...duesRes.rows,
+      ...endowRes.rows,
+      ...leviesRes.rows,
+    ].sort((a, b) => {
+      const da = a.date ? new Date(a.date) : new Date(0);
+      const db = b.date ? new Date(b.date) : new Date(0);
+      return db - da;
+    });
+
+    const summary = {
+      total:     all.reduce((s, r) => s + parseFloat(r.amount || 0), 0),
+      dues:      duesRes.rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0),
+      endowment: endowRes.rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0),
+      levies:    leviesRes.rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0),
+    };
+
+    res.json({ transactions: all, summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
