@@ -1189,7 +1189,7 @@ router.post('/test-birthday-email', adminOnly, async (req, res) => {
 
 // POST /api/admin/test-meeting-auto — test auto general meeting reminder (invite/3/1/hour)
 router.post('/test-meeting-auto', adminOnly, async (req, res) => {
-  const { email, name, type } = req.body;
+  const { email, phone, name, type } = req.body;
   if (!email) return res.status(400).json({ error: 'Provide an email.' });
   const validTypes = ['invite', '3', '1', 'hour'];
   const noticeType = validTypes.includes(String(type)) ? (isNaN(type) ? type : Number(type)) : 'invite';
@@ -1198,30 +1198,45 @@ router.post('/test-meeting-auto', adminOnly, async (req, res) => {
   const meetingDate = _lastSundayOfMonth(now.getFullYear(), now.getMonth());
   const formatted = _fmtDate(meetingDate);
 
-  let subject, badgeHtml, introPara;
+  let subject, badgeHtml, introPara, smsBody;
   if (noticeType === 'invite') {
     subject   = `UCOSA-NA Monthly General Meeting — ${formatted}`;
     badgeHtml = '';
     introPara = `<p>You are cordially invited to the <strong>UCOSA North America Monthly General Zoom Meeting</strong>. We look forward to your participation.</p>`;
+    smsBody   = `Dear ${memberName}, you are invited to the UCOSA-NA Monthly General Meeting on ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
   } else if (noticeType === 3) {
     subject   = `Reminder: UCOSA-NA General Meeting in 3 Days — ${formatted}`;
     badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 3 Days</div>`;
     introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>3 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+    smsBody   = `UCOSA-NA Reminder: Dear ${memberName}, the Monthly General Meeting is in 3 days on ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
   } else if (noticeType === 1) {
     subject   = `Reminder: UCOSA-NA General Meeting is Tomorrow — ${formatted}`;
     badgeHtml = `<div style="background:#c62828;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting is TOMORROW</div>`;
     introPara = `<p>This is a reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is <strong>tomorrow</strong>, <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+    smsBody   = `UCOSA-NA Reminder: Dear ${memberName}, the Monthly General Meeting is TOMORROW, ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
   } else {
     subject   = `Meeting Starts in 1 Hour — UCOSA-NA General Meeting Today`;
     badgeHtml = `<div style="background:#1b5e20;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING STARTS IN 1 HOUR — Join Now!</div>`;
     introPara = `<p>The <strong>UCOSA-NA Monthly General Zoom Meeting</strong> starts in <strong>1 hour</strong> at <strong>5:00 PM Eastern</strong> today, <strong>${formatted}</strong>.</p>`;
+    smsBody   = `UCOSA-NA: Dear ${memberName}, the Monthly General Meeting starts in 1 HOUR at 5:00 PM Eastern today. Join now: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
   }
+
+  const results = {};
   try {
     await sendEmail({ to: email, subject: `[TEST] ${subject}`, html: _meetingEmailHtml(memberName, formatted, badgeHtml, introPara) });
-    res.json({ email: `Test auto-meeting notice (${noticeType}) sent to ${email}` });
-  } catch (err) {
-    res.json({ email: `Email failed: ${err.message}` });
+    results.email = `Test auto-meeting notice (${noticeType}) sent to ${email}`;
+  } catch (err) { results.email = `Email failed: ${err.message}`; }
+
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      try {
+        await sendSMS(normalized, smsBody);
+        results.sms = `Test meeting SMS sent to ${normalized}`;
+      } catch (err) { results.sms = `SMS failed: ${err.message}`; }
+    } else { results.sms = `Invalid phone: ${phone}`; }
   }
+  res.json(results);
 });
 
 // GET /api/admin/users — list all members with profile data
