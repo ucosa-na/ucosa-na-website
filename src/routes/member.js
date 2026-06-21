@@ -368,6 +368,8 @@ router.get('/wallet', requireAuth, async (req, res) => {
            notes
          FROM endowment_fund
          WHERE user_id = $1
+           AND amount > 0
+           AND contribution_date IS NOT NULL
          ORDER BY contribution_date DESC`, [uid]),
       pool.query(
         `SELECT
