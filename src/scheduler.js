@@ -586,6 +586,11 @@ async function sendGeneralMeetingNotices(meetingDate, type) {
     badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 3 Days</div>`;
     introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>3 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
     smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is in 3 days on ${formatted} at 5:00 PM Eastern. Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 2) {
+    subject   = `Reminder: UCOSA-NA General Meeting in 2 Days — ${formatted}`;
+    badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 2 Days</div>`;
+    introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>2 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+    smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is in 2 days on ${formatted} at 5:00 PM Eastern. Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
   } else if (type === 1) {
     subject   = `Reminder: UCOSA-NA General Meeting is Tomorrow — ${formatted}`;
     badgeHtml = `<div style="background:#c62828;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting is TOMORROW</div>`;
@@ -656,6 +661,7 @@ async function checkGeneralMeetingDayReminders() {
 
     if      (diffDays === 7) await sendGeneralMeetingNotices(lastSun, 'invite');
     else if (diffDays === 3) await sendGeneralMeetingNotices(lastSun, 3);
+    else if (diffDays === 2) await sendGeneralMeetingNotices(lastSun, 2); // catch-up if 3-day was missed
     else if (diffDays === 1) await sendGeneralMeetingNotices(lastSun, 1);
     else log.info(`General meeting day check: ${diffDays} day(s) to meeting — no notice needed`);
   } catch (err) {

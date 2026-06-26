@@ -1180,6 +1180,27 @@
           </button>
         </div>
 
+        <!-- Manual reminder panel -->
+        <div style="background:#fef3c7;border:1.5px solid #d97706;border-radius:10px;padding:20px 24px;margin-bottom:20px;max-width:680px;">
+          <div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:8px;">&#9200; Send Meeting Reminder to ALL Members</div>
+          <p style="color:#555;font-size:14px;margin:0 0 14px;">Manually send a reminder (e.g. if the scheduled cron was missed). Meeting date is auto-calculated as the last Sunday of the current month.</p>
+          <div id="meetingReminderMsg" class="msg" style="display:none;margin-bottom:12px;font-size:15px;"></div>
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px;font-weight:700;color:#444;display:block;margin-bottom:6px;">Reminder Type</label>
+            <select id="meetingReminderType" style="padding:9px 14px;border:1.5px solid #d97706;border-radius:7px;font-size:14px;min-width:220px;">
+              <option value="invite">Invite (7-day)</option>
+              <option value="3">3-Day Reminder</option>
+              <option value="2" selected>2-Day Reminder (catch-up)</option>
+              <option value="1">1-Day Reminder</option>
+              <option value="hour">1-Hour Notice</option>
+            </select>
+          </div>
+          <button id="meetingReminderBtn" onclick="sendMeetingReminder()"
+            style="padding:11px 28px;background:#b45309;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">
+            &#9200; Send Reminder to All Members
+          </button>
+        </div>
+
         <!-- Send to all -->
         <div style="background:#fff3e0;border:1.5px solid #f59e0b;border-radius:10px;padding:20px 24px;max-width:680px;">
           <div style="font-size:15px;font-weight:700;color:#b45309;margin-bottom:8px;">&#128249; Send to ALL Active Members</div>
@@ -3940,6 +3961,29 @@
         msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
       } finally {
         btn.disabled = false; btn.textContent = '📹 Send Invite to All Members';
+      }
+    }
+
+    async function sendMeetingReminder() {
+      const btn   = document.getElementById('meetingReminderBtn');
+      const msgEl = document.getElementById('meetingReminderMsg');
+      const type  = document.getElementById('meetingReminderType').value;
+      msgEl.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/api/admin/meeting/reminder', {
+          method:  'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ type }),
+        });
+        const data = await res.json();
+        msgEl.className = res.ok ? 'msg success' : 'msg error';
+        msgEl.textContent = res.ok ? ('✅ ' + data.message) : (data.error || 'Failed to send reminder.');
+        msgEl.style.display = 'block';
+      } catch {
+        msgEl.className = 'msg error'; msgEl.textContent = 'Network error — server unreachable.'; msgEl.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = '⏰ Send Reminder to All Members';
       }
     }
 

@@ -3,6 +3,7 @@ const Stripe      = require('stripe');
 const requireAuth = require('../middleware/requireAuth');
 const db          = require('../db');
 const { sendEmail } = require('../mailer');
+const { sendSMS, normalizePhone } = require('../sms');
 
 let _stripe;
 function getStripe() {
@@ -186,6 +187,22 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
           </div>
         </div>`,
     }).catch(() => {});
+
+    // Send SMS receipt if member has a phone number
+    const { rows: [profile] } = await db.query(
+      `SELECT COALESCE(p.phone, u.phone) AS phone, u.full_name
+       FROM users u LEFT JOIN member_profiles p ON p.user_id = u.id WHERE u.id = $1`,
+      [req.user.id]
+    );
+    if (profile && profile.phone) {
+      const normalized = normalizePhone(profile.phone);
+      if (normalized) {
+        const memberName = profile.full_name || req.user.email;
+        const itemSummary = items.map(i => `${i.label}: ${i.amount}`).join(', ');
+        const smsBody = `UCOSA-NA Payment Receipt: Dear ${memberName}, your payment of $${total} has been received. ${itemSummary}. Ref: ${paymentIntentId} — UCOSA-NA`;
+        sendSMS(normalized, smsBody).catch(() => {});
+      }
+    }
 
     res.json({ ok: true, total });
   } catch (err) {

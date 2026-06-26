@@ -560,6 +560,26 @@ router.post('/meeting/invite-test', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/meeting/reminder — manually send meeting reminder to all active members
+router.post('/meeting/reminder', secOrAdmin, async (req, res) => {
+  const raw  = String(req.body.type || '');
+  const typeMap = { invite: 'invite', '3': 3, '2': 2, '1': 1, hour: 'hour' };
+  const type = typeMap[raw];
+  if (type === undefined) return res.status(400).json({ error: 'Invalid type. Use: invite, 3, 2, 1, or hour' });
+
+  try {
+    const { sendGeneralMeetingNotices, getLastSundayOfMonth } = require('../scheduler');
+    const etStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const etNow = new Date(etStr);
+    const meetingDate = getLastSundayOfMonth(etNow.getFullYear(), etNow.getMonth());
+    await sendGeneralMeetingNotices(meetingDate, type);
+    res.json({ ok: true, message: `Meeting reminder (${type}) dispatched to all active members.` });
+  } catch (err) {
+    log.error(`Manual meeting reminder error: ${err.message}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/executives — list all executives with member info
 router.get('/executives', secOrAdmin, async (req, res) => {
   try {
@@ -971,13 +991,14 @@ router.post('/test-fund-approval', adminOnly, async (req, res) => {
   res.json(results);
 });
 
-// POST /api/admin/test-payment-receipt — test Stripe dues payment receipt email
+// POST /api/admin/test-payment-receipt — test Stripe dues payment receipt email + SMS
 router.post('/test-payment-receipt', adminOnly, async (req, res) => {
-  const { email, name } = req.body;
+  const { email, name, phone } = req.body;
   if (!email) return res.status(400).json({ error: 'Provide an email address.' });
   const memberName = name || 'Test Member';
   const fakeRef = 'pi_test_' + Date.now();
   const fakeRows = `<tr><td style="padding:6px 12px;">Annual Dues (2026)</td><td style="padding:6px 12px;font-weight:700;color:#1b5e20;">$100.00</td></tr>`;
+  const results = {};
   try {
     await sendEmail({
       to: email,
@@ -1003,10 +1024,24 @@ router.post('/test-payment-receipt', adminOnly, async (req, res) => {
           </div>
         </div>`
     });
-    res.json({ email: `Test payment receipt sent to ${email}` });
+    results.email = `Test payment receipt sent to ${email}`;
   } catch (err) {
-    res.json({ email: `Email failed: ${err.message}` });
+    results.email = `Email failed: ${err.message}`;
   }
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      try {
+        await sendSMS(normalized, `UCOSA-NA Payment Receipt: Dear ${memberName}, your payment of $100.00 has been received. Annual Dues (2026): $100.00. Ref: ${fakeRef} — UCOSA-NA`);
+        results.sms = `Test payment receipt SMS sent to ${normalized}`;
+      } catch (err) {
+        results.sms = `SMS failed: ${err.message}`;
+      }
+    } else {
+      results.sms = `Invalid phone number: ${phone}`;
+    }
+  }
+  res.json(results);
 });
 
 // POST /api/admin/test-donation-receipt — test donor confirmation email
