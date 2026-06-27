@@ -580,6 +580,54 @@ router.post('/meeting/reminder', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/meeting/list-invite — send Zoom meeting invite to a custom recipient list
+router.post('/meeting/list-invite', secOrAdmin, async (req, res) => {
+  const { list } = req.body;
+  if (!list || !list.trim()) return res.status(400).json({ error: 'list is required' });
+
+  const entries = list.split('\n').flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean);
+  const parsed = [];
+  for (const entry of entries) {
+    const parts = entry.split(':').map(s => s.trim());
+    const fullName = parts[0], email = parts[1] || '', phone = parts[2] || '';
+    if (!fullName || !email || !email.includes('@')) continue;
+    parsed.push({ fullName, email, phone });
+  }
+  if (!parsed.length) return res.status(400).json({ error: 'No valid entries found.' });
+
+  const now = new Date();
+  const meetingDate = _lastSundayOfMonth(now.getFullYear(), now.getMonth());
+  const formatted   = _fmtDate(meetingDate);
+  const subject     = `UCOSA-NA Monthly General Meeting — ${formatted}`;
+  const introPara   = `<p>You are cordially invited to the <strong>UCOSA North America Monthly General Zoom Meeting</strong>. We look forward to your participation.</p>`;
+  const smsFn       = n => `Dear ${n}, you are invited to the UCOSA-NA Monthly General Meeting on ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let emailSent = 0, emailFailed = 0, smsSent = 0, smsFailed = 0;
+
+  for (const { fullName, email, phone } of parsed) {
+    try {
+      await sendEmail({ to: email, subject, html: _meetingEmailHtml(fullName, formatted, '', introPara) });
+      emailSent++;
+    } catch (err) { emailFailed++; log.error(`Meeting list-invite email failed for ${email}: ${err.message}`); }
+    await sleep(250);
+
+    if (phone) {
+      const normalized = normalizePhone(phone);
+      if (normalized) {
+        try {
+          await sendSMS(normalized, smsFn(fullName));
+          smsSent++;
+        } catch (err) { smsFailed++; log.error(`Meeting list-invite SMS failed for ${normalized}: ${err.message}`); }
+        await sleep(300);
+      }
+    }
+  }
+
+  log.info(`Meeting list-invite: ${emailSent} email(s), ${smsSent} SMS to ${parsed.length} recipient(s)`);
+  res.json({ ok: true, message: `Meeting invite sent — ${emailSent} email(s), ${smsSent} SMS(es).`, emailSent, emailFailed, smsSent, smsFailed });
+});
+
 // GET /api/admin/executives — list all executives with member info
 router.get('/executives', secOrAdmin, async (req, res) => {
   try {
