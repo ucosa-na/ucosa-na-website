@@ -5,6 +5,8 @@ const pool        = require('./db');
 const log         = require('./logger');
 const { sendEmail } = require('./mailer');
 
+const { sendSMS } = require('./sms');
+
 const DUE_MONTH = 5;   // May
 const DUE_DAY   = 3;
 
@@ -26,21 +28,6 @@ function zoomMeetingBlock() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-function getTwilioClient() {
-  const sid   = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  if (!sid || !token) return null;
-  return require('twilio')(sid, token);
-}
-
-async function sendSMS(to, body) {
-  const client = getTwilioClient();
-  if (!client) return;
-  const from = process.env.TWILIO_PHONE_NUMBER;
-  if (!from) return;
-  await client.messages.create({ to, from, body });
-}
 
 // Returns active members who don't have a 'paid' dues record for the given year
 async function getUnpaidMembers(year) {
