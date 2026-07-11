@@ -2193,6 +2193,86 @@ router.post('/email/broadcast', proOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/endowment/notify-suspended — notify all members that the endowment form is suspended
+router.post('/endowment/notify-suspended', proOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+       FROM users u
+       LEFT JOIN member_profiles p ON p.user_id = u.id
+       WHERE u.id != 1 ORDER BY u.full_name ASC`
+    );
+    if (!rows.length) return res.status(400).json({ error: 'No members found' });
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let emailSent = 0, emailFailed = 0, smsSent = 0, smsFailed = 0;
+
+    for (const m of rows) {
+      // Email
+      try {
+        await sendEmail({
+          to: m.email,
+          subject: 'UCOSA-NA Endowment Fund Contribution Form — Temporarily Suspended',
+          html: `
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<style>
+  body{margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;}
+  .wrap{max-width:560px;margin:32px auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;}
+  .hdr{background:#7b2152;text-align:center;padding:28px 32px;}
+  .hdr img{width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;}
+  .hdr-label{color:#c8a96e;font-size:0.8em;letter-spacing:2px;text-transform:uppercase;}
+  .hdr h1{color:#fff;font-size:20px;margin:6px 0 0;}
+  .body{background:#fdf6ec;padding:28px 32px;}
+  .notice-box{background:#fff3cd;border:2px solid #e6a817;border-radius:8px;padding:16px 18px;margin:18px 0;color:#7d4e00;font-size:14px;line-height:1.6;}
+  .notice-box strong{display:block;font-size:15px;margin-bottom:6px;color:#5c3600;}
+  .footer{color:#999;font-size:12px;margin-top:28px;border-top:1px solid #eee;padding-top:14px;}
+</style></head>
+<body><div class="wrap">
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo"/>
+    <div class="hdr-label">Ugbeka College Old Students Association — North America Inc.</div>
+    <h1>Endowment Fund Contribution Form</h1>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${m.full_name}</strong>,</p>
+    <div class="notice-box">
+      <strong>&#9888; Form Temporarily Suspended</strong>
+      The Endowment Fund Contribution form is currently suspended as we are updating the form to better serve you.
+      You will not be able to submit contributions through the member portal at this time.
+    </div>
+    <p>We apologize for any inconvenience this may cause. You will be notified by email and SMS as soon as the form is ready for use again.</p>
+    <p>If you have any questions, please contact us at <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>.</p>
+    <div class="footer">
+      UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a>
+    </div>
+  </div>
+</div></body></html>`,
+        });
+        emailSent++;
+      } catch (err) { emailFailed++; }
+      await sleep(250);
+
+      // SMS
+      if (m.phone) {
+        try {
+          await sendSMS(m.phone, `Dear ${m.full_name}, the UCOSA-NA Endowment Fund Contribution form is temporarily suspended while we update the form. You will be notified when it is ready again. — UCOSA-NA`);
+          smsSent++;
+        } catch (err) { smsFailed++; }
+        await sleep(300);
+      }
+    }
+
+    log.info(`Endowment suspension notice: email ${emailSent} sent, ${emailFailed} failed; SMS ${smsSent} sent, ${smsFailed} failed`);
+    res.json({
+      message: `Notification sent. Email: ${emailSent} sent${emailFailed ? `, ${emailFailed} failed` : ''}. SMS: ${smsSent} sent${smsFailed ? `, ${smsFailed} failed` : ''}.`,
+      emailSent, emailFailed, smsSent, smsFailed
+    });
+  } catch (err) {
+    log.error('Endowment suspension notify error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/email/invite-broadcast — send personalised invitational email + SMS to a provided list
 router.post('/email/invite-broadcast', proOrAdmin, async (req, res) => {
   const { list } = req.body;

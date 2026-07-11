@@ -17,6 +17,13 @@
 
     #submittedBanner{display:none;background:#e8f5e9;border:1.5px solid #4caf50;border-radius:8px;padding:16px 20px;margin-bottom:20px;color:#1b5e20;font-size:15px;}
 
+    #suspendedBanner{background:#fff3cd;border:2px solid #e6a817;border-radius:10px;padding:18px 22px;margin-bottom:22px;color:#7d4e00;font-size:15px;display:flex;align-items:flex-start;gap:14px;}
+    #suspendedBanner .sus-icon{font-size:28px;flex-shrink:0;margin-top:2px;}
+    #suspendedBanner strong{display:block;font-size:16px;margin-bottom:4px;color:#5c3600;}
+
+    .form-suspended-overlay{position:relative;}
+    .form-suspended-overlay::after{content:'';position:absolute;inset:0;background:rgba(245,245,245,0.65);border-radius:10px;pointer-events:none;z-index:2;}
+
     .form-card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:28px 32px;margin-bottom:20px;}
     .form-card h3{font-size:15px;font-weight:700;color:#7b2152;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #f0e6f4;padding-bottom:8px;margin-bottom:18px;}
 
@@ -67,6 +74,15 @@
     <p>Complete all required fields and submit to record your contribution</p>
   </div>
 
+  <div id="suspendedBanner">
+    <span class="sus-icon">&#9888;</span>
+    <div>
+      <strong>Endowment Form Temporarily Suspended</strong>
+      The Endowment Fund Contribution form is currently unavailable as we are updating the form.
+      You will be notified by email and SMS as soon as the form is ready for use again. We apologize for any inconvenience.
+    </div>
+  </div>
+
   <div id="submittedBanner">
     &#9989; You have already submitted an endowment fund contribution. Contact the Financial Secretary to make changes.
   </div>
@@ -75,7 +91,7 @@
 
   <form id="endowmentForm" novalidate>
 
-    <div class="form-card">
+    <div class="form-card form-suspended-overlay">
       <h3>Contributor Information</h3>
       <div class="form-row">
         <div class="form-group full">
@@ -91,7 +107,7 @@
       </div>
     </div>
 
-    <div class="form-card">
+    <div class="form-card form-suspended-overlay">
       <h3>Contribution Details</h3>
       <div class="form-row">
         <div class="form-group">
@@ -130,7 +146,7 @@
       </div>
     </div>
 
-    <div class="form-card">
+    <div class="form-card form-suspended-overlay">
       <h3>Declaration</h3>
       <div class="terms-box">
         I hereby certify that the information provided above is true and accurate. I understand that this
@@ -173,7 +189,13 @@
     } catch(_) {}
   })();
 
-  // Check if already submitted — disable form if so
+  // Form is suspended — disable all inputs immediately
+  (function disableSuspended() {
+    document.getElementById('endowmentForm').querySelectorAll('input,select,textarea,button').forEach(el => el.disabled = true);
+    document.getElementById('submitBtn').disabled = true;
+  })();
+
+  // Check if already submitted (kept for future use when form is re-enabled)
   (async function checkExisting() {
     const tok = localStorage.getItem('ucosa_token');
     if (!tok) { window.location.href = '/login.html'; return; }
@@ -182,7 +204,6 @@
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         document.getElementById('submittedBanner').style.display = 'block';
-        document.getElementById('endowmentForm').querySelectorAll('input,select,textarea,button').forEach(el => el.disabled = true);
       }
     } catch(_) {}
   })();

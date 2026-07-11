@@ -1917,6 +1917,15 @@
         <h2>&#127775; Endowment Fund</h2>
         <p style="color:#555;font-size:19px;margin-bottom:20px;">Record endowment fund contributions from members.</p>
 
+        <div style="background:#fff3cd;border:2px solid #e6a817;border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <strong style="color:#5c3600;">&#9888; Form Currently Suspended</strong>
+            <p style="margin:4px 0 0;font-size:13px;color:#7d4e00;">The Endowment Fund Contribution form is greyed out and disabled for all members. Click to send an email + SMS notification to all members about the suspension.</p>
+          </div>
+          <button id="sendEndowSuspendBtn" onclick="notifyEndowmentSuspended()" style="background:#e6a817;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">&#128233; Notify All Members</button>
+          <span id="endowSuspendStatus" style="font-size:13px;font-weight:600;"></span>
+        </div>
+
         <div style="background:#f0f7ff;border:1.5px solid #0d47a1;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
           <div style="flex:1;min-width:200px;">
             <strong style="color:#0d47a1;">&#9993; Enrollment Open Notification</strong>
@@ -3521,6 +3530,31 @@
         msgEl.textContent = `Error: ${err.message}`;
         msgEl.style.display = 'block';
         btn.disabled = false; btn.textContent = '📧 Send Reminder';
+      }
+    }
+
+    async function notifyEndowmentSuspended() {
+      if (!confirm('Send an email + SMS to ALL members notifying them that the Endowment Fund Contribution form is suspended?\n\nThis will send to every member in the database.')) return;
+      const btn    = document.getElementById('sendEndowSuspendBtn');
+      const status = document.getElementById('endowSuspendStatus');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      status.textContent = '';
+      try {
+        const res  = await fetch('/api/admin/endowment/notify-suspended', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        status.style.color = '#5c3600';
+        status.textContent = `✅ ${data.message}`;
+      } catch (err) {
+        status.style.color = '#c0392b';
+        status.textContent = `Error: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📩 Notify All Members';
       }
     }
 
