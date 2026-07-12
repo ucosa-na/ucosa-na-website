@@ -321,6 +321,19 @@ pool.query(`
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS join_requests (
+      id             SERIAL PRIMARY KEY,
+      full_name      TEXT NOT NULL,
+      email          TEXT NOT NULL,
+      phone          TEXT NOT NULL,
+      address        TEXT DEFAULT NULL,
+      reached_out_by TEXT DEFAULT NULL,
+      status         TEXT DEFAULT NULL,
+      submitted_at   TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

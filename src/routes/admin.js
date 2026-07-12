@@ -23,6 +23,7 @@ const proOrAdmin      = requireRole('admin', 'pro-role');
 const welfareOrAdmin  = requireRole('admin', 'welfare');
 const excoOrAdmin     = requireRole('admin', 'exco');
 const fundAppAccess   = requireRole('admin', 'exco', 'fin-role');
+const joinReqAccess   = requireRole('admin', 'security-role', 'pro-role', 'welfare');
 
 const router = express.Router();
 
@@ -2112,6 +2113,37 @@ router.get('/financials/:userId', finOrAdmin, async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── JOIN REQUESTS ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/join-requests — list all membership interest submissions
+router.get('/join-requests', joinReqAccess, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, full_name, email, phone, address, reached_out_by, status, submitted_at
+       FROM join_requests ORDER BY submitted_at DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/join-requests/:id — update reached_out_by and/or status
+router.put('/join-requests/:id', joinReqAccess, async (req, res) => {
+  const { id } = req.params;
+  const { reached_out_by, status } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE join_requests SET reached_out_by = $1, status = $2 WHERE id = $3 RETURNING *`,
+      [reached_out_by ?? null, status ?? null, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Record not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

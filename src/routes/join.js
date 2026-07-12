@@ -1,5 +1,6 @@
 const express = require('express');
 const { sendEmail } = require('../mailer');
+const pool = require('../db');
 
 const router = express.Router();
 
@@ -114,6 +115,12 @@ router.post('/', async (req, res) => {
         </div>
       `,
     }).catch(err => console.error('Join confirmation email error:', err.message));
+
+    // Save to database for admin tracking
+    pool.query(
+      `INSERT INTO join_requests (full_name, email, phone, address) VALUES ($1, $2, $3, $4)`,
+      [name, email, phone, address || null]
+    ).catch(err => console.error('Failed to save join request to DB:', err.message));
 
     res.json({ message: 'Request sent successfully.' });
   } catch (err) {

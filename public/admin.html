@@ -776,6 +776,17 @@
         </div>
       </div>
 
+      <!-- Join Requests sub-menu (admin + secretary + pro + welfare) -->
+      <div class="sidebar-join-req" id="sidebarGroupJoinReq">
+        <div class="sidebar-group-label group-sec open" onclick="toggleSidebarGroup('groupJoinReqItems', this)">
+          <span>&#128203; Join Requests</span>
+          <span class="chevron">&#9654;</span>
+        </div>
+        <div class="sidebar-group-items open" id="groupJoinReqItems">
+          <a href="#joinRequestsSection">Membership Requests</a>
+        </div>
+      </div>
+
       <!-- Welfare sub-menu -->
       <div class="sidebar-welfare" id="sidebarGroupWelfare">
         <div class="sidebar-group-label group-sec open" onclick="toggleSidebarGroup('groupWelfareItems', this)">
@@ -1824,6 +1835,43 @@
         </div>
       </section>
 
+      <!-- JOIN REQUESTS -->
+      <section id="joinRequestsSection">
+        <h2>&#128203; Membership Join Requests</h2>
+        <p style="color:#555;font-size:16px;margin-bottom:20px;">
+          All membership interest submissions from the website. Record who reached out and leave a status note.
+        </p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+          <input type="text" id="joinReqSearch" oninput="renderJoinRequests()"
+            placeholder="Search by name, email or phone…"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:260px;"/>
+          <button onclick="document.getElementById('joinReqSearch').value='';renderJoinRequests();"
+            style="padding:8px 14px;border:1.5px solid #dde3f0;border-radius:8px;font-size:14px;background:white;cursor:pointer;">Clear</button>
+          <span id="joinReqCount" style="font-size:14px;color:#888;"></span>
+        </div>
+        <div id="joinReqMsg" class="msg" style="display:none;margin-bottom:12px;"></div>
+        <div class="table-wrap">
+          <table id="joinReqTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Submitted</th>
+                <th>Reached Out By</th>
+                <th>Status / Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="joinReqTableBody">
+              <tr class="empty-row"><td colspan="9">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- FINANCIAL RECORDS -->
       <!-- ANNUAL DUES -->
       <section id="annualDues">
@@ -2723,6 +2771,12 @@
         if (el) el.style.display = (isAdmin || isWelfare) ? '' : 'none';
       });
 
+      const joinReqSections = ['joinRequestsSection'];
+      joinReqSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (isAdmin || isSec || isPro || isWelfare) ? '' : 'none';
+      });
+
       // Sidebar link visibility
       document.querySelectorAll('.sidebar-sec').forEach(el => {
         el.style.display = (isAdmin || isSec || isExco) ? '' : 'none';
@@ -2741,6 +2795,9 @@
       });
       document.querySelectorAll('.sidebar-welfare').forEach(el => {
         el.style.display = (isAdmin || isWelfare || isExco) ? '' : 'none';
+      });
+      document.querySelectorAll('.sidebar-join-req').forEach(el => {
+        el.style.display = (isAdmin || isSec || isPro || isWelfare) ? '' : 'none';
       });
     }
 
@@ -3249,6 +3306,81 @@
     }
 
     // ── WELFARE MEMBER DIRECTORY ──────────────────────────────────────────────
+    // ── JOIN REQUESTS ──────────────────────────────────────────────────────────
+
+    async function loadJoinRequests() {
+      const tbody = document.getElementById('joinReqTableBody');
+      try {
+        const res = await fetch('/api/admin/join-requests', {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!res.ok) {
+          if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="9" style="color:#e63946;">Failed to load (${res.status}).</td></tr>`;
+          return;
+        }
+        window._joinRequests = await res.json();
+        renderJoinRequests();
+      } catch (err) {
+        if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="9" style="color:#e63946;">Network error: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderJoinRequests() {
+      const all = window._joinRequests || [];
+      const q = (document.getElementById('joinReqSearch')?.value || '').toLowerCase();
+      const filtered = q
+        ? all.filter(r =>
+            (r.full_name || '').toLowerCase().includes(q) ||
+            (r.email     || '').toLowerCase().includes(q) ||
+            (r.phone     || '').toLowerCase().includes(q))
+        : all;
+
+      const count = document.getElementById('joinReqCount');
+      if (count) count.textContent = `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('joinReqTableBody');
+      if (!tbody) return;
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="9">No requests found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = filtered.map((r, i) => `
+        <tr id="jrRow${r.id}">
+          <td>${i + 1}</td>
+          <td><strong>${escapeHtml(r.full_name || '—')}</strong></td>
+          <td>${escapeHtml(r.email || '—')}</td>
+          <td>${escapeHtml(r.phone || '—')}</td>
+          <td style="font-size:13px;">${escapeHtml(r.address || '—')}</td>
+          <td style="font-size:13px;white-space:nowrap;">${r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
+          <td><input type="text" id="jrReach${r.id}" value="${escapeHtml(r.reached_out_by || '')}" placeholder="Name of member who reached out" style="width:160px;padding:5px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;"/></td>
+          <td><input type="text" id="jrStatus${r.id}" value="${escapeHtml(r.status || '')}" placeholder="Leave a status note…" style="width:200px;padding:5px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;"/></td>
+          <td><button onclick="saveJoinRequest(${r.id})" style="background:#7b2152;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;">Save</button></td>
+        </tr>`).join('');
+    }
+
+    async function saveJoinRequest(id) {
+      const reached_out_by = document.getElementById('jrReach'  + id)?.value.trim() || null;
+      const status         = document.getElementById('jrStatus' + id)?.value.trim() || null;
+      const msgEl = document.getElementById('joinReqMsg');
+      msgEl.style.display = 'none';
+      try {
+        const res = await fetch(`/api/admin/join-requests/${id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reached_out_by, status })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        // update local cache
+        const idx = (window._joinRequests || []).findIndex(r => r.id === id);
+        if (idx !== -1) { window._joinRequests[idx].reached_out_by = reached_out_by; window._joinRequests[idx].status = status; }
+        msgEl.className = 'msg success'; msgEl.textContent = `✅ Record for "${data.full_name}" saved.`; msgEl.style.display = 'block';
+        setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
+      } catch (err) {
+        msgEl.className = 'msg error'; msgEl.textContent = `Error: ${err.message}`; msgEl.style.display = 'block';
+      }
+    }
+
     async function loadWelfareMembers() {
       const tbody = document.getElementById('welfareTableBody');
       try {
@@ -5358,6 +5490,10 @@
 
       if (['admin', 'welfare'].includes(user.role)) {
         loadWelfareMembers();
+      }
+
+      if (['admin', 'security-role', 'pro-role', 'welfare'].includes(user.role)) {
+        loadJoinRequests();
       }
 
       if (user.role === 'admin') {
