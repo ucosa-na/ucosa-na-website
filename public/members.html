@@ -857,8 +857,21 @@
           document.getElementById('adminSidebarLink').style.display = 'block';
         }
 
+        const lastLoginStr = user.prevLastLogin
+          ? new Date(user.prevLastLogin).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+          : null;
+
         const content = document.getElementById('mainContent');
         content.innerHTML = `
+          <!-- WELCOME BANNER -->
+          <div style="background:#7b2152;color:#fff;border-radius:10px;padding:14px 22px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:20px;">&#128075;</span>
+            <div>
+              <strong style="font-size:16px;">Welcome back, ${user.title ? user.title + ' ' : ''}${user.fullName}!</strong>
+              ${lastLoginStr ? `<span style="font-size:13px;color:#f0d8e8;margin-left:10px;">Last login: ${lastLoginStr}</span>` : '<span style="font-size:13px;color:#f0d8e8;margin-left:10px;">First login</span>'}
+            </div>
+          </div>
+
           <!-- PROFILE CARD -->
           <div class="profile-card">
             <h2>${user.title ? user.title + ' ' : ''}${user.fullName}</h2>

@@ -211,7 +211,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Your temporary password has expired. Please contact an administrator to reset your password.' });
     }
 
-    await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+    await pool.query('UPDATE users SET prev_last_login = last_login, last_login = NOW() WHERE id = $1', [user.id]);
     log.info(`Login successful: ${user.email} (role: ${user.role}) from IP ${req.ip}`);
     pool.query(
       `INSERT INTO audit_log (action, entity_type, entity_id, entity_name, performed_by, performed_by_name, details)
@@ -326,7 +326,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password,
+      SELECT u.id, u.full_name, u.email, u.role, u.must_change_password, u.prev_last_login,
              p.title, p.first_name, p.last_name, p.address, p.phone, p.alt_phone, p.year_joined, p.graduation_year
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
@@ -348,6 +348,7 @@ router.get('/me', requireAuth, async (req, res) => {
       altPhone: user.alt_phone || '',
       yearJoined: user.year_joined || '',
       graduationYear: user.graduation_year || '',
+      prevLastLogin: user.prev_last_login || null,
     });
   } catch (err) {
     console.error('Me error:', err.message);

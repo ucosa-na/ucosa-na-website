@@ -774,18 +774,18 @@
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
           <a href="#welfareMemberDirectory">Member Directory</a>
-          <a href="#joinRequestsSection">Join Requests</a>
+          <a href="#joinRequestsSection">New Member Requests</a>
         </div>
       </div>
 
-      <!-- Join Requests sub-menu (admin + secretary + pro + welfare) -->
+      <!-- New Member Requests sub-menu (all privileged roles) -->
       <div class="sidebar-join-req" id="sidebarGroupJoinReq">
         <div class="sidebar-group-label group-sec open" onclick="toggleSidebarGroup('groupJoinReqItems', this)">
-          <span>&#128203; Join Requests</span>
+          <span>&#128203; New Member Requests</span>
           <span class="chevron">&#9654;</span>
         </div>
         <div class="sidebar-group-items open" id="groupJoinReqItems">
-          <a href="#joinRequestsSection">Membership Requests</a>
+          <a href="#joinRequestsSection">New Member Requests</a>
         </div>
       </div>
 
@@ -1837,11 +1837,11 @@
         </div>
       </section>
 
-      <!-- JOIN REQUESTS -->
+      <!-- NEW MEMBER REQUESTS -->
       <section id="joinRequestsSection">
-        <h2>&#128203; Membership Join Requests</h2>
+        <h2>&#128203; New Member Requests</h2>
         <p style="color:#555;font-size:16px;margin-bottom:20px;">
-          All membership interest submissions from the website. Record who reached out and leave a status note.
+          All membership interest submissions from the website. Welfare and Secretary can record outreach and notes.
         </p>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
           <input type="text" id="joinReqSearch" oninput="renderJoinRequests()"
@@ -1862,13 +1862,15 @@
                 <th>Phone</th>
                 <th>Address</th>
                 <th>Submitted</th>
+                <th>Reach-out</th>
+                <th>Status</th>
                 <th>Reached Out By</th>
-                <th>Status / Notes</th>
+                <th>Notes</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="joinReqTableBody">
-              <tr class="empty-row"><td colspan="9">Loading…</td></tr>
+              <tr class="empty-row"><td colspan="11">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -2776,7 +2778,7 @@
       const joinReqSections = ['joinRequestsSection'];
       joinReqSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isSec || isPro || isWelfare) ? '' : 'none';
+        if (el) el.style.display = ''; // visible to all privileged roles
       });
 
       // Sidebar link visibility
@@ -2799,7 +2801,7 @@
         el.style.display = (isAdmin || isWelfare || isExco) ? '' : 'none';
       });
       document.querySelectorAll('.sidebar-join-req').forEach(el => {
-        el.style.display = (isAdmin || isSec || isPro || isWelfare) ? '' : 'none';
+        el.style.display = ''; // visible to all privileged roles
       });
     }
 
@@ -3308,7 +3310,7 @@
     }
 
     // ── WELFARE MEMBER DIRECTORY ──────────────────────────────────────────────
-    // ── JOIN REQUESTS ──────────────────────────────────────────────────────────
+    // ── NEW MEMBER REQUESTS ────────────────────────────────────────────────────
 
     async function loadJoinRequests() {
       const tbody = document.getElementById('joinReqTableBody');
@@ -3317,18 +3319,23 @@
           headers: { 'Authorization': 'Bearer ' + getToken() }
         });
         if (!res.ok) {
-          if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="9" style="color:#e63946;">Failed to load (${res.status}).</td></tr>`;
+          if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="11" style="color:#e63946;">Failed to load (${res.status}).</td></tr>`;
           return;
         }
         window._joinRequests = await res.json();
         renderJoinRequests();
       } catch (err) {
-        if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="9" style="color:#e63946;">Network error: ${err.message}</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr class="empty-row"><td colspan="11" style="color:#e63946;">Network error: ${err.message}</td></tr>`;
       }
     }
 
     function renderJoinRequests() {
-      const all = window._joinRequests || [];
+      const all  = window._joinRequests || [];
+      const role = (JSON.parse(localStorage.getItem('ucosa_user') || '{}').role) || '';
+      const canEdit   = ['admin', 'security-role', 'welfare'].includes(role);
+      const canDelete = role === 'admin';
+      const dis = canEdit ? '' : 'disabled';
+
       const q = (document.getElementById('joinReqSearch')?.value || '').toLowerCase();
       const filtered = q
         ? all.filter(r =>
@@ -3343,24 +3350,56 @@
       const tbody = document.getElementById('joinReqTableBody');
       if (!tbody) return;
       if (!filtered.length) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="9">No requests found.</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="11">No requests found.</td></tr>`;
         return;
       }
-      tbody.innerHTML = filtered.map((r, i) => `
+      tbody.innerHTML = filtered.map((r, i) => {
+        const reachedOut = r.reached_out === true || r.reached_out === 'true';
+        const statusBadge = reachedOut
+          ? `<span style="display:inline-block;background:#e8f5e9;color:#1b5e20;border:1.5px solid #4caf50;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;">&#9679; Yes</span>`
+          : `<span style="display:inline-block;background:#fdecea;color:#c0392b;border:1.5px solid #e57373;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;">&#9679; No</span>`;
+        const saveBtn = canEdit
+          ? `<button onclick="saveJoinRequest(${r.id})" style="background:#7b2152;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px;">Save</button>`
+          : '';
+        const delBtn = canDelete
+          ? `<button onclick="deleteJoinRequest(${r.id},'${escapeHtml(r.full_name)}')" style="background:#e63946;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;">Delete</button>`
+          : '';
+        return `
         <tr id="jrRow${r.id}">
           <td>${i + 1}</td>
           <td><strong>${escapeHtml(r.full_name || '—')}</strong></td>
-          <td>${escapeHtml(r.email || '—')}</td>
-          <td>${escapeHtml(r.phone || '—')}</td>
+          <td style="font-size:13px;">${escapeHtml(r.email || '—')}</td>
+          <td style="font-size:13px;">${escapeHtml(r.phone || '—')}</td>
           <td style="font-size:13px;">${escapeHtml(r.address || '—')}</td>
           <td style="font-size:13px;white-space:nowrap;">${r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '—'}</td>
-          <td><input type="text" id="jrReach${r.id}" value="${escapeHtml(r.reached_out_by || '')}" placeholder="Name of member who reached out" style="width:160px;padding:5px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;"/></td>
-          <td><input type="text" id="jrStatus${r.id}" value="${escapeHtml(r.status || '')}" placeholder="Leave a status note…" style="width:200px;padding:5px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;"/></td>
-          <td><button onclick="saveJoinRequest(${r.id})" style="background:#7b2152;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;">Save</button></td>
-        </tr>`).join('');
+          <td style="text-align:center;">
+            <select id="jrReachedOut${r.id}" ${dis} onchange="updateReachedOutStatus(${r.id})"
+              style="padding:4px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;${canEdit?'':'background:#f5f5f5;color:#aaa;'}">
+              <option value="false" ${!reachedOut ? 'selected' : ''}>No</option>
+              <option value="true"  ${reachedOut  ? 'selected' : ''}>Yes</option>
+            </select>
+          </td>
+          <td style="text-align:center;" id="jrStatusBadge${r.id}">${statusBadge}</td>
+          <td><input type="text" id="jrReach${r.id}" value="${escapeHtml(r.reached_out_by || '')}" placeholder="Member who reached out" ${dis}
+            style="width:150px;padding:5px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;${canEdit?'':'background:#f5f5f5;color:#aaa;'}"/></td>
+          <td><input type="text" id="jrStatus${r.id}" value="${escapeHtml(r.status || '')}" placeholder="Leave a status note…" ${dis}
+            style="width:180px;padding:5px 8px;border:1.5px solid #dde3f0;border-radius:6px;font-size:13px;${canEdit?'':'background:#f5f5f5;color:#aaa;'}"/></td>
+          <td style="white-space:nowrap;">${saveBtn}${delBtn}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updateReachedOutStatus(id) {
+      const val = document.getElementById('jrReachedOut' + id)?.value === 'true';
+      const badge = document.getElementById('jrStatusBadge' + id);
+      if (!badge) return;
+      badge.innerHTML = val
+        ? `<span style="display:inline-block;background:#e8f5e9;color:#1b5e20;border:1.5px solid #4caf50;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;">&#9679; Yes</span>`
+        : `<span style="display:inline-block;background:#fdecea;color:#c0392b;border:1.5px solid #e57373;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;">&#9679; No</span>`;
     }
 
     async function saveJoinRequest(id) {
+      const reached_out    = document.getElementById('jrReachedOut' + id)?.value === 'true';
       const reached_out_by = document.getElementById('jrReach'  + id)?.value.trim() || null;
       const status         = document.getElementById('jrStatus' + id)?.value.trim() || null;
       const msgEl = document.getElementById('joinReqMsg');
@@ -3369,14 +3408,32 @@
         const res = await fetch(`/api/admin/join-requests/${id}`, {
           method: 'PUT',
           headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reached_out_by, status })
+          body: JSON.stringify({ reached_out, reached_out_by, status })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Save failed');
-        // update local cache
         const idx = (window._joinRequests || []).findIndex(r => r.id === id);
-        if (idx !== -1) { window._joinRequests[idx].reached_out_by = reached_out_by; window._joinRequests[idx].status = status; }
+        if (idx !== -1) Object.assign(window._joinRequests[idx], { reached_out, reached_out_by, status });
         msgEl.className = 'msg success'; msgEl.textContent = `✅ Record for "${data.full_name}" saved.`; msgEl.style.display = 'block';
+        setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
+      } catch (err) {
+        msgEl.className = 'msg error'; msgEl.textContent = `Error: ${err.message}`; msgEl.style.display = 'block';
+      }
+    }
+
+    async function deleteJoinRequest(id, name) {
+      if (!confirm(`Delete the request from "${name}"? This cannot be undone.`)) return;
+      const msgEl = document.getElementById('joinReqMsg');
+      try {
+        const res = await fetch(`/api/admin/join-requests/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Delete failed');
+        window._joinRequests = (window._joinRequests || []).filter(r => r.id !== id);
+        renderJoinRequests();
+        msgEl.className = 'msg success'; msgEl.textContent = `✅ Request from "${name}" deleted.`; msgEl.style.display = 'block';
         setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
       } catch (err) {
         msgEl.className = 'msg error'; msgEl.textContent = `Error: ${err.message}`; msgEl.style.display = 'block';
@@ -5494,9 +5551,7 @@
         loadWelfareMembers();
       }
 
-      if (['admin', 'security-role', 'pro-role', 'welfare', 'exco'].includes(user.role)) {
-        loadJoinRequests();
-      }
+      loadJoinRequests(); // visible to all privileged roles
 
       if (user.role === 'admin') {
         fetchMetrics();

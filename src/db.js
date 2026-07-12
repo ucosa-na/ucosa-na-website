@@ -322,6 +322,8 @@ pool.query(`
     );
   `)
 ).then(() =>
+  pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS prev_last_login TIMESTAMPTZ DEFAULT NULL;`)
+).then(() =>
   pool.query(`
     CREATE TABLE IF NOT EXISTS join_requests (
       id             SERIAL PRIMARY KEY,
@@ -329,6 +331,7 @@ pool.query(`
       email          TEXT NOT NULL,
       phone          TEXT NOT NULL,
       address        TEXT DEFAULT NULL,
+      reached_out    BOOLEAN DEFAULT FALSE,
       reached_out_by TEXT DEFAULT NULL,
       status         TEXT DEFAULT NULL,
       submitted_at   TIMESTAMPTZ DEFAULT NOW()
