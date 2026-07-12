@@ -339,6 +339,38 @@ pool.query(`
       submitted_at   TIMESTAMPTZ DEFAULT NOW()
     );
   `)
+).then(() =>
+  pool.query(`
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS ben1_sex TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS ben1_birth_date DATE DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS ben1_ssn_last4 TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS ben1_phone TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS ben1_email TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS has_dependent BOOLEAN DEFAULT FALSE;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_name TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_sex TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_birth_date DATE DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_commencement_date DATE DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ssn_last4 TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_street_address TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_city TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_state TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_zip TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_email TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_alt_address TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_alt_city TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_alt_state TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_alt_zip TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_alt_phone TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_alt_email TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_name TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_sex TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_birth_date DATE DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_relation TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_ssn_last4 TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_phone TEXT DEFAULT NULL;
+    ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_email TEXT DEFAULT NULL;
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);
