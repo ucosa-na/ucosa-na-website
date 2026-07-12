@@ -23,7 +23,7 @@ const proOrAdmin      = requireRole('admin', 'pro-role');
 const welfareOrAdmin  = requireRole('admin', 'welfare', 'security-role', 'exco');
 const excoOrAdmin     = requireRole('admin', 'exco');
 const fundAppAccess   = requireRole('admin', 'exco', 'fin-role');
-const joinReqAccess   = requireRole('admin', 'security-role', 'pro-role', 'welfare', 'exco');
+const joinReqAccess   = requireRole('admin', 'security-role', 'pro-role', 'welfare', 'exco', 'fin-role');
 
 const router = express.Router();
 
