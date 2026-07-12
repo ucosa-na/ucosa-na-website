@@ -174,7 +174,7 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label>City <span class="req">*</span></label>
+          <label>7. City <span class="req">*</span></label>
           <input type="text" id="city" required/>
         </div>
         <div class="form-group" style="max-width:100px;">
@@ -188,36 +188,6 @@
         <div class="form-group">
           <label>Email <span class="req">*</span></label>
           <input type="email" id="email" required/>
-        </div>
-      </div>
-
-      <h4>7. Alternate / Mailing Address (if different)</h4>
-      <div class="form-row">
-        <div class="form-group full">
-          <label>Address</label>
-          <input type="text" id="alt_address"/>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>City</label>
-          <input type="text" id="alt_city"/>
-        </div>
-        <div class="form-group" style="max-width:100px;">
-          <label>State</label>
-          <input type="text" id="alt_state" maxlength="2"/>
-        </div>
-        <div class="form-group" style="max-width:110px;">
-          <label>Zip Code</label>
-          <input type="text" id="alt_zip" maxlength="10"/>
-        </div>
-        <div class="form-group">
-          <label>Tel. #</label>
-          <input type="tel" id="alt_phone"/>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="alt_email"/>
         </div>
       </div>
 
@@ -578,7 +548,6 @@
   function fillForm(data) {
     const fields = [
       'applicant_name','birth_date','commencement_date','ssn_last4','street_address','city','state','zip_code','email',
-      'alt_address','alt_city','alt_state','alt_zip','alt_phone','alt_email',
       'ben1_name','ben1_birth_date','ben1_relation','ben1_ssn_last4','ben1_phone','ben1_email',
       'dep_name','dep_birth_date','dep_commencement_date','dep_ssn_last4',
       'dep_street_address','dep_city','dep_state','dep_zip','dep_email',
@@ -731,12 +700,6 @@
       state:                 document.getElementById('state').value.trim(),
       zip_code:              document.getElementById('zip_code').value.trim(),
       email:                 document.getElementById('email').value.trim(),
-      alt_address:           document.getElementById('alt_address').value.trim(),
-      alt_city:              document.getElementById('alt_city').value.trim(),
-      alt_state:             document.getElementById('alt_state').value.trim(),
-      alt_zip:               document.getElementById('alt_zip').value.trim(),
-      alt_phone:             document.getElementById('alt_phone').value.trim(),
-      alt_email:             document.getElementById('alt_email').value.trim(),
       ben1_name:             document.getElementById('ben1_name').value.trim(),
       ben1_sex:              ben1_sex || null,
       ben1_birth_date:       document.getElementById('ben1_birth_date').value || null,
