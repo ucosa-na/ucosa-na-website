@@ -40,13 +40,12 @@
     .radio-group label{font-size:13px;font-weight:400;color:#222;display:flex;align-items:center;gap:6px;cursor:pointer;}
     .radio-group input[type=radio]{width:auto;margin:0;}
 
-    /* Dependent section — always visible, fields disabled when no dependent */
-    #sectionB .dep-fields input,
-    #sectionB .dep-fields select,
-    #sectionB .dep-fields textarea{background:#f9f9f9;color:#aaa;}
-    #sectionB.dep-active .dep-fields input,
-    #sectionB.dep-active .dep-fields select,
-    #sectionB.dep-active .dep-fields textarea{background:#fff;color:#222;}
+    /* Dependent section — always visible, greyed out until has_dependent = Yes */
+    #sectionB:not(.dep-active){background:#f5f5f5;}
+    #sectionB:not(.dep-active) h3{color:#aaa;}
+    #sectionB:not(.dep-active) p{color:#bbb;}
+    #sectionB .dep-fields{opacity:0.45;transition:opacity 0.25s;}
+    #sectionB.dep-active .dep-fields{opacity:1;}
 
     /* Benefit table */
     .benefit-table{width:100%;border-collapse:collapse;margin:10px 0;}
