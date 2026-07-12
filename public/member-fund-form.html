@@ -40,8 +40,13 @@
     .radio-group label{font-size:13px;font-weight:400;color:#222;display:flex;align-items:center;gap:6px;cursor:pointer;}
     .radio-group input[type=radio]{width:auto;margin:0;}
 
-    /* Dependent section */
-    #sectionB{display:none;}
+    /* Dependent section — always visible, fields disabled when no dependent */
+    #sectionB .dep-fields input,
+    #sectionB .dep-fields select,
+    #sectionB .dep-fields textarea{background:#f9f9f9;color:#aaa;}
+    #sectionB.dep-active .dep-fields input,
+    #sectionB.dep-active .dep-fields select,
+    #sectionB.dep-active .dep-fields textarea{background:#fff;color:#222;}
 
     /* Benefit table */
     .benefit-table{width:100%;border-collapse:collapse;margin:10px 0;}
@@ -96,7 +101,6 @@
       .form-card{box-shadow:none;border:1px solid #ddd;padding:16px 20px;}
       .form-header{border-radius:0;padding:16px 20px;}
       input,select,textarea{border:1px solid #ccc!important;}
-      #sectionB{display:block!important;}
     }
   </style>
 </head>
@@ -266,131 +270,104 @@
       </div>
     </div>
 
-    <!-- Section B: Dependent (shown only when has_dependent = Yes) -->
+    <!-- Section B: Dependent — always visible, fields enabled only when has_dependent = Yes -->
     <div class="form-card" id="sectionB">
       <h3>Section B — Dependent</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:16px;font-style:italic;">Complete this section only if Primary Applicant has a dependent (Question 9 above).</p>
 
-      <div class="form-row">
-        <div class="form-group full">
-          <label>1. Dependent's Full Name <span class="req">*</span></label>
-          <input type="text" id="dep_name"/>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>2. Sex <span class="req">*</span></label>
-          <div class="radio-group">
-            <label><input type="radio" name="dep_sex" value="Male"/> Male</label>
-            <label><input type="radio" name="dep_sex" value="Female"/> Female</label>
+      <div class="dep-fields">
+        <div class="form-row">
+          <div class="form-group full">
+            <label>1. Full Name <span class="req">*</span></label>
+            <input type="text" id="dep_name" placeholder="First and last name" disabled/>
           </div>
         </div>
-        <div class="form-group">
-          <label>3. Birth Date <span class="req">*</span></label>
-          <input type="date" id="dep_birth_date"/>
-        </div>
-        <div class="form-group">
-          <label>4. Commencement Date</label>
-          <input type="date" id="dep_commencement_date"/>
-        </div>
-        <div class="form-group">
-          <label>5. Social Security # (Last 4)</label>
-          <input type="text" id="dep_ssn_last4" maxlength="4" placeholder="XXXX"/>
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group full">
-          <label>6. Street Address <span class="req">*</span></label>
-          <input type="text" id="dep_street_address"/>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>City <span class="req">*</span></label>
-          <input type="text" id="dep_city"/>
-        </div>
-        <div class="form-group" style="max-width:100px;">
-          <label>State <span class="req">*</span></label>
-          <input type="text" id="dep_state" maxlength="2" placeholder="NY"/>
-        </div>
-        <div class="form-group" style="max-width:110px;">
-          <label>Zip Code</label>
-          <input type="text" id="dep_zip" maxlength="10"/>
-        </div>
-        <div class="form-group">
-          <label>Email <span class="req">*</span></label>
-          <input type="email" id="dep_email"/>
-        </div>
-      </div>
-
-      <h4>7. Alternate / Mailing Address (if different)</h4>
-      <div class="form-row">
-        <div class="form-group full">
-          <label>Address</label>
-          <input type="text" id="dep_alt_address"/>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>City</label>
-          <input type="text" id="dep_alt_city"/>
-        </div>
-        <div class="form-group" style="max-width:100px;">
-          <label>State</label>
-          <input type="text" id="dep_alt_state" maxlength="2"/>
-        </div>
-        <div class="form-group" style="max-width:110px;">
-          <label>Zip Code</label>
-          <input type="text" id="dep_alt_zip" maxlength="10"/>
-        </div>
-        <div class="form-group">
-          <label>Tel. #</label>
-          <input type="tel" id="dep_alt_phone"/>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="dep_alt_email"/>
-        </div>
-      </div>
-
-      <h4>8. Name of Beneficiary (Dependent)</h4>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Name <span class="req">*</span></label>
-          <input type="text" id="dep_ben_name"/>
-        </div>
-        <div class="form-group">
-          <label>Sex</label>
-          <div style="display:flex;gap:16px;align-items:center;padding-top:6px;">
-            <label><input type="radio" name="dep_ben_sex" value="Male"/> Male</label>
-            <label><input type="radio" name="dep_ben_sex" value="Female"/> Female</label>
+        <div class="form-row">
+          <div class="form-group">
+            <label>2. Sex <span class="req">*</span></label>
+            <div class="radio-group">
+              <label><input type="radio" name="dep_sex" value="Male" disabled/> Male</label>
+              <label><input type="radio" name="dep_sex" value="Female" disabled/> Female</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>3. Birth Date <span class="req">*</span></label>
+            <input type="date" id="dep_birth_date" disabled/>
+          </div>
+          <div class="form-group">
+            <label>4. Commencement Date</label>
+            <input type="date" id="dep_commencement_date" disabled/>
+          </div>
+          <div class="form-group">
+            <label>5. Social Security # (Last 4)</label>
+            <input type="text" id="dep_ssn_last4" maxlength="4" placeholder="XXXX" disabled/>
           </div>
         </div>
-        <div class="form-group">
-          <label>Birth Date</label>
-          <input type="date" id="dep_ben_birth_date"/>
+
+        <div class="form-row">
+          <div class="form-group full">
+            <label>6. Street Address <span class="req">*</span></label>
+            <input type="text" id="dep_street_address" disabled/>
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Relationship <span class="req">*</span></label>
-          <input type="text" id="dep_ben_relation" placeholder="e.g. Spouse, Child, Sibling"/>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>7. City <span class="req">*</span></label>
+            <input type="text" id="dep_city" disabled/>
+          </div>
+          <div class="form-group" style="max-width:100px;">
+            <label>State <span class="req">*</span></label>
+            <input type="text" id="dep_state" maxlength="2" placeholder="NY" disabled/>
+          </div>
+          <div class="form-group" style="max-width:110px;">
+            <label>Zip Code</label>
+            <input type="text" id="dep_zip" maxlength="10" disabled/>
+          </div>
+          <div class="form-group">
+            <label>Email <span class="req">*</span></label>
+            <input type="email" id="dep_email" disabled/>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Social Security # (Last 4)</label>
-          <input type="text" id="dep_ben_ssn_last4" maxlength="4" placeholder="e.g. 1234"/>
+
+        <h4>8. Beneficiary</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Name <span class="req">*</span></label>
+            <input type="text" id="dep_ben_name" placeholder="Full name" disabled/>
+          </div>
+          <div class="form-group">
+            <label>Sex</label>
+            <div style="display:flex;gap:16px;align-items:center;padding-top:6px;">
+              <label><input type="radio" name="dep_ben_sex" value="Male" disabled/> Male</label>
+              <label><input type="radio" name="dep_ben_sex" value="Female" disabled/> Female</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Birth Date</label>
+            <input type="date" id="dep_ben_birth_date" disabled/>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Telephone #</label>
-          <input type="tel" id="dep_ben_phone"/>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Relationship <span class="req">*</span></label>
+            <input type="text" id="dep_ben_relation" placeholder="e.g. Spouse, Child, Sibling" disabled/>
+          </div>
+          <div class="form-group">
+            <label>Social Security # (Last 4)</label>
+            <input type="text" id="dep_ben_ssn_last4" maxlength="4" placeholder="e.g. 1234" disabled/>
+          </div>
+          <div class="form-group">
+            <label>Telephone #</label>
+            <input type="tel" id="dep_ben_phone" placeholder="+1 555 000 0000" disabled/>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="dep_ben_email" placeholder="name@email.com" disabled/>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="dep_ben_email"/>
-        </div>
-      </div>
+      </div><!-- /.dep-fields -->
     </div>
 
     <!-- Section C: Benefit Coverage -->
@@ -591,7 +568,12 @@
   if (storedUser.email) document.getElementById('email').value         = storedUser.email;
 
   function toggleDependent(radio) {
-    document.getElementById('sectionB').style.display = radio.value === 'yes' ? 'block' : 'none';
+    const enabled = radio.value === 'yes';
+    const secB = document.getElementById('sectionB');
+    secB.classList.toggle('dep-active', enabled);
+    secB.querySelectorAll('.dep-fields input, .dep-fields select, .dep-fields textarea').forEach(el => {
+      el.disabled = !enabled;
+    });
   }
 
   function fillForm(data) {
@@ -617,11 +599,9 @@
       }
     });
     // Has dependent
-    if (data.has_dependent) {
-      const val = (data.has_dependent === true || data.has_dependent === 'yes') ? 'yes' : 'no';
-      const r = document.querySelector(`input[name="has_dependent"][value="${val}"]`);
-      if (r) { r.checked = true; toggleDependent(r); }
-    }
+    const depVal = (data.has_dependent === true || data.has_dependent === 'yes') ? 'yes' : 'no';
+    const depRadio = document.querySelector(`input[name="has_dependent"][value="${depVal}"]`);
+    if (depRadio) { depRadio.checked = true; toggleDependent(depRadio); }
     if (data.terms_accepted) document.getElementById('terms_accepted').checked = true;
     // Approval section (read-only)
     if (data.finsec_commencement_correct !== null && data.finsec_commencement_correct !== undefined) {
@@ -684,7 +664,7 @@
     document.getElementById('submittedBanner').style.display = 'block';
     document.getElementById('appStatus').textContent = status || 'pending';
     document.getElementById('appStatus').className = 'status-badge status-' + (status || 'pending');
-    document.querySelectorAll('#fundForm input, #fundForm select, #fundForm textarea').forEach(el => el.disabled = true);
+    document.querySelectorAll('#fundForm input:not([name="has_dependent"]), #fundForm select, #fundForm textarea').forEach(el => el.disabled = true);
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').textContent = 'Application Already Submitted';
   }
