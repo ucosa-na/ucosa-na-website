@@ -773,6 +773,8 @@
           <a href="#execMeetingInvite">Exec Meeting Invite</a>
           <a href="#meetingNotes">Meeting Notes</a>
           <a href="#logViewer">Log Viewer</a>
+          <a href="#welfareMemberDirectory">Member Directory</a>
+          <a href="#joinRequestsSection">Join Requests</a>
         </div>
       </div>
 
@@ -2768,7 +2770,7 @@
       const welfareSections = ['welfareMemberDirectory'];
       welfareSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isWelfare) ? '' : 'none';
+        if (el) el.style.display = (isAdmin || isWelfare || isSec || isExco) ? '' : 'none';
       });
 
       const joinReqSections = ['joinRequestsSection'];
@@ -5488,11 +5490,11 @@
       // Always load members (table for admin/security, dropdowns for fin-role)
       loadMembers();
 
-      if (['admin', 'welfare'].includes(user.role)) {
+      if (['admin', 'welfare', 'security-role', 'exco'].includes(user.role)) {
         loadWelfareMembers();
       }
 
-      if (['admin', 'security-role', 'pro-role', 'welfare'].includes(user.role)) {
+      if (['admin', 'security-role', 'pro-role', 'welfare', 'exco'].includes(user.role)) {
         loadJoinRequests();
       }
 
@@ -5536,7 +5538,6 @@
         loadDevLevies();
         loadLogs();
         loadMeetingNotes();
-        loadWelfareMembers();
         loadExecutives();
         populateExecMemberDropdown();
       }
