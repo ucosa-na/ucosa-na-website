@@ -2226,14 +2226,21 @@ router.post('/email/broadcast', proOrAdmin, async (req, res) => {
 });
 
 // POST /api/admin/endowment/notify-suspended — notify all members that the endowment form is suspended
+// Optional body: { test_to: "email@example.com" } — sends only to that address for preview
 router.post('/endowment/notify-suspended', proOrAdmin, async (req, res) => {
+  const { test_to } = req.body || {};
   try {
-    const { rows } = await pool.query(
-      `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
-       FROM users u
-       LEFT JOIN member_profiles p ON p.user_id = u.id
-       WHERE u.id != 1 ORDER BY u.full_name ASC`
-    );
+    let rows;
+    if (test_to) {
+      rows = [{ full_name: 'Test Member', email: test_to, phone: null }];
+    } else {
+      ({ rows } = await pool.query(
+        `SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
+         FROM users u
+         LEFT JOIN member_profiles p ON p.user_id = u.id
+         WHERE u.id != 1 ORDER BY u.full_name ASC`
+      ));
+    }
     if (!rows.length) return res.status(400).json({ error: 'No members found' });
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
