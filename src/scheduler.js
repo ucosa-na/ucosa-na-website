@@ -39,7 +39,7 @@ async function getUnpaidMembers(year) {
     LEFT JOIN member_profiles p ON p.user_id = u.id
     LEFT JOIN annual_dues d ON d.user_id = u.id AND d.year = $1
     WHERE u.is_active = true
-      AND u.role != 'admin'
+      AND u.id != 1
       AND (d.id IS NULL OR d.status != 'paid')
     ORDER BY u.full_name ASC
   `, [year]);
@@ -83,7 +83,7 @@ async function populateAnnualDues() {
   let members;
   try {
     const { rows } = await pool.query(
-      `SELECT id FROM users WHERE is_active = true AND role != 'admin' ORDER BY id ASC`
+      `SELECT id FROM users WHERE is_active = true AND id != 1 ORDER BY id ASC`
     );
     members = rows;
   } catch (err) {
@@ -304,7 +304,7 @@ async function sendInactivityReminders() {
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
       WHERE u.is_active = TRUE
-        AND u.role != 'admin'
+        AND u.id != 1
         AND u.last_login IS NOT NULL
         AND u.last_login < NOW() - INTERVAL '90 days'
         AND (
@@ -399,7 +399,7 @@ async function sendEnrollmentOpenNotifications() {
       SELECT u.id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
-      WHERE u.is_active = TRUE AND u.role != 'admin'
+      WHERE u.is_active = TRUE AND u.id != 1
       ORDER BY u.full_name ASC
     `);
     members = rows;
@@ -598,7 +598,7 @@ async function sendGeneralMeetingNotices(meetingDate, type) {
       SELECT u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
-      WHERE u.is_active = TRUE AND u.role != 'admin'
+      WHERE u.is_active = TRUE AND u.id != 1
       ORDER BY u.full_name ASC
     `);
     members = rows;

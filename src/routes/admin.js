@@ -400,7 +400,7 @@ router.post('/meeting/invite', secOrAdmin, async (req, res) => {
       `SELECT u.id, u.full_name, u.email, COALESCE(p.phone, u.phone) AS phone
        FROM users u
        LEFT JOIN member_profiles p ON p.user_id = u.id
-       WHERE u.is_active = TRUE AND u.role != 'admin'
+       WHERE u.is_active = TRUE AND u.id != 1
        ORDER BY u.full_name ASC`
     );
     if (!members.length) return res.json({ ok: true, message: 'No active members found.' });
@@ -3336,7 +3336,7 @@ router.post('/send-enrollment-email', adminOnly, async (req, res) => {
     const { rows: members } = await pool.query(`
       SELECT u.id, u.full_name, u.email
       FROM users u
-      WHERE u.is_active = TRUE AND u.role != 'admin' AND u.email IS NOT NULL
+      WHERE u.is_active = TRUE AND u.id != 1 AND u.email IS NOT NULL
       ORDER BY u.full_name ASC
     `);
 
