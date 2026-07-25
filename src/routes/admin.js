@@ -629,6 +629,83 @@ router.post('/meeting/list-invite', secOrAdmin, async (req, res) => {
   res.json({ ok: true, message: `Meeting invite sent — ${emailSent} email(s), ${smsSent} SMS(es).`, emailSent, emailFailed, smsSent, smsFailed });
 });
 
+// POST /api/admin/meeting/list-reminder — send a specific reminder type to a custom recipient list
+// Body: { type: "invite"|"3"|"2"|"1"|"hour", list: "Name:email:phone\n..." }
+router.post('/meeting/list-reminder', secOrAdmin, async (req, res) => {
+  const raw = String(req.body.type || '');
+  const typeMap = { invite: 'invite', '3': 3, '2': 2, '1': 1, hour: 'hour' };
+  const type = typeMap[raw];
+  if (type === undefined) return res.status(400).json({ error: 'Invalid type. Use: invite, 3, 2, 1, or hour' });
+  if (!req.body.list || !req.body.list.trim()) return res.status(400).json({ error: 'list is required' });
+
+  const entries = req.body.list.split('\n').flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean);
+  const parsed = [];
+  for (const entry of entries) {
+    const parts = entry.split(':').map(s => s.trim());
+    const fullName = parts[0], email = parts[1] || '', phone = parts[2] || '';
+    if (!fullName || !email || !email.includes('@')) continue;
+    parsed.push({ fullName, email, phone });
+  }
+  if (!parsed.length) return res.status(400).json({ error: 'No valid entries found.' });
+
+  const now = new Date();
+  const meetingDate = _lastSundayOfMonth(now.getFullYear(), now.getMonth());
+  const formatted = _fmtDate(meetingDate);
+
+  let subject, badgeHtml, introPara, smsFn;
+  if (type === 'invite') {
+    subject   = `UCOSA-NA Monthly General Meeting — ${formatted}`;
+    badgeHtml = '';
+    introPara = `<p>You are cordially invited to the <strong>UCOSA North America Monthly General Zoom Meeting</strong>. We look forward to your participation.</p>`;
+    smsFn     = n => `Dear ${n}, you are invited to the UCOSA-NA Monthly General Meeting on ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 3) {
+    subject   = `Reminder: UCOSA-NA General Meeting in 3 Days — ${formatted}`;
+    badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 3 Days</div>`;
+    introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>3 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+    smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is in 3 days on ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 2) {
+    subject   = `Reminder: UCOSA-NA General Meeting in 2 Days — ${formatted}`;
+    badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting in 2 Days</div>`;
+    introPara = `<p>This is a friendly reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is in <strong>2 days</strong> on <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>.</p>`;
+    smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is in 2 days on ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 1) {
+    subject   = `Reminder: UCOSA-NA General Meeting is Tomorrow — ${formatted}`;
+    badgeHtml = `<div style="background:#c62828;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">REMINDER — Meeting is TOMORROW</div>`;
+    introPara = `<p>This is a reminder that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> is <strong>tomorrow</strong>, <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>. Please make sure you have the details ready.</p>`;
+    smsFn     = n => `UCOSA-NA Reminder: Dear ${n}, the Monthly General Meeting is TOMORROW, ${formatted} at 5:00 PM Eastern. Join: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
+  } else {
+    subject   = `Meeting Starts in 1 Hour — UCOSA-NA General Meeting Today`;
+    badgeHtml = `<div style="background:#1b5e20;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING STARTS IN 1 HOUR — Join Now!</div>`;
+    introPara = `<p>The <strong>UCOSA-NA Monthly General Zoom Meeting</strong> starts in <strong>1 hour</strong> at <strong>5:00 PM Eastern</strong> today, <strong>${formatted}</strong>. Please join on time.</p>`;
+    smsFn     = n => `UCOSA-NA: Dear ${n}, the Monthly General Meeting starts in 1 HOUR at 5:00 PM Eastern today. Join now: ${_ZOOM_LINK} | ID: ${_ZOOM_ID} | Passcode: ${_ZOOM_PASS} — UCOSA-NA`;
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let emailSent = 0, emailFailed = 0, smsSent = 0, smsFailed = 0;
+
+  for (const { fullName, email, phone } of parsed) {
+    try {
+      await sendEmail({ to: email, subject, html: _meetingEmailHtml(fullName, formatted, badgeHtml, introPara) });
+      emailSent++;
+    } catch (err) { emailFailed++; log.error(`Meeting list-reminder email failed for ${email}: ${err.message}`); }
+    await sleep(250);
+
+    if (phone) {
+      const normalized = normalizePhone(phone);
+      if (normalized) {
+        try {
+          await sendSMS(normalized, smsFn(fullName));
+          smsSent++;
+        } catch (err) { smsFailed++; log.error(`Meeting list-reminder SMS failed for ${normalized}: ${err.message}`); }
+        await sleep(300);
+      }
+    }
+  }
+
+  log.info(`Meeting list-reminder (${type}): ${emailSent} email(s), ${smsSent} SMS to ${parsed.length} recipient(s)`);
+  res.json({ ok: true, message: `Reminder (${type}) sent — ${emailSent} email(s), ${smsSent} SMS(es).`, emailSent, emailFailed, smsSent, smsFailed });
+});
+
 // GET /api/admin/executives — list all executives with member info
 router.get('/executives', secOrAdmin, async (req, res) => {
   try {
