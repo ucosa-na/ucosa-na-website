@@ -3481,4 +3481,67 @@ router.post('/send-enrollment-email', adminOnly, async (req, res) => {
   }
 });
 
+// ── Computer Teacher Salary ──────────────────────────────────────────────────
+router.get('/computer-teacher-salary', finOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT cts.id, cts.user_id, cts.member_name, cts.amt_pledged, cts.amt_redeemed,
+             cts.date_redeemed, cts.status, cts.notes, cts.created_at,
+             rb.full_name AS recorded_by_name
+      FROM computer_teacher_salary cts
+      LEFT JOIN users rb ON rb.id = cts.recorded_by
+      ORDER BY cts.created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/computer-teacher-salary', finOrAdmin, async (req, res) => {
+  const { userId, memberName, amtPledged, amtRedeemed, dateRedeemed, status, notes } = req.body;
+  if (!memberName || amtPledged === undefined) {
+    return res.status(400).json({ error: 'Member and pledged amount are required.' });
+  }
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO computer_teacher_salary (user_id, member_name, amt_pledged, amt_redeemed, date_redeemed, status, notes, recorded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [userId || null, memberName, parseFloat(amtPledged), parseFloat(amtRedeemed || 0), dateRedeemed || null, status || 'pending', notes || null, req.user.id]
+    );
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/computer-teacher-salary/:id', finOrAdmin, async (req, res) => {
+  const { userId, memberName, amtPledged, amtRedeemed, dateRedeemed, status, notes } = req.body;
+  if (!memberName || amtPledged === undefined) {
+    return res.status(400).json({ error: 'Member and pledged amount are required.' });
+  }
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE computer_teacher_salary
+       SET user_id=$1, member_name=$2, amt_pledged=$3, amt_redeemed=$4, date_redeemed=$5, status=$6, notes=$7, updated_at=NOW()
+       WHERE id=$8`,
+      [userId || null, memberName, parseFloat(amtPledged), parseFloat(amtRedeemed || 0), dateRedeemed || null, status || 'pending', notes || null, req.params.id]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/computer-teacher-salary/:id', finOrAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM computer_teacher_salary WHERE id=$1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

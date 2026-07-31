@@ -371,6 +371,22 @@ pool.query(`
     ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_phone TEXT DEFAULT NULL;
     ALTER TABLE member_fund_applications ADD COLUMN IF NOT EXISTS dep_ben_email TEXT DEFAULT NULL;
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS computer_teacher_salary (
+      id              SERIAL PRIMARY KEY,
+      user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      member_name     TEXT NOT NULL,
+      amt_pledged     NUMERIC(14,2) NOT NULL DEFAULT 0,
+      amt_redeemed    NUMERIC(14,2) NOT NULL DEFAULT 0,
+      date_redeemed   DATE DEFAULT NULL,
+      status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','partial','redeemed')),
+      notes           TEXT DEFAULT NULL,
+      recorded_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at      TIMESTAMPTZ DEFAULT NOW(),
+      updated_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

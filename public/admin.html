@@ -754,6 +754,7 @@
           <a href="#specialLeviesSection">Members-Donations</a>
           <a href="#levyRecordsSection">Special Levy</a>
           <a href="#devLevySection">Development Levy</a>
+          <a href="#computerTeacherSalary">Computer Teacher Salary</a>
         </div>
       </div>
 
@@ -2508,6 +2509,77 @@
         </div>
       </section>
 
+      <!-- COMPUTER TEACHER SALARY -->
+      <section id="computerTeacherSalary" class="fin-section">
+        <h2>&#128187; Computer Teacher Salary</h2>
+        <p style="color:#555;font-size:15px;margin-bottom:20px;">Track member pledges toward the computer teacher salary.</p>
+
+        <div id="ctsSalaryError"   class="msg error"></div>
+        <div id="ctsSalarySuccess" class="msg success"></div>
+
+        <!-- ADD RECORD FORM -->
+        <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+          <div class="form-group" style="min-width:200px;flex:2;">
+            <label for="ctsMember">Member <span style="color:#e63946;">*</span></label>
+            <select id="ctsMember"><option value="">— Choose member —</option></select>
+          </div>
+          <div class="form-group" style="max-width:180px;">
+            <label for="ctsAmtPledged">Amt-Pledged (&#8358;) <span style="color:#e63946;">*</span></label>
+            <input type="number" id="ctsAmtPledged" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:180px;">
+            <label for="ctsAmtRedeemed">Redeemed (&#8358;)</label>
+            <input type="number" id="ctsAmtRedeemed" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label for="ctsDateRedeemed">Date Redeemed</label>
+            <input type="date" id="ctsDateRedeemed" />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label for="ctsStatus">Status</label>
+            <select id="ctsStatus">
+              <option value="pending">Pending</option>
+              <option value="partial">Partial</option>
+              <option value="redeemed">Redeemed</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:2;min-width:180px;">
+            <label for="ctsNotes">Notes</label>
+            <input type="text" id="ctsNotes" placeholder="Optional notes" />
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button class="btn-primary" id="ctsSaveBtn" onclick="saveCtsSalary()">Add Record</button>
+        </div>
+
+        <!-- FILTER -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="text" id="ctsSearch" oninput="applyCtsFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:200px;" />
+          <span id="ctsCountLabel" style="font-size:14px;color:#888;"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="fin-table" id="ctsTable">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Amt-Pledged (&#8358;)</th>
+                <th>Redeemed (&#8358;)</th>
+                <th>Date Redeemed</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Recorded By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ctsTbody">
+              <tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>
+            </tbody>
+            <tfoot id="ctsTfoot"></tfoot>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -2737,7 +2809,7 @@
 
       // Section visibility
       const secSections      = ['createMember', 'bulkImport', 'membersList', 'unactivatedSection', 'meetingInvite', 'executivesSection', 'execMeetingInvite', 'meetingNotes', 'logViewer'];
-      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection'];
+      const finSections      = ['annualDues', 'endowmentFund', 'expenseRecords', 'donationsSection', 'specialLeviesSection', 'levyRecordsSection', 'devLevySection', 'computerTeacherSalary'];
       const adminSections    = ['statsRow', 'testEmail', 'testSms', 'testFundNotifications', 'enrollmentNotify', 'siteMaintenance', 'auditLog', 'birthdaySection', 'emailFailuresSection'];
       const proAdminSections = ['fundApplicationsSection'];
       const finFundSections  = ['fundApplicationsSection'];
@@ -4555,6 +4627,8 @@
       document.getElementById('levyMember').innerHTML    = opts;
       document.getElementById('levyRecMember').innerHTML = opts;
       document.getElementById('devLevyMember').innerHTML = opts;
+      const ctsMemberEl = document.getElementById('ctsMember');
+      if (ctsMemberEl) ctsMemberEl.innerHTML = opts;
     }
 
     // ── ANNUAL DUES ───────────────────────────────────────────────────────────
@@ -5569,6 +5643,7 @@
         loadSpecialLevies();
         loadLevyRecords();
         loadDevLevies();
+        loadCtsSalary();
       }
 
       if (['admin', 'security-role'].includes(user.role)) {
@@ -5591,6 +5666,7 @@
         loadSpecialLevies();
         loadLevyRecords();
         loadDevLevies();
+        loadCtsSalary();
         loadLogs();
         loadMeetingNotes();
         loadExecutives();
@@ -6309,6 +6385,114 @@
         const res = await fetch(`/api/admin/donations/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
         if (!res.ok) { const d = await res.json(); errEl.textContent = d.error || 'Delete failed.'; errEl.style.display = 'block'; return; }
         loadDonations();
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
+      }
+    }
+
+    // ── Computer Teacher Salary ───────────────────────────────────────────────
+    let _allCtsSalary = [];
+
+    async function loadCtsSalary() {
+      const tbody = document.getElementById('ctsTbody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">Loading…</td></tr>';
+      try {
+        const res  = await fetch('/api/admin/computer-teacher-salary', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        const data = await res.json();
+        if (!res.ok) {
+          document.getElementById('ctsSalaryError').textContent = data.error || 'Error loading records.';
+          document.getElementById('ctsSalaryError').style.display = 'block';
+          return;
+        }
+        _allCtsSalary = data;
+        applyCtsFilter();
+      } catch (err) {
+        document.getElementById('ctsSalaryError').textContent = 'Failed to load records.';
+        document.getElementById('ctsSalaryError').style.display = 'block';
+      }
+    }
+
+    function applyCtsFilter() {
+      const search   = (document.getElementById('ctsSearch')?.value || '').toLowerCase();
+      const filtered = _allCtsSalary.filter(r => !search || (r.member_name || '').toLowerCase().includes(search));
+      const tbody    = document.getElementById('ctsTbody');
+      const tfoot    = document.getElementById('ctsTfoot');
+      document.getElementById('ctsCountLabel').textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;font-style:italic;padding:20px;">No records found.</td></tr>';
+        tfoot.innerHTML = '';
+        return;
+      }
+      const badge = s => ({ pending: '#f59e0b', partial: '#3b82f6', redeemed: '#22c55e' }[s] || '#aaa');
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td><strong>${escapeHtml(r.member_name)}</strong></td>
+          <td style="font-weight:700;">&#8358;${parseFloat(r.amt_pledged).toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
+          <td style="color:#2e7d32;font-weight:700;">&#8358;${parseFloat(r.amt_redeemed).toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
+          <td>${r.date_redeemed ? new Date(r.date_redeemed).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</td>
+          <td><span style="background:${badge(r.status)};color:#fff;border-radius:12px;padding:2px 10px;font-size:13px;font-weight:600;">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span></td>
+          <td>${r.notes ? escapeHtml(r.notes) : '—'}</td>
+          <td style="font-size:13px;color:#777;">${r.recorded_by_name ? escapeHtml(r.recorded_by_name) : '—'}</td>
+          <td><button class="btn-sm btn-danger" onclick="deleteCtsSalary(${r.id})">Delete</button></td>
+        </tr>`).join('');
+      const totalPledged  = filtered.reduce((s, r) => s + parseFloat(r.amt_pledged  || 0), 0);
+      const totalRedeemed = filtered.reduce((s, r) => s + parseFloat(r.amt_redeemed || 0), 0);
+      tfoot.innerHTML = `
+        <tr style="font-weight:700;background:#f4f0ea;">
+          <td>Total (${filtered.length} record${filtered.length !== 1 ? 's' : ''})</td>
+          <td>&#8358;${totalPledged.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
+          <td style="color:#2e7d32;">&#8358;${totalRedeemed.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
+          <td colspan="5"></td>
+        </tr>`;
+    }
+
+    async function saveCtsSalary() {
+      const errEl = document.getElementById('ctsSalaryError');
+      const sucEl = document.getElementById('ctsSalarySuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+      const sel          = document.getElementById('ctsMember');
+      const userId       = sel.value ? parseInt(sel.value) : null;
+      const memberName   = sel.value ? sel.options[sel.selectedIndex].textContent.trim() : '';
+      const amtPledged   = document.getElementById('ctsAmtPledged').value;
+      const amtRedeemed  = document.getElementById('ctsAmtRedeemed').value;
+      const dateRedeemed = document.getElementById('ctsDateRedeemed').value;
+      const status       = document.getElementById('ctsStatus').value;
+      const notes        = document.getElementById('ctsNotes').value.trim();
+
+      if (!userId || !amtPledged) {
+        errEl.textContent = 'Member and pledged amount are required.'; errEl.style.display = 'block'; return;
+      }
+
+      const btn = document.getElementById('ctsSaveBtn');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/admin/computer-teacher-salary', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, memberName, amtPledged: parseFloat(amtPledged), amtRedeemed: parseFloat(amtRedeemed || 0), dateRedeemed: dateRedeemed || null, status, notes: notes || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Save failed.'; errEl.style.display = 'block'; return; }
+        sucEl.textContent = 'Record added successfully.'; sucEl.style.display = 'block';
+        ['ctsAmtPledged', 'ctsAmtRedeemed', 'ctsDateRedeemed', 'ctsNotes'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('ctsMember').value  = '';
+        document.getElementById('ctsStatus').value  = 'pending';
+        loadCtsSalary();
+        setTimeout(() => { sucEl.style.display = 'none'; }, 3000);
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
+      } finally { btn.disabled = false; }
+    }
+
+    async function deleteCtsSalary(id) {
+      if (!confirm('Delete this salary record? This cannot be undone.')) return;
+      const errEl = document.getElementById('ctsSalaryError');
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch(`/api/admin/computer-teacher-salary/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (!res.ok) { const d = await res.json(); errEl.textContent = d.error || 'Delete failed.'; errEl.style.display = 'block'; return; }
+        loadCtsSalary();
       } catch (err) {
         errEl.textContent = 'Network error.'; errEl.style.display = 'block';
       }
