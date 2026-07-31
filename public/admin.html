@@ -2541,7 +2541,7 @@
             <select id="ctsStatus">
               <option value="pending">Pending</option>
               <option value="partial">Partial</option>
-              <option value="redeemed">Redeemed</option>
+              <option value="paid">Paid</option>
             </select>
           </div>
           <div class="form-group" style="flex:2;min-width:180px;">
@@ -2635,6 +2635,51 @@
       <div class="modal-actions">
         <button class="btn-primary" onclick="saveEndowEdit()">Save Changes</button>
         <button class="btn-secondary" onclick="closeEndowEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPUTER TEACHER SALARY EDIT MODAL -->
+  <div class="modal-overlay" id="ctsEditModal">
+    <div class="modal-box">
+      <h3>Edit Salary Record</h3>
+      <div id="ctsEditError"   class="msg error"></div>
+      <div id="ctsEditSuccess" class="msg success"></div>
+      <input type="hidden" id="ctsEditId" />
+      <div class="form-row" style="flex-wrap:wrap;gap:12px;">
+        <div class="form-group" style="min-width:200px;flex:2;">
+          <label for="ctsEditMember">Member</label>
+          <select id="ctsEditMember"></select>
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label for="ctsEditAmtPledged">Amt-Pledged (&#8358;)</label>
+          <input type="number" id="ctsEditAmtPledged" min="0" step="0.01" />
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label for="ctsEditAmtRedeemed">Redeemed (&#8358;)</label>
+          <input type="number" id="ctsEditAmtRedeemed" min="0" step="0.01" />
+        </div>
+        <div class="form-group" style="max-width:160px;">
+          <label for="ctsEditDateRedeemed">Date Redeemed</label>
+          <input type="date" id="ctsEditDateRedeemed" />
+        </div>
+        <div class="form-group" style="max-width:140px;">
+          <label for="ctsEditStatus">Status</label>
+          <select id="ctsEditStatus">
+            <option value="pending">Pending</option>
+            <option value="partial">Partial</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:2;min-width:180px;">
+          <label for="ctsEditNotes">Notes</label>
+          <input type="text" id="ctsEditNotes" placeholder="Optional notes" />
+        </div>
+      </div>
+      <p style="font-size:13px;color:#7d4e00;background:#fff8e1;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;margin-top:12px;">&#128276; Setting status to <strong>Paid</strong> will automatically send an email &amp; SMS receipt to the member.</p>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="saveCtsEdit()">Save Changes</button>
+        <button class="btn-secondary" onclick="closeCtsEdit()">Cancel</button>
       </div>
     </div>
   </div>
@@ -4630,6 +4675,8 @@
       document.getElementById('devLevyMember').innerHTML = opts;
       const ctsMemberEl = document.getElementById('ctsMember');
       if (ctsMemberEl) ctsMemberEl.innerHTML = opts;
+      const ctsEditMemberEl = document.getElementById('ctsEditMember');
+      if (ctsEditMemberEl) ctsEditMemberEl.innerHTML = opts;
     }
 
     // ── ANNUAL DUES ───────────────────────────────────────────────────────────
@@ -6424,7 +6471,9 @@
         tfoot.innerHTML = '';
         return;
       }
-      const badge = s => ({ pending: '#f59e0b', partial: '#3b82f6', redeemed: '#22c55e' }[s] || '#aaa');
+      const badge = s => ({ pending: '#f59e0b', partial: '#3b82f6', paid: '#22c55e' }[s] || '#aaa');
+      window._ctsRecordMap = {};
+      filtered.forEach(r => { window._ctsRecordMap[r.id] = r; });
       tbody.innerHTML = filtered.map(r => `
         <tr>
           <td><strong>${escapeHtml(r.member_name)}</strong></td>
@@ -6434,7 +6483,10 @@
           <td><span style="background:${badge(r.status)};color:#fff;border-radius:12px;padding:2px 10px;font-size:13px;font-weight:600;">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span></td>
           <td>${r.notes ? escapeHtml(r.notes) : '—'}</td>
           <td style="font-size:13px;color:#777;">${r.recorded_by_name ? escapeHtml(r.recorded_by_name) : '—'}</td>
-          <td><button class="btn-sm btn-danger" onclick="deleteCtsSalary(${r.id})">Delete</button></td>
+          <td style="display:flex;gap:6px;">
+            <button class="btn-sm" style="background:#c8a96e;color:white;" onclick="openCtsEdit(${r.id})">Edit</button>
+            <button class="btn-sm btn-danger" onclick="deleteCtsSalary(${r.id})">Delete</button>
+          </td>
         </tr>`).join('');
       const totalPledged  = filtered.reduce((s, r) => s + parseFloat(r.amt_pledged  || 0), 0);
       const totalRedeemed = filtered.reduce((s, r) => s + parseFloat(r.amt_redeemed || 0), 0);
@@ -6494,6 +6546,64 @@
         const res = await fetch(`/api/admin/computer-teacher-salary/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + getToken() } });
         if (!res.ok) { const d = await res.json(); errEl.textContent = d.error || 'Delete failed.'; errEl.style.display = 'block'; return; }
         loadCtsSalary();
+      } catch (err) {
+        errEl.textContent = 'Network error.'; errEl.style.display = 'block';
+      }
+    }
+
+    function openCtsEdit(id) {
+      const r = (window._ctsRecordMap || {})[id];
+      if (!r) return;
+      document.getElementById('ctsEditId').value           = r.id;
+      document.getElementById('ctsEditAmtPledged').value   = r.amt_pledged;
+      document.getElementById('ctsEditAmtRedeemed').value  = r.amt_redeemed;
+      document.getElementById('ctsEditDateRedeemed').value = r.date_redeemed ? r.date_redeemed.split('T')[0] : '';
+      document.getElementById('ctsEditStatus').value       = r.status;
+      document.getElementById('ctsEditNotes').value        = r.notes || '';
+      // sync member dropdown
+      const editSel = document.getElementById('ctsEditMember');
+      editSel.innerHTML = document.getElementById('ctsMember').innerHTML;
+      editSel.value = r.user_id || '';
+      document.getElementById('ctsEditError').style.display   = 'none';
+      document.getElementById('ctsEditSuccess').style.display = 'none';
+      document.getElementById('ctsEditModal').style.display   = 'flex';
+    }
+
+    function closeCtsEdit() {
+      document.getElementById('ctsEditModal').style.display = 'none';
+    }
+
+    async function saveCtsEdit() {
+      const errEl = document.getElementById('ctsEditError');
+      const sucEl = document.getElementById('ctsEditSuccess');
+      errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+      const id           = document.getElementById('ctsEditId').value;
+      const sel          = document.getElementById('ctsEditMember');
+      const userId       = sel.value ? parseInt(sel.value) : null;
+      const memberName   = sel.value ? sel.options[sel.selectedIndex].textContent.trim() : '';
+      const amtPledged   = document.getElementById('ctsEditAmtPledged').value;
+      const amtRedeemed  = document.getElementById('ctsEditAmtRedeemed').value;
+      const dateRedeemed = document.getElementById('ctsEditDateRedeemed').value;
+      const status       = document.getElementById('ctsEditStatus').value;
+      const notes        = document.getElementById('ctsEditNotes').value.trim();
+
+      if (!userId || !amtPledged) {
+        errEl.textContent = 'Member and pledged amount are required.'; errEl.style.display = 'block'; return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/computer-teacher-salary/${id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, memberName, amtPledged: parseFloat(amtPledged), amtRedeemed: parseFloat(amtRedeemed || 0), dateRedeemed: dateRedeemed || null, status, notes: notes || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Save failed.'; errEl.style.display = 'block'; return; }
+        sucEl.textContent = status === 'paid' ? 'Record updated. Receipt emailed & SMS sent to member.' : 'Record updated.';
+        sucEl.style.display = 'block';
+        loadCtsSalary();
+        setTimeout(() => { closeCtsEdit(); }, 1800);
       } catch (err) {
         errEl.textContent = 'Network error.'; errEl.style.display = 'block';
       }

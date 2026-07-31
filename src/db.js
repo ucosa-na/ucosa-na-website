@@ -380,12 +380,17 @@ pool.query(`
       amt_pledged     NUMERIC(14,2) NOT NULL DEFAULT 0,
       amt_redeemed    NUMERIC(14,2) NOT NULL DEFAULT 0,
       date_redeemed   DATE DEFAULT NULL,
-      status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','partial','redeemed')),
+      status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','partial','paid')),
       notes           TEXT DEFAULT NULL,
       recorded_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at      TIMESTAMPTZ DEFAULT NOW(),
       updated_at      TIMESTAMPTZ DEFAULT NOW()
     );
+  `)
+).then(() =>
+  pool.query(`
+    ALTER TABLE computer_teacher_salary DROP CONSTRAINT IF EXISTS computer_teacher_salary_status_check;
+    ALTER TABLE computer_teacher_salary ADD CONSTRAINT computer_teacher_salary_status_check CHECK (status IN ('pending','partial','paid'));
   `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
