@@ -2556,6 +2556,8 @@
         <!-- FILTER -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
           <input type="text" id="ctsSearch" oninput="applyCtsFilter()" placeholder="Search member…" style="padding:6px 12px;border:1.5px solid #dde3f0;border-radius:8px;font-size:15px;min-width:200px;" />
+          <button onclick="downloadCtsCSV()" style="background:#1a1a2e;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
+          <button onclick="copyCtsWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
           <span id="ctsCountLabel" style="font-size:14px;color:#888;"></span>
         </div>
 
@@ -6440,6 +6442,51 @@
 
     // ── Computer Teacher Salary ───────────────────────────────────────────────
     let _allCtsSalary = [];
+
+    function downloadCtsCSV() {
+      const search = (document.getElementById('ctsSearch')?.value || '').toLowerCase();
+      const rows = _allCtsSalary.filter(r => !search || (r.member_name || '').toLowerCase().includes(search));
+      if (!rows.length) { alert('No records to download.'); return; }
+      const headers = ['Member','Amt-Pledged (NGN)','Redeemed (NGN)','Date Redeemed','Status','Notes','Recorded By'];
+      const lines = [
+        headers.join(','),
+        ...rows.map(r => [
+          `"${(r.member_name || '').replace(/"/g,'""')}"`,
+          parseFloat(r.amt_pledged).toFixed(2),
+          parseFloat(r.amt_redeemed).toFixed(2),
+          r.date_redeemed ? new Date(r.date_redeemed).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : '',
+          r.status,
+          `"${(r.notes || '').replace(/"/g,'""')}"`,
+          `"${(r.recorded_by_name || '').replace(/"/g,'""')}"`,
+        ].join(','))
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ucosa-computer-teacher-salary-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    function copyCtsWhatsApp() {
+      const search = (document.getElementById('ctsSearch')?.value || '').toLowerCase();
+      const rows = _allCtsSalary.filter(r => !search || (r.member_name || '').toLowerCase().includes(search));
+      if (!rows.length) { alert('No records to copy.'); return; }
+      const totalPledged  = rows.reduce((s, r) => s + parseFloat(r.amt_pledged  || 0), 0);
+      const totalRedeemed = rows.reduce((s, r) => s + parseFloat(r.amt_redeemed || 0), 0);
+      const lines = [
+        `*UCOSA-NA — Computer Teacher Salary*`,
+        `*Date:* ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`,
+        ``,
+        ...rows.map((r, i) => `${i+1}. ${r.member_name} | Pledged: \u20A6${parseFloat(r.amt_pledged).toLocaleString('en-NG',{minimumFractionDigits:2})} | Redeemed: \u20A6${parseFloat(r.amt_redeemed).toLocaleString('en-NG',{minimumFractionDigits:2})} | ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}`),
+        ``,
+        `*Total Pledged: \u20A6${totalPledged.toLocaleString('en-NG',{minimumFractionDigits:2})}*`,
+        `*Total Redeemed: \u20A6${totalRedeemed.toLocaleString('en-NG',{minimumFractionDigits:2})}*`,
+        `*(${rows.length} record${rows.length !== 1 ? 's' : ''})*`,
+      ];
+      navigator.clipboard.writeText(lines.join('\n'))
+        .then(() => alert('Copied! Paste directly into WhatsApp.'))
+        .catch(() => alert('Copy failed — please try again.'));
+    }
 
     async function loadCtsSalary() {
       const tbody = document.getElementById('ctsTbody');
