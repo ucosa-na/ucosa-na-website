@@ -3482,6 +3482,68 @@ router.post('/send-enrollment-email', adminOnly, async (req, res) => {
 });
 
 // ── Computer Teacher Salary ──────────────────────────────────────────────────
+async function sendCtsPledgeNotification(userId, amtPledged, recordId) {
+  if (!userId) return;
+  const { rows: member } = await pool.query('SELECT full_name, email, phone FROM users WHERE id=$1', [userId]);
+  if (!member.length) return;
+  const { full_name, email, phone } = member[0];
+  const normalizedPhone = phone ? normalizePhone(phone) : null;
+  const amountNaira = parseFloat(amtPledged);
+
+  if (email) {
+    sendEmail({
+      to: email,
+      subject: 'Thank You for Your Pledge — Computer Teacher Salary — UCOSA-NA',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            <h1 style="color:#fff;margin:8px 0 0;font-size:22px;">Pledge Received — Thank You!</h1>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+            <p>Dear <strong>${full_name}</strong>,</p>
+            <p>Thank you for your generous pledge toward the <strong>Computer Teacher Salary</strong>. Your pledge of <strong>&#8358;${amountNaira.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</strong> has been recorded.</p>
+            <p>We kindly remind you to redeem your pledge using any of the payment options below:</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <thead><tr style="background:#1a1a2e;color:#fff;">
+                <th style="padding:10px 12px;text-align:left;">Payment Method</th>
+                <th style="padding:10px 12px;text-align:left;">Details</th>
+              </tr></thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #eee;">
+                  <td style="padding:10px 12px;font-weight:700;">&#8358; Naira Transfer</td>
+                  <td style="padding:10px 12px;">
+                    <strong>Account Name:</strong> Osatohanmwen Gloria Obakpolor Sule<br>
+                    <strong>Bank:</strong> Sterling Bank<br>
+                    <strong>Account No:</strong> 0027219075
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 12px;font-weight:700;">$ Dollar (Zelle)</td>
+                  <td style="padding:10px 12px;">
+                    <strong>Zelle to:</strong> osatosule@yahoo.com
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="font-size:13px;color:#555;background:#fff8e1;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:4px;">&#128204; Note: This voluntary donation goes directly to <strong>Deaconess Osato Sule</strong>'s account, separate from the UCOSA account.</p>
+            <p style="margin-top:20px;">Thank you for your continued support of Ugbeka College.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`,
+    }).catch(err => log.error(`CTS pledge email failed for ${email}: ${err.message}`));
+  }
+
+  if (normalizedPhone) {
+    sendSMS(normalizedPhone,
+      `Dear ${full_name}, thank you for your pledge of NGN ${amountNaira.toLocaleString('en-NG')} toward the Computer Teacher Salary. To redeem: Naira transfer to Osatohanmwen Gloria Obakpolor Sule, Sterling Bank, Acct: 0027219075. Dollar (Zelle): osatosule@yahoo.com — UCOSA-NA`
+    ).catch(err => log.error(`CTS pledge SMS failed for ${normalizedPhone}: ${err.message}`));
+  }
+
+  log.info(`CTS pledge notification sent to ${full_name} (${email}) for record ${recordId}`);
+}
+
 async function sendCtsReceipt(userId, amtRedeemed, amtPledged, recordId) {
   if (!userId) return;
   const { rows: member } = await pool.query('SELECT full_name, email, phone FROM users WHERE id=$1', [userId]);
@@ -3567,6 +3629,8 @@ router.post('/computer-teacher-salary', finOrAdmin, async (req, res) => {
     const newId = rows[0].id;
     if (status === 'paid' && userId) {
       sendCtsReceipt(userId, amtRedeemed, amtPledged, newId).catch(err => log.error(`CTS receipt error: ${err.message}`));
+    } else if ((status === 'pending' || status === 'partial') && userId) {
+      sendCtsPledgeNotification(userId, amtPledged, newId).catch(err => log.error(`CTS pledge notification error: ${err.message}`));
     }
     res.json({ ok: true, id: newId });
   } catch (err) {
