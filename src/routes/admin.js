@@ -3482,6 +3482,61 @@ router.post('/send-enrollment-email', adminOnly, async (req, res) => {
 });
 
 // ── Computer Teacher Salary ──────────────────────────────────────────────────
+async function sendCtsReceipt(userId, amtRedeemed, amtPledged, recordId) {
+  if (!userId) return;
+  const { rows: member } = await pool.query('SELECT full_name, email, phone FROM users WHERE id=$1', [userId]);
+  if (!member.length) return;
+  const { full_name, email, phone } = member[0];
+  const normalizedPhone = phone ? normalizePhone(phone) : null;
+  const ref = `CTS-${recordId}-${Date.now()}`;
+  const amountNaira = parseFloat(amtRedeemed || amtPledged);
+
+  if (email) {
+    sendEmail({
+      to: email,
+      subject: 'Payment Receipt — Computer Teacher Salary Contribution — UCOSA-NA',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+          <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            <h1 style="color:#fff;margin:8px 0 0;font-size:22px;">Payment Receipt</h1>
+          </div>
+          <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+            <p>Dear <strong>${full_name}</strong>,</p>
+            <p>Your contribution toward the Computer Teacher Salary has been received and marked as <strong>Paid</strong>. Here is your receipt:</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <thead><tr style="background:#1a1a2e;color:#fff;">
+                <th style="padding:10px 12px;text-align:left;">Description</th>
+                <th style="padding:10px 12px;text-align:left;">Amount</th>
+              </tr></thead>
+              <tbody>
+                <tr><td style="padding:6px 12px;">Computer Teacher Salary Contribution</td><td style="padding:6px 12px;font-weight:700;color:#1b5e20;">&#8358;${amountNaira.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+              </tbody>
+              <tfoot><tr style="border-top:2px solid #eee;">
+                <td style="padding:10px 12px;font-weight:700;">Total</td>
+                <td style="padding:10px 12px;font-weight:700;color:#1b5e20;">&#8358;${amountNaira.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
+              </tr></tfoot>
+            </table>
+            <p style="font-size:13px;color:#888;">Reference: ${ref}</p>
+            <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p style="font-size:13px;color:#555;background:#fff8e1;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:4px;">Note: This voluntary donation is sent directly to <strong>Deaconess Osato Sule</strong>'s account, separate from the UCOSA account.</p>
+            <p style="margin-top:20px;">Thank you for your generous support of Ugbeka College.</p>
+            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+          </div>
+        </div>`,
+    }).catch(err => log.error(`CTS receipt email failed for ${email}: ${err.message}`));
+  }
+
+  if (normalizedPhone) {
+    sendSMS(normalizedPhone,
+      `Dear ${full_name}, your Computer Teacher Salary contribution of NGN ${amountNaira.toLocaleString('en-NG')} has been received and marked as Paid. Ref: ${ref}. Thank you — UCOSA-NA`
+    ).catch(err => log.error(`CTS receipt SMS failed for ${normalizedPhone}: ${err.message}`));
+  }
+
+  log.info(`CTS paid receipt sent to ${full_name} (email: ${email}, phone: ${normalizedPhone}) for record ${recordId}`);
+}
+
 router.get('/computer-teacher-salary', finOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -3509,7 +3564,11 @@ router.post('/computer-teacher-salary', finOrAdmin, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [userId || null, memberName, parseFloat(amtPledged), parseFloat(amtRedeemed || 0), dateRedeemed || null, status || 'pending', notes || null, req.user.id]
     );
-    res.json({ ok: true, id: rows[0].id });
+    const newId = rows[0].id;
+    if (status === 'paid' && userId) {
+      sendCtsReceipt(userId, amtRedeemed, amtPledged, newId).catch(err => log.error(`CTS receipt error: ${err.message}`));
+    }
+    res.json({ ok: true, id: newId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3536,59 +3595,7 @@ router.put('/computer-teacher-salary/:id', finOrAdmin, async (req, res) => {
 
     // Send receipt when status just changed to 'paid'
     if (status === 'paid' && prevStatus !== 'paid' && userId) {
-      const { rows: member } = await pool.query('SELECT full_name, email, phone FROM users WHERE id=$1', [userId]);
-      if (member.length) {
-        const { full_name, email, phone } = member[0];
-        const normalizedPhone = phone ? normalizePhone(phone) : null;
-        const ref = `CTS-${req.params.id}-${Date.now()}`;
-        const amountNaira = parseFloat(amtRedeemed || amtPledged);
-        const description = 'Computer Teacher Salary Contribution';
-
-        if (email) {
-          sendEmail({
-            to: email,
-            subject: `Payment Receipt — ${description} — UCOSA-NA`,
-            html: `
-              <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
-                <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
-                  <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
-                  <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
-                  <h1 style="color:#fff;margin:8px 0 0;font-size:22px;">Payment Receipt</h1>
-                </div>
-                <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
-                  <p>Dear <strong>${full_name}</strong>,</p>
-                  <p>Your contribution toward the Computer Teacher Salary has been received and marked as <strong>Paid</strong>. Here is your receipt:</p>
-                  <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-                    <thead><tr style="background:#1a1a2e;color:#fff;">
-                      <th style="padding:10px 12px;text-align:left;">Description</th>
-                      <th style="padding:10px 12px;text-align:left;">Amount</th>
-                    </tr></thead>
-                    <tbody>
-                      <tr><td style="padding:6px 12px;">${description}</td><td style="padding:6px 12px;font-weight:700;color:#1b5e20;">&#8358;${amountNaira.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
-                    </tbody>
-                    <tfoot><tr style="border-top:2px solid #eee;">
-                      <td style="padding:10px 12px;font-weight:700;">Total</td>
-                      <td style="padding:10px 12px;font-weight:700;color:#1b5e20;">&#8358;${amountNaira.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
-                    </tr></tfoot>
-                  </table>
-                  <p style="font-size:13px;color:#888;">Reference: ${ref}</p>
-                  <p style="font-size:13px;color:#888;">Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  <p style="font-size:13px;color:#555;background:#fff8e1;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:4px;">Note: This voluntary donation is sent directly to <strong>Deaconess Osato Sule</strong>'s account, separate from the UCOSA account.</p>
-                  <p style="margin-top:20px;">Thank you for your generous support of Ugbeka College.</p>
-                  <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
-                </div>
-              </div>`,
-          }).catch(err => log.error(`CTS receipt email failed for ${email}: ${err.message}`));
-        }
-
-        if (normalizedPhone) {
-          sendSMS(normalizedPhone,
-            `Dear ${full_name}, your Computer Teacher Salary contribution of NGN ${amountNaira.toLocaleString('en-NG')} has been received and marked as Paid. Ref: ${ref}. Thank you — UCOSA-NA`
-          ).catch(err => log.error(`CTS receipt SMS failed for ${normalizedPhone}: ${err.message}`));
-        }
-
-        log.info(`CTS paid receipt sent to ${full_name} (${email}, ${normalizedPhone}) for record ${req.params.id}`);
-      }
+      sendCtsReceipt(userId, amtRedeemed, amtPledged, req.params.id).catch(err => log.error(`CTS receipt error: ${err.message}`));
     }
 
     res.json({ ok: true });
