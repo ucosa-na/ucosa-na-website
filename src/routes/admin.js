@@ -3517,6 +3517,12 @@ router.put('/former-members/:id', adminOrWelfare, async (req, res) => {
   const { fullName, email, phone, notes, status } = req.body;
   if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
   try {
+    // Auto-remove when marked as rejoined — they are now a full member
+    if (status === 'rejoined') {
+      const { rowCount } = await pool.query('DELETE FROM former_members WHERE id=$1', [req.params.id]);
+      if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+      return res.json({ ok: true, removed: true, fullName });
+    }
     const { rowCount } = await pool.query(
       `UPDATE former_members SET full_name=$1, email=$2, phone=$3, notes=$4, status=$5, updated_at=NOW() WHERE id=$6`,
       [fullName, email || null, phone || null, notes || null, status || 'pending', req.params.id]

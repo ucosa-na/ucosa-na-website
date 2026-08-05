@@ -2750,6 +2750,7 @@
           <input type="text" id="fmEditNotes" />
         </div>
       </div>
+      <p id="fmEditRejoinNote" style="font-size:13px;color:#1b5e20;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:8px 12px;margin-top:12px;display:none;">&#9989; Setting status to <strong>Rejoined</strong> will automatically remove this person from the Former Members list — they will be treated as a full member.</p>
       <div class="modal-actions">
         <button class="btn-primary" onclick="saveFmEdit()">Save Changes</button>
         <button class="btn-secondary" onclick="closeFmEdit()">Cancel</button>
@@ -6666,6 +6667,10 @@
       document.getElementById('fmEditNotes').value    = r.notes    || '';
       document.getElementById('fmEditError').style.display   = 'none';
       document.getElementById('fmEditSuccess').style.display = 'none';
+      document.getElementById('fmEditRejoinNote').style.display = r.status === 'rejoined' ? 'block' : 'none';
+      document.getElementById('fmEditStatus').onchange = function() {
+        document.getElementById('fmEditRejoinNote').style.display = this.value === 'rejoined' ? 'block' : 'none';
+      };
       document.getElementById('fmEditModal').style.display   = 'flex';
     }
 
@@ -6693,6 +6698,13 @@
         });
         const data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Save failed.'; errEl.style.display = 'block'; return; }
+        if (data.removed) {
+          sucEl.textContent = `${data.fullName} has rejoined and been removed from the Former Members list.`;
+          sucEl.style.display = 'block';
+          loadFormerMembers();
+          setTimeout(() => { closeFmEdit(); }, 2500);
+          return;
+        }
         sucEl.textContent = 'Record updated.'; sucEl.style.display = 'block';
         loadFormerMembers();
         setTimeout(() => { closeFmEdit(); }, 1500);
