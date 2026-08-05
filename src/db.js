@@ -406,6 +406,8 @@ pool.query(`
       updated_at  TIMESTAMPTZ DEFAULT NOW()
     );
   `)
+).then(() =>
+  pool.query(`ALTER TABLE former_members ADD COLUMN IF NOT EXISTS last_invite_sent_at TIMESTAMPTZ DEFAULT NULL;`)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

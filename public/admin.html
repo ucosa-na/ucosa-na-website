@@ -2561,6 +2561,7 @@
           </select>
           <button onclick="downloadFmCSV()" style="background:#1a1a2e;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#11015; Download CSV</button>
           <button onclick="copyFmWhatsApp()" style="background:#25d366;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#128205; WhatsApp</button>
+          <button onclick="sendFmInvitesNow(this)" style="background:#7b2152;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;">&#9993; Send Invites Now</button>
           <span id="fmCountLabel" style="font-size:14px;color:#888;"></span>
         </div>
 
@@ -6761,6 +6762,27 @@
       navigator.clipboard.writeText(lines.join('\n'))
         .then(() => alert('Copied! Paste directly into WhatsApp.'))
         .catch(() => alert('Copy failed — please try again.'));
+    }
+
+    async function sendFmInvitesNow(btn) {
+      if (!confirm('Send "We Miss You" invites to all pending former members who are due for contact (60-day interval)? This will send email and/or SMS to eligible former members.')) return;
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        const r = await fetch('/api/admin/former-members/send-invites', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('ucosa_token') },
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed');
+        alert(d.message || 'Invites sent successfully.');
+      } catch (e) {
+        alert('Error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
     }
 
     // ── Computer Teacher Salary ───────────────────────────────────────────────

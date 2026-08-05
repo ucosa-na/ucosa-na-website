@@ -682,6 +682,132 @@ async function checkGeneralMeetingHourReminder() {
   }
 }
 
+// ── Former Member Invite Broadcast (every 60 days) ───────────────────────────
+
+function buildFormerMemberInviteHtml(fullName) {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fdf6ec;margin:0;padding:0}
+  .wrap{max-width:620px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .hdr{background:#7b2152;padding:28px 36px;text-align:center}
+  .hdr h1{color:#f5e6d0;font-size:22px;margin:0;letter-spacing:.08em}
+  .hdr p{color:#d4a0b8;font-size:13px;margin:6px 0 0;letter-spacing:.1em;text-transform:uppercase}
+  .body{padding:36px 40px;color:#333;font-size:15px;line-height:1.75}
+  .body p{margin:0 0 16px}
+  .body ul{margin:0 0 16px 20px}
+  .body ul li{margin-bottom:8px}
+  .links-table{width:100%;border-collapse:collapse;margin:0 0 20px}
+  .links-table th{background:#1a1a2e;color:#c8a96e;padding:10px 14px;text-align:left;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .links-table td{padding:10px 14px;border-bottom:1px solid #f0e6f4;font-size:14px}
+  .links-table tr:last-child td{border-bottom:none}
+  .links-table tr:nth-child(even) td{background:#fdf6fb}
+  .links-table td a{color:#7b2152;font-weight:600;text-decoration:none}
+  .cta{text-align:center;margin:28px 0}
+  .cta a{background:#c8a96e;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;display:inline-block}
+  .ftr{background:#1a1a2e;color:#aab4c8;text-align:center;padding:18px 20px;font-size:12px}
+  .ftr a{color:#c8a96e;text-decoration:none}
+  strong{color:#7b2152}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px"/>
+    <h1>UCOSA-North America</h1>
+    <p>Alumni United Across North America</p>
+  </div>
+  <div class="body">
+    <p>Dear <strong>${fullName}</strong>,</p>
+    <p>We hope this message finds you well.</p>
+    <p>We are reaching out because you are part of something that does not fade with time — the bond of fellowship forged at Ugbeka College. That connection is exactly why <strong>UCOSA-North America</strong> exists: <em>Alumni United Across North America</em>, staying connected, supporting our alma mater, and uplifting one another.</p>
+    <p>We have come a long way from our humble beginnings. We have grown, we have organized, and we are proud to say — <strong>we now have a home online.</strong> We warmly invite you to visit us at:</p>
+    <p style="text-align:center;font-size:18px;font-weight:700;color:#7b2152"><a href="https://ucosa-na.org" style="color:#7b2152">www.ucosa-na.org</a></p>
+    <p>We are a not-for-profit, non-political, charitable, and voluntary association of Ugbeka College alumni residing in the United States and Canada. We meet via <strong>Zoom video conferencing on the last Sunday of every month</strong>, so no matter where you are in North America, you can join from any internet-connected device.</p>
+    <p>Our goals remain the same as the values we all share:</p>
+    <ul>
+      <li>To foster <strong>unity, brotherhood, and fellowship</strong> among fellow Ugbeka College alumni in North America</li>
+      <li>To <strong>support the development and improvement</strong> of Ugbeka College and the Ugbeka community</li>
+      <li>To organize cultural, social, and fundraising activities that benefit our association and the broader Ugbeka community</li>
+    </ul>
+    <p>We recognize our shared heritage and our collective responsibility to the institution that shaped us all. That responsibility does not expire — and neither does your place among us.</p>
+    <p><strong>We would love to welcome you back.</strong> Visit <a href="https://ucosa-na.org">ucosa-na.org</a> to reconnect. While at the website, check out our member benefits and the development work we have done so far at our alma mater:</p>
+    <table class="links-table">
+      <thead><tr><th>Page</th><th>Direct Link</th></tr></thead>
+      <tbody>
+        <tr><td>Member Benefits</td><td><a href="https://ucosa-na.org/#member-benefit">ucosa-na.org/#member-benefit</a></td></tr>
+        <tr><td>Computer Lab</td><td><a href="https://ucosa-na.org/#computer-lab">ucosa-na.org/#computer-lab</a></td></tr>
+        <tr><td>Development Projects</td><td><a href="https://ucosa-na.org/#dev-projects">ucosa-na.org/#dev-projects</a></td></tr>
+        <tr><td><strong>Request To Join</strong></td><td><a href="https://ucosa-na.org/#join"><strong>ucosa-na.org/#join</strong></a></td></tr>
+      </tbody>
+    </table>
+    <p>Please click <strong>"Request To Join"</strong> so we can reconnect and get you back where you belong.</p>
+    <div class="cta"><a href="https://ucosa-na.org/#join">Request To Join</a></div>
+    <p>With warmth and fellowship,</p>
+    <p><strong>The Executive Committee</strong><br/>UCOSA-North America<br/><a href="https://ucosa-na.org">www.ucosa-na.org</a></p>
+  </div>
+  <div class="ftr">&copy; 2026 UCOSA-North America. All rights reserved. &mdash; <a href="https://ucosa-na.org">ucosa-na.org</a></div>
+</div>
+</body></html>`.trim();
+}
+
+async function sendFormerMemberInvites() {
+  try {
+    const { rows } = await pool.query(`
+      SELECT id, full_name, email, phone
+      FROM former_members
+      WHERE status = 'pending'
+        AND (email IS NOT NULL OR phone IS NOT NULL)
+        AND (last_invite_sent_at IS NULL OR last_invite_sent_at < NOW() - INTERVAL '60 days')
+      ORDER BY full_name ASC
+    `);
+
+    if (!rows.length) {
+      log.info('sendFormerMemberInvites: no pending former members due for invite');
+      return;
+    }
+
+    log.info(`sendFormerMemberInvites: sending invites to ${rows.length} former member(s)`);
+
+    for (const row of rows) {
+      if (row.email) {
+        try {
+          await sendEmail({
+            to: `"${row.full_name}" <${row.email}>`,
+            subject: 'We Miss You — Come Back Home to UCOSA-NA',
+            html: buildFormerMemberInviteHtml(row.full_name),
+          });
+        } catch (err) {
+          log.error(`sendFormerMemberInvites: email failed for ${row.full_name}: ${err.message}`);
+        }
+        await sleep(250);
+      }
+
+      if (row.phone) {
+        const sms =
+          `UCOSA-NA: Dear ${row.full_name}, we miss you!\n\n` +
+          `We invite you to reconnect with your fellow Ugbeka College alumni in North America.\n\n` +
+          `Visit us at https://ucosa-na.org and click "Request To Join" to come back home.\n\n` +
+          `— UCOSA-North America`;
+        try {
+          await sendSMS(row.phone, sms);
+        } catch (err) {
+          log.error(`sendFormerMemberInvites: SMS failed for ${row.full_name}: ${err.message}`);
+        }
+        await sleep(300);
+      }
+
+      await pool.query('UPDATE former_members SET last_invite_sent_at = NOW() WHERE id = $1', [row.id]);
+    }
+
+    log.info(`sendFormerMemberInvites: done — ${rows.length} former member(s) contacted`);
+  } catch (err) {
+    log.error(`sendFormerMemberInvites failed: ${err.message}`);
+  }
+}
+
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
 // January 1st at 00:01 AM — populate annual dues records for all active members
@@ -711,12 +837,16 @@ cron.schedule('0 9 * * *', checkGeneralMeetingDayReminders, { timezone: 'America
 // Every Sunday at 4:00 PM ET — 1-hour notice before 5:00 PM general meeting
 cron.schedule('0 16 * * 0', checkGeneralMeetingHourReminder, { timezone: 'America/New_York' });
 
-log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 14 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, daily 9AM general meeting day reminders, Sunday 4PM general meeting hour notice, 1st-of-month 9AM birthday emails)');
+// Daily at 10:00 AM ET — send "We Miss You" invites to pending former members (60-day interval)
+cron.schedule('0 10 * * *', sendFormerMemberInvites, { timezone: 'America/New_York' });
+
+log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 14 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, daily 9AM general meeting day reminders, Sunday 4PM general meeting hour notice, 1st-of-month 9AM birthday emails, daily 10AM former-member invite check)');
 
 module.exports = {
   populateAnnualDues, sendAdvanceReminders, sendDueDateReminders,
   sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications,
   checkGeneralMeetingDayReminders, checkGeneralMeetingHourReminder,
+  sendFormerMemberInvites,
   // Exported for test endpoints in admin.js
   duesReminderHtml, zoomMeetingBlock, generalMeetingHtml, fmtMeetingDate, getLastSundayOfMonth, sendGeneralMeetingNotices,
 };

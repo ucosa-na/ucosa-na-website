@@ -3544,6 +3544,17 @@ router.delete('/former-members/:id', adminOrWelfare, async (req, res) => {
   }
 });
 
+// POST /api/admin/former-members/send-invites — manually trigger 60-day invite broadcast
+router.post('/former-members/send-invites', adminOrWelfare, async (req, res) => {
+  try {
+    const { sendFormerMemberInvites } = require('../scheduler');
+    await sendFormerMemberInvites();
+    res.json({ ok: true, message: 'Invites dispatched to all pending former members due for contact.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Computer Teacher Salary ──────────────────────────────────────────────────
 async function sendCtsPledgeNotification(userId, amtPledged, recordId) {
   if (!userId) return;
