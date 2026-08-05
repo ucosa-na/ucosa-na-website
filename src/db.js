@@ -392,6 +392,20 @@ pool.query(`
     ALTER TABLE computer_teacher_salary DROP CONSTRAINT IF EXISTS computer_teacher_salary_status_check;
     ALTER TABLE computer_teacher_salary ADD CONSTRAINT computer_teacher_salary_status_check CHECK (status IN ('pending','partial','paid'));
   `)
+).then(() =>
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS former_members (
+      id          SERIAL PRIMARY KEY,
+      full_name   TEXT NOT NULL,
+      email       TEXT DEFAULT NULL,
+      phone       TEXT DEFAULT NULL,
+      notes       TEXT DEFAULT NULL,
+      status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','declined','rejoined')),
+      recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at  TIMESTAMPTZ DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
 ).catch(err => {
   console.error('DB schema init failed:', err.message);
   process.exit(1);

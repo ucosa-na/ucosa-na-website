@@ -599,7 +599,12 @@ async function sendGeneralMeetingNotices(meetingDate, type) {
       FROM users u
       LEFT JOIN member_profiles p ON p.user_id = u.id
       WHERE u.is_active = TRUE AND u.id != 1
-      ORDER BY u.full_name ASC
+      UNION
+      SELECT fm.full_name, fm.email, fm.phone
+      FROM former_members fm
+      WHERE fm.status = 'pending'
+        AND (fm.email IS NOT NULL OR fm.phone IS NOT NULL)
+      ORDER BY full_name ASC
     `);
     members = rows;
   } catch (err) {

@@ -21,6 +21,7 @@ const secOrAdmin      = requireRole('admin', 'security-role');
 const anyPriv         = requireRole('admin', 'fin-role', 'security-role', 'pro-role', 'welfare', 'exco');
 const proOrAdmin      = requireRole('admin', 'pro-role');
 const welfareOrAdmin  = requireRole('admin', 'welfare', 'security-role', 'exco');
+const adminOrWelfare  = requireRole('admin', 'welfare');
 const excoOrAdmin     = requireRole('admin', 'exco');
 const fundAppAccess   = requireRole('admin', 'exco', 'fin-role');
 const joinReqAccess   = requireRole('admin', 'security-role', 'pro-role', 'welfare', 'exco', 'fin-role');
@@ -3478,6 +3479,62 @@ router.post('/send-enrollment-email', adminOnly, async (req, res) => {
   } catch (err) {
     log.error('send-enrollment-email error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── Former Members ───────────────────────────────────────────────────────────
+router.get('/former-members', adminOrWelfare, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT fm.id, fm.full_name, fm.email, fm.phone, fm.notes, fm.status, fm.created_at,
+             rb.full_name AS recorded_by_name
+      FROM former_members fm
+      LEFT JOIN users rb ON rb.id = fm.recorded_by
+      ORDER BY fm.full_name ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/former-members', adminOrWelfare, async (req, res) => {
+  const { fullName, email, phone, notes, status } = req.body;
+  if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO former_members (full_name, email, phone, notes, status, recorded_by)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [fullName, email || null, phone || null, notes || null, status || 'pending', req.user.id]
+    );
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/former-members/:id', adminOrWelfare, async (req, res) => {
+  const { fullName, email, phone, notes, status } = req.body;
+  if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE former_members SET full_name=$1, email=$2, phone=$3, notes=$4, status=$5, updated_at=NOW() WHERE id=$6`,
+      [fullName, email || null, phone || null, notes || null, status || 'pending', req.params.id]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/former-members/:id', adminOrWelfare, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM former_members WHERE id=$1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
