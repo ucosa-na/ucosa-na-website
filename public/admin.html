@@ -798,7 +798,7 @@
         </div>
         <div class="sidebar-group-items open" id="groupWelfareItems">
           <a href="#welfareMemberDirectory">Member Directory</a>
-          <a href="#formerMembersSection">Former Members</a>
+          <a href="#formerMembersSection" class="sidebar-admin-only">Former Members</a>
         </div>
       </div>
 
@@ -3016,7 +3016,10 @@
       const formerMembersSections = ['formerMembersSection'];
       formerMembersSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (isAdmin || isWelfare) ? '' : 'none';
+        if (el) el.style.display = isAdmin ? '' : 'none';
+      });
+      document.querySelectorAll('.sidebar-admin-only').forEach(el => {
+        el.style.display = isAdmin ? '' : 'none';
       });
 
       const joinReqSections = ['joinRequestsSection'];
@@ -5799,7 +5802,7 @@
         loadWelfareMembers();
       }
 
-      if (['admin', 'welfare'].includes(user.role)) {
+      if (user.role === 'admin') {
         loadFormerMembers();
       }
 

@@ -3483,7 +3483,7 @@ router.post('/send-enrollment-email', adminOnly, async (req, res) => {
 });
 
 // ── Former Members ───────────────────────────────────────────────────────────
-router.get('/former-members', adminOrWelfare, async (req, res) => {
+router.get('/former-members', adminOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT fm.id, fm.full_name, fm.email, fm.phone, fm.notes, fm.status, fm.created_at,
@@ -3498,7 +3498,7 @@ router.get('/former-members', adminOrWelfare, async (req, res) => {
   }
 });
 
-router.post('/former-members', adminOrWelfare, async (req, res) => {
+router.post('/former-members', adminOnly, async (req, res) => {
   const { fullName, email, phone, notes, status } = req.body;
   if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
   try {
@@ -3513,7 +3513,7 @@ router.post('/former-members', adminOrWelfare, async (req, res) => {
   }
 });
 
-router.put('/former-members/:id', adminOrWelfare, async (req, res) => {
+router.put('/former-members/:id', adminOnly, async (req, res) => {
   const { fullName, email, phone, notes, status } = req.body;
   if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
   try {
@@ -3534,7 +3534,7 @@ router.put('/former-members/:id', adminOrWelfare, async (req, res) => {
   }
 });
 
-router.delete('/former-members/:id', adminOrWelfare, async (req, res) => {
+router.delete('/former-members/:id', adminOnly, async (req, res) => {
   try {
     const { rowCount } = await pool.query('DELETE FROM former_members WHERE id=$1', [req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
@@ -3545,7 +3545,7 @@ router.delete('/former-members/:id', adminOrWelfare, async (req, res) => {
 });
 
 // POST /api/admin/former-members/send-invites — manually trigger 60-day invite broadcast
-router.post('/former-members/send-invites', adminOrWelfare, async (req, res) => {
+router.post('/former-members/send-invites', adminOnly, async (req, res) => {
   try {
     const { sendFormerMemberInvites } = require('../scheduler');
     await sendFormerMemberInvites();
