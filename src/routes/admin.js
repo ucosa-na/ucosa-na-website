@@ -1450,7 +1450,7 @@ router.post('/test-cts-pledge-reminder', adminOnly, async (req, res) => {
                   <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Dollar (Zelle)</td><td style="padding:8px 12px;">osatosule@yahoo.com</td></tr>
                 </tbody>
               </table>
-              <p>Once payment is made, please notify the Welfare Officer so your record can be updated.</p>
+              <p>Once payment is made, please notify the Financial Secretary so your record can be updated.</p>
               <p>Thank you for your continued generosity and support of our teachers.</p>
               <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
             </div>
