@@ -1401,6 +1401,80 @@ router.post('/test-meeting-auto', adminOnly, async (req, res) => {
   res.json(results);
 });
 
+// POST /api/admin/test-cts-pledge-reminder — test Computer Teacher Salary pledge redemption reminder
+router.post('/test-cts-pledge-reminder', adminOnly, async (req, res) => {
+  const { email, phone, name } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone.' });
+  const memberName  = name || 'Test Member';
+  const pledged     = 50000;
+  const redeemed    = 0;
+  const balance     = pledged - redeemed;
+  const statusLabel = 'Pending';
+  const results     = { email: null, sms: null };
+
+  if (email) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: '[TEST] Friendly Reminder — Redeem Your Computer Teacher Salary Pledge — UCOSA-NA',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+            <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+              <h1 style="color:#fff;margin:8px 0 0;font-size:22px;">Pledge Redemption Reminder</h1>
+            </div>
+            <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+              <p>Dear <strong>${memberName}</strong>,</p>
+              <p>This is a friendly reminder that you have an outstanding pledge toward the <strong>Computer Teacher Salary</strong>.</p>
+              <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                <thead><tr style="background:#1a1a2e;color:#fff;">
+                  <th style="padding:10px 12px;text-align:left;">Detail</th>
+                  <th style="padding:10px 12px;text-align:left;">Amount</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td style="padding:8px 12px;">Amount Pledged</td><td style="padding:8px 12px;">&#8358;${pledged.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Amount Redeemed</td><td style="padding:8px 12px;">&#8358;${redeemed.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr><td style="padding:8px 12px;font-weight:700;">Balance Due</td><td style="padding:8px 12px;font-weight:700;color:#b71c1c;">&#8358;${balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+                  <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Status</td><td style="padding:8px 12px;">${statusLabel}</td></tr>
+                </tbody>
+              </table>
+              <p>Kindly redeem your pledge using any of the payment options below:</p>
+              <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                <thead><tr style="background:#1a1a2e;color:#fff;">
+                  <th style="padding:10px 12px;text-align:left;">Payment Method</th>
+                  <th style="padding:10px 12px;text-align:left;">Details</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td style="padding:8px 12px;">Naira Transfer</td><td style="padding:8px 12px;">Osatohanmwen Gloria Obakpolor Sule<br>Sterling Bank &mdash; Account: 0027219075</td></tr>
+                  <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Dollar (Zelle)</td><td style="padding:8px 12px;">osatosule@yahoo.com</td></tr>
+                </tbody>
+              </table>
+              <p>Once payment is made, please notify the Welfare Officer so your record can be updated.</p>
+              <p>Thank you for your continued generosity and support of our teachers.</p>
+              <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+            </div>
+          </div>`,
+      });
+      results.email = `Test CTS pledge reminder email sent to ${email}`;
+    } catch (err) { results.email = `Email failed: ${err.message}`; }
+  }
+
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    if (normalized) {
+      try {
+        await sendSMS(normalized,
+          `Dear ${memberName}, this is a reminder that your Computer Teacher Salary pledge of NGN ${pledged.toLocaleString('en-NG')} has a balance of NGN ${balance.toLocaleString('en-NG')} (${statusLabel}). To redeem: Naira transfer to Osatohanmwen Gloria Obakpolor Sule, Sterling Bank, Acct: 0027219075. Dollar (Zelle): osatosule@yahoo.com — UCOSA-NA`
+        );
+        results.sms = `Test CTS pledge reminder SMS sent to ${normalized}`;
+      } catch (err) { results.sms = `SMS failed: ${err.message}`; }
+    } else { results.sms = `Invalid phone: ${phone}`; }
+  }
+
+  res.json(results);
+});
+
 // GET /api/admin/users — list all members with profile data
 router.get('/users', anyPriv, async (req, res) => {
   try {
