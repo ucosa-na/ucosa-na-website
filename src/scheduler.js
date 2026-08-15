@@ -808,6 +808,123 @@ async function sendFormerMemberInvites() {
   }
 }
 
+// ── Computer Teacher Salary Pledge Reminder (Last Sunday of Month, 9 AM ET) ───
+
+async function sendCtsPledgeReminders() {
+  const etStr  = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const etNow  = new Date(etStr);
+  const year   = etNow.getFullYear();
+  const month  = etNow.getMonth();
+  const today  = new Date(year, month, etNow.getDate());
+  const lastSun = getLastSundayOfMonth(year, month);
+  const meeting = new Date(lastSun.getFullYear(), lastSun.getMonth(), lastSun.getDate());
+
+  if (today.getTime() !== meeting.getTime()) {
+    log.info('CTS pledge reminder: not last Sunday of the month — skipping');
+    return;
+  }
+
+  log.info('CTS pledge reminder: last Sunday detected — fetching unredeemed pledges');
+
+  let records;
+  try {
+    const { rows } = await pool.query(`
+      SELECT cts.id, cts.member_name, cts.amt_pledged, cts.amt_redeemed, cts.status,
+             u.email, COALESCE(p.phone, u.phone) AS phone
+      FROM computer_teacher_salary cts
+      JOIN users u ON u.id = cts.user_id
+      LEFT JOIN member_profiles p ON p.user_id = cts.user_id
+      WHERE cts.status IN ('pending', 'partial')
+        AND cts.user_id IS NOT NULL
+      ORDER BY cts.member_name ASC
+    `);
+    records = rows;
+  } catch (err) {
+    log.error(`CTS pledge reminder: DB query failed — ${err.message}`);
+    return;
+  }
+
+  if (!records.length) {
+    log.info('CTS pledge reminder: no unredeemed pledges found — done');
+    return;
+  }
+
+  log.info(`CTS pledge reminder: sending to ${records.length} member(s)`);
+
+  let emailCount = 0, smsCount = 0;
+  for (const r of records) {
+    const pledged     = parseFloat(r.amt_pledged);
+    const redeemed    = parseFloat(r.amt_redeemed || 0);
+    const balance     = pledged - redeemed;
+    const statusLabel = r.status === 'partial' ? 'Partial' : 'Pending';
+
+    if (r.email) {
+      try {
+        await sendEmail({
+          to: r.email,
+          subject: 'Friendly Reminder — Redeem Your Computer Teacher Salary Pledge — UCOSA-NA',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#333;">
+              <div style="background:#1a1a2e;padding:28px 32px;border-radius:10px 10px 0 0;text-align:center;">
+                <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px">
+                <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+                <h1 style="color:#fff;margin:8px 0 0;font-size:22px;">Pledge Redemption Reminder</h1>
+              </div>
+              <div style="background:#f9f9f9;padding:28px 32px;border-radius:0 0 10px 10px;">
+                <p>Dear <strong>${r.member_name}</strong>,</p>
+                <p>This is a friendly reminder that you have an outstanding pledge toward the <strong>Computer Teacher Salary</strong>.</p>
+                <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                  <thead><tr style="background:#1a1a2e;color:#fff;">
+                    <th style="padding:10px 12px;text-align:left;">Detail</th>
+                    <th style="padding:10px 12px;text-align:left;">Amount</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td style="padding:8px 12px;">Amount Pledged</td><td style="padding:8px 12px;">&#8358;${pledged.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+                    <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Amount Redeemed</td><td style="padding:8px 12px;">&#8358;${redeemed.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+                    <tr><td style="padding:8px 12px;font-weight:700;">Balance Due</td><td style="padding:8px 12px;font-weight:700;color:#b71c1c;">&#8358;${balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td></tr>
+                    <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Status</td><td style="padding:8px 12px;">${statusLabel}</td></tr>
+                  </tbody>
+                </table>
+                <p>Kindly redeem your pledge using any of the payment options below:</p>
+                <table style="width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                  <thead><tr style="background:#1a1a2e;color:#fff;">
+                    <th style="padding:10px 12px;text-align:left;">Payment Method</th>
+                    <th style="padding:10px 12px;text-align:left;">Details</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td style="padding:8px 12px;">Naira Transfer</td><td style="padding:8px 12px;">Osatohanmwen Gloria Obakpolor Sule<br>Sterling Bank &mdash; Account: 0027219075</td></tr>
+                    <tr style="background:#f4f4f4;"><td style="padding:8px 12px;">Dollar (Zelle)</td><td style="padding:8px 12px;">osatosule@yahoo.com</td></tr>
+                  </tbody>
+                </table>
+                <p>Once payment is made, please notify the Welfare Officer so your record can be updated.</p>
+                <p>Thank you for your continued generosity and support of our teachers.</p>
+                <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+              </div>
+            </div>`,
+        });
+        emailCount++;
+      } catch (err) {
+        log.error(`CTS pledge reminder email failed for ${r.email}: ${err.message}`);
+      }
+      await sleep(250);
+    }
+
+    if (r.phone) {
+      try {
+        await sendSMS(r.phone,
+          `Dear ${r.member_name}, this is a reminder that your Computer Teacher Salary pledge of NGN ${pledged.toLocaleString('en-NG')} has a balance of NGN ${balance.toLocaleString('en-NG')} (${statusLabel}). To redeem: Naira transfer to Osatohanmwen Gloria Obakpolor Sule, Sterling Bank, Acct: 0027219075. Dollar (Zelle): osatosule@yahoo.com — UCOSA-NA`
+        );
+        smsCount++;
+      } catch (err) {
+        log.error(`CTS pledge reminder SMS failed for ${r.phone}: ${err.message}`);
+      }
+      await sleep(300);
+    }
+  }
+
+  log.info(`CTS pledge reminder: dispatched — ${emailCount} email(s), ${smsCount} SMS(es)`);
+}
+
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
 // January 1st at 00:01 AM — populate annual dues records for all active members
@@ -840,13 +957,16 @@ cron.schedule('0 16 * * 0', checkGeneralMeetingHourReminder, { timezone: 'Americ
 // Daily at 10:00 AM ET — send "We Miss You" invites to pending former members (60-day interval)
 cron.schedule('0 10 * * *', sendFormerMemberInvites, { timezone: 'America/New_York' });
 
-log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 14 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, daily 9AM general meeting day reminders, Sunday 4PM general meeting hour notice, 1st-of-month 9AM birthday emails, daily 10AM former-member invite check)');
+// Every Sunday at 9:00 AM ET — CTS pledge reminder (only fires on the last Sunday of the month)
+cron.schedule('0 9 * * 0', sendCtsPledgeReminders, { timezone: 'America/New_York' });
+
+log.info('Scheduler: jobs registered (Jan 1 dues populate + enrollment open, Jun 14 2026 enrollment open, May 2 & June 1 dues reminders, daily 8AM inactivity check, daily 9AM general meeting day reminders, Sunday 4PM general meeting hour notice, 1st-of-month 9AM birthday emails, daily 10AM former-member invite check, Sunday 9AM CTS pledge reminder)');
 
 module.exports = {
   populateAnnualDues, sendAdvanceReminders, sendDueDateReminders,
   sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications,
   checkGeneralMeetingDayReminders, checkGeneralMeetingHourReminder,
-  sendFormerMemberInvites,
+  sendFormerMemberInvites, sendCtsPledgeReminders,
   // Exported for test endpoints in admin.js
   duesReminderHtml, zoomMeetingBlock, generalMeetingHtml, fmtMeetingDate, getLastSundayOfMonth, sendGeneralMeetingNotices,
 };
