@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6LcxxxxxxxxxxxxxxxxxRECAPTCHA_SITE_KEY"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -548,10 +549,16 @@
       btn.textContent = 'Processing…';
 
       try {
+        // reCAPTCHA v3 — get token before submitting
+        let recaptchaToken = '';
+        if (typeof grecaptcha !== 'undefined') {
+          recaptchaToken = await grecaptcha.execute('6LcxxxxxxxxxxxxxxxxxRECAPTCHA_SITE_KEY', { action: 'donate' });
+        }
+
         const res  = await fetch('/api/payment/donate-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, amount: _amtCents }),
+          body: JSON.stringify({ name, email, amount: _amtCents, recaptchaToken }),
         });
         const data = await res.json();
         if (!res.ok) {

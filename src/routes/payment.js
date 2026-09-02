@@ -1,9 +1,55 @@
 const express     = require('express');
+const https       = require('https');
 const Stripe      = require('stripe');
 const requireAuth = require('../middleware/requireAuth');
 const db          = require('../db');
+const log         = require('../logger');
 const { sendEmail } = require('../mailer');
 const { sendSMS, normalizePhone } = require('../sms');
+
+function verifyRecaptcha(token) {
+  return new Promise((resolve, reject) => {
+    const secret = process.env.RECAPTCHA_SECRET_KEY;
+    const body   = `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`;
+    const req = https.request({
+      hostname: 'www.google.com',
+      path:     '/recaptcha/api/siteverify',
+      method:   'POST',
+      headers:  { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) },
+    }, res => {
+      let data = '';
+      res.on('data', d => { data += d; });
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve({ success: false }); } });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+function donationReceiptHtml(name, amount, paymentIntentId) {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;">
+      <div style="background:#7b2152;text-align:center;padding:24px 32px;">
+        <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;">
+        <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase;">UCOSA North America</div>
+      </div>
+      <div style="background:#fdf6ec;padding:28px 32px;">
+        <p>Dear <strong>${name}</strong>,</p>
+        <p>Your generous donation of <strong>$${amount}</strong> to the Ugbeka College Old Students' Association of North America has been received.</p>
+        <p>Your contribution goes directly toward supporting students at Ugbeka College — funding the computer laboratory, school supplies, and educational resources that open doors for the next generation.</p>
+        <div style="background:#fff;border-left:4px solid #c8a96e;padding:14px 18px;border-radius:4px;margin:20px 0;">
+          <strong>Donation Receipt</strong><br>
+          Donor: ${name}<br>
+          Amount: $${amount}<br>
+          Reference: ${paymentIntentId}<br>
+          Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
+        <p style="color:#888;font-size:13px;">On behalf of all our students and alumni, thank you for making a difference.</p>
+        <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
+      </div>
+    </div>`;
+}
 
 let _stripe;
 function getStripe() {
@@ -213,10 +259,27 @@ router.post('/member-confirm', requireAuth, async (req, res) => {
 // ── Public donation: create PaymentIntent ────────────────────────────────────
 router.post('/donate-intent', async (req, res) => {
   try {
-    const { name, email, amount } = req.body;
+    const { name, email, amount, recaptchaToken } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Name and email are required.' });
     const amt = parseInt(amount, 10);
     if (!amt || amt < 100) return res.status(400).json({ error: 'Invalid donation amount.' });
+
+    // reCAPTCHA v3 verification
+    if (process.env.RECAPTCHA_SECRET_KEY) {
+      if (!recaptchaToken) {
+        return res.status(400).json({ error: 'Security verification required.' });
+      }
+      try {
+        const check = await verifyRecaptcha(recaptchaToken);
+        if (!check.success || (check.score !== undefined && check.score < 0.5)) {
+          log.warn(`reCAPTCHA failed for donation — ${email} (score: ${check.score ?? 'n/a'})`);
+          return res.status(400).json({ error: 'Security check failed. Please try again.' });
+        }
+      } catch (err) {
+        log.error(`reCAPTCHA verification error: ${err.message}`);
+        // Don't block legitimate donors on reCAPTCHA network errors
+      }
+    }
 
     const intent = await getStripe().paymentIntents.create({
       amount: amt,
@@ -255,36 +318,73 @@ router.post('/donate-confirm', async (req, res) => {
     );
 
     // Send receipt email to donor
-    await sendEmail({
+    sendEmail({
       to: email,
       subject: 'Thank You for Your Donation — UCOSA-NA',
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0;">
-          <div style="background:#7b2152;text-align:center;padding:24px 32px;">
-            <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 10px;">
-            <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase;">UCOSA North America</div>
-          </div>
-          <div style="background:#fdf6ec;padding:28px 32px;">
-            <p>Dear <strong>${name}</strong>,</p>
-            <p>Your generous donation of <strong>$${amount}</strong> to the Ugbeka College Old Students' Association of North America has been received.</p>
-            <p>Your contribution goes directly toward supporting students at Ugbeka College — funding the computer laboratory, school supplies, and educational resources that open doors for the next generation.</p>
-            <div style="background:#fff;border-left:4px solid #c8a96e;padding:14px 18px;border-radius:4px;margin:20px 0;">
-              <strong>Donation Receipt</strong><br>
-              Donor: ${name}<br>
-              Amount: $${amount}<br>
-              Reference: ${paymentIntentId}<br>
-              Date: ${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}
-            </div>
-            <p style="color:#888;font-size:13px;">On behalf of all our students and alumni, thank you for making a difference.</p>
-            <p style="color:#888;font-size:13px;">— UCOSA-North America</p>
-          </div>
-        </div>`,
-    }).catch(() => {}); // Don't fail the request if email fails
+      html: donationReceiptHtml(name, amount, paymentIntentId),
+    }).catch(err => log.error(`donate-confirm: receipt email failed for ${email}: ${err.message}`));
 
     res.json({ ok: true, amount });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── Stripe webhook: record donation + send receipt server-side ────────────────
+router.post('/webhook', async (req, res) => {
+  const sig           = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+  try {
+    if (webhookSecret) {
+      event = getStripe().webhooks.constructEvent(req.body, sig, webhookSecret);
+    } else {
+      log.warn('Stripe webhook received but STRIPE_WEBHOOK_SECRET not set — skipping signature check');
+      event = JSON.parse(req.body.toString());
+    }
+  } catch (err) {
+    log.error(`Stripe webhook signature error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'payment_intent.succeeded') {
+    const intent = event.data.object;
+    const desc   = intent.description || '';
+
+    if (desc.startsWith('UCOSA-NA Donation')) {
+      const name           = intent.metadata?.donor_name  || desc.replace('UCOSA-NA Donation — ', '').trim();
+      const email          = intent.metadata?.donor_email || intent.receipt_email;
+      const amount         = (intent.amount / 100).toFixed(2);
+      const paymentIntentId = intent.id;
+
+      // Record in DB (ON CONFLICT handles case where donate-confirm already recorded it)
+      try {
+        const { rowCount } = await db.query(
+          `INSERT INTO donations (donor_name, donor_email, amount, stripe_payment_intent_id)
+           VALUES ($1, $2, $3, $4) ON CONFLICT (stripe_payment_intent_id) DO NOTHING`,
+          [name, email, amount, paymentIntentId]
+        );
+        if (rowCount > 0) {
+          log.info(`Webhook: donation recorded — ${name} (${email}) $${amount} [${paymentIntentId}]`);
+          // Only send email if this is a new record (not already handled by donate-confirm)
+          if (email) {
+            sendEmail({
+              to: email,
+              subject: 'Thank You for Your Donation — UCOSA-NA',
+              html: donationReceiptHtml(name, amount, paymentIntentId),
+            }).catch(err => log.error(`Webhook: receipt email failed for ${email}: ${err.message}`));
+          }
+        } else {
+          log.info(`Webhook: donation already recorded via donate-confirm — skipping [${paymentIntentId}]`);
+        }
+      } catch (err) {
+        log.error(`Webhook: DB insert failed for ${paymentIntentId}: ${err.message}`);
+      }
+    }
+  }
+
+  res.json({ received: true });
 });
 
 module.exports = router;
