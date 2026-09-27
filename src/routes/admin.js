@@ -3613,8 +3613,8 @@ router.put('/former-members/:id', adminOnly, async (req, res) => {
       const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
       const { rows: inserted } = await pool.query(
-        'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role, phone, created_by) VALUES ($1,$2,$3,TRUE,$4,$5,$6,$7,$8) RETURNING id',
-        [fullName, emailVal, hash, expiresAt, 'member', phoneVal, req.user.id]
+        'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role, created_by) VALUES ($1,$2,$3,TRUE,$4,$5,$6) RETURNING id',
+        [fullName, emailVal, hash, expiresAt, 'member', req.user.id]
       );
       const userId = inserted[0].id;
 
@@ -3622,6 +3622,10 @@ router.put('/former-members/:id', adminOnly, async (req, res) => {
         `INSERT INTO member_profiles (user_id, first_name, last_name, phone) VALUES ($1,$2,$3,$4)`,
         [userId, firstName, lastName, phoneVal]
       );
+
+      if (phoneVal) {
+        await pool.query('UPDATE users SET phone=$1 WHERE id=$2', [phoneVal, userId]);
+      }
 
       await pool.query(
         `INSERT INTO members_birthday (user_id, member_name, birthday_month) VALUES ($1,$2,'January') ON CONFLICT (user_id) DO NOTHING`,
