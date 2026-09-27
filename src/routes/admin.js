@@ -3591,11 +3591,87 @@ router.put('/former-members/:id', adminOnly, async (req, res) => {
   const { fullName, email, phone, notes, status } = req.body;
   if (!fullName) return res.status(400).json({ error: 'Full name is required.' });
   try {
-    // Auto-remove when marked as rejoined — they are now a full member
+    // Auto-create member account when marked as rejoined
     if (status === 'rejoined') {
-      const { rowCount } = await pool.query('DELETE FROM former_members WHERE id=$1', [req.params.id]);
+      const { rows: fmRows, rowCount } = await pool.query('SELECT * FROM former_members WHERE id=$1', [req.params.id]);
       if (!rowCount) return res.status(404).json({ error: 'Record not found.' });
-      return res.json({ ok: true, removed: true, fullName });
+      const fm = fmRows[0];
+      const emailVal = (email || fm.email || '').toLowerCase().trim();
+      if (!emailVal) return res.status(400).json({ error: 'Email is required to create a member account.' });
+
+      // Check for duplicate
+      const { rows: existing } = await pool.query('SELECT id FROM users WHERE email=$1', [emailVal]);
+      if (existing.length > 0) return res.status(409).json({ error: 'A member with this email already exists.' });
+
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || nameParts[0];
+      const phoneVal = phone || fm.phone || null;
+
+      const tempPassword = generatePassword();
+      const hash = await bcrypt.hash(tempPassword, 10);
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+      const { rows: inserted } = await pool.query(
+        'INSERT INTO users (full_name, email, password_hash, must_change_password, password_expires_at, role, phone, created_by) VALUES ($1,$2,$3,TRUE,$4,$5,$6,$7,$8) RETURNING id',
+        [fullName, emailVal, hash, expiresAt, 'member', phoneVal, req.user.id]
+      );
+      const userId = inserted[0].id;
+
+      await pool.query(
+        `INSERT INTO member_profiles (user_id, first_name, last_name, phone) VALUES ($1,$2,$3,$4)`,
+        [userId, firstName, lastName, phoneVal]
+      );
+
+      await pool.query(
+        `INSERT INTO members_birthday (user_id, member_name, birthday_month) VALUES ($1,$2,'January') ON CONFLICT (user_id) DO NOTHING`,
+        [userId, fullName]
+      );
+
+      await pool.query('DELETE FROM former_members WHERE id=$1', [req.params.id]);
+
+      log.info(`Former member rejoined as member: ${fullName} (${emailVal}) by user ${req.user.id}`);
+      await logAudit(req.user.id, req.user.email, 'MEMBER_CREATED', 'MEMBER', userId, fullName, { email: emailVal, rejoined: true });
+
+      // Send welcome SMS
+      if (phoneVal) {
+        try {
+          await sendSMS(phoneVal,
+            `Welcome back to UCOSA-NA, ${fullName}!\nLogin: https://ucosa-na.org\nEmail: ${emailVal}\nTemp password: ${tempPassword}\nExpires in 48 hours.`
+          );
+        } catch (err) {
+          log.error(`Welcome SMS failed for rejoined member ${fullName}: ${err.message}`);
+        }
+      }
+
+      // Fire-and-forget welcome email
+      sendEmail({
+        to: emailVal,
+        subject: 'Welcome Back to UCOSA-North America — Your Login Details',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border-radius:12px;overflow:hidden;border:1px solid #e8d9c0">
+            <div style="background:#7b2152;text-align:center;padding:28px 32px">
+              <img src="https://ucosa-na.org/logo.jpg" alt="UCOSA-NA Logo" style="width:90px;height:90px;border-radius:50%;border:3px solid #c8a96e;display:block;margin:0 auto 12px">
+              <div style="color:#c8a96e;font-size:0.85em;letter-spacing:2px;text-transform:uppercase">UCOSA North America</div>
+            </div>
+            <div style="background:#fdf6ec;padding:32px">
+              <h2 style="color:#7b2152;margin-top:0">Welcome Back to UCOSA-North America!</h2>
+              <p>Dear <strong>${fullName}</strong>,</p>
+              <p>Your member account has been reactivated. Use the details below to log in:</p>
+              <div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #c8a96e">
+                <p><strong>Login URL:</strong> <a href="https://ucosa-na.org">https://ucosa-na.org</a></p>
+                <p><strong>Email:</strong> ${emailVal}</p>
+                <p><strong>Temporary Password:</strong> <code style="background:#f5ede0;padding:4px 10px;border-radius:4px;font-size:1.1em">${tempPassword}</code></p>
+                <p style="color:#c0392b;font-size:0.9em">⚠️ This password expires in <strong>48 hours</strong>. Please log in and change it before it expires.</p>
+              </div>
+              <p>Welcome back to your old friends and brothers and sisters!</p>
+              <p style="color:#888;font-size:0.85em;margin-top:24px">UCOSA-North America &mdash; <a href="mailto:admin@ucosa-na.org">admin@ucosa-na.org</a></p>
+            </div>
+          </div>
+        `,
+      }).catch(err => log.error(`Welcome email failed for rejoined member ${emailVal}: ${err.message}`));
+
+      return res.json({ ok: true, removed: true, userId, fullName, tempPassword });
     }
     const { rowCount } = await pool.query(
       `UPDATE former_members SET full_name=$1, email=$2, phone=$3, notes=$4, status=$5, updated_at=NOW() WHERE id=$6`,
