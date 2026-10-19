@@ -582,6 +582,18 @@ router.post('/meeting/reminder', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/meeting/postponement-notice — send October 2026 postponement blast to all members
+router.post('/meeting/postponement-notice', secOrAdmin, async (req, res) => {
+  try {
+    const { sendPostponementNotice } = require('../scheduler');
+    await sendPostponementNotice();
+    res.json({ ok: true, message: 'October 2026 postponement notice dispatched to all active members.' });
+  } catch (err) {
+    log.error(`Postponement notice error: ${err.message}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/meeting/list-invite — send Zoom meeting invite to a custom recipient list
 router.post('/meeting/list-invite', secOrAdmin, async (req, res) => {
   const { list } = req.body;

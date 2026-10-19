@@ -588,6 +588,12 @@ async function sendGeneralMeetingNotices(meetingDate, type) {
     badgeHtml = `<div style="background:#1b5e20;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING STARTS IN 1 HOUR — Join Now!</div>`;
     introPara = `<p>The <strong>UCOSA-NA Monthly General Zoom Meeting</strong> starts in <strong>1 hour</strong> at <strong>5:00 PM Eastern</strong> today, <strong>${formatted}</strong>. Please join on time.</p>`;
     smsFn     = n => `UCOSA-NA: Dear ${n}, the Monthly General Meeting starts in 1 HOUR at 5:00 PM Eastern today. Join now: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
+  } else if (type === 'postponed') {
+    const origDate = fmtMeetingDate(getLastSundayOfMonth(2026, 9));
+    subject   = `UCOSA-NA General Meeting — October Meeting Postponed to ${formatted}`;
+    badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING DATE CHANGE — October Meeting Postponed</div>`;
+    introPara = `<p>Please be informed that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> originally scheduled for <strong>${origDate}</strong> has been <strong>postponed</strong> to <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>. We apologize for any inconvenience.</p>`;
+    smsFn     = n => `UCOSA-NA Notice: Dear ${n}, the October General Meeting (${origDate}) has been postponed to ${formatted} at 5:00 PM Eastern. Join: ${GENERAL_ZOOM_LINK} | ID: ${GENERAL_ZOOM_ID} | Passcode: ${GENERAL_ZOOM_PASS} — UCOSA-NA`;
   } else {
     return;
   }
@@ -647,14 +653,19 @@ async function checkGeneralMeetingDayReminders() {
     const year   = etNow.getFullYear();
     const month  = etNow.getMonth();
     const today  = new Date(year, month, etNow.getDate());
-    const lastSun = getLastSundayOfMonth(year, month);
-    const meeting = new Date(lastSun.getFullYear(), lastSun.getMonth(), lastSun.getDate());
+
+    // Special case: October 2026 general meeting postponed to November 1, 2026
+    const meetingDate = (year === 2026 && month === 9)
+      ? new Date(Date.UTC(2026, 10, 1, 12, 0, 0))
+      : getLastSundayOfMonth(year, month);
+
+    const meeting  = new Date(meetingDate.getFullYear(), meetingDate.getMonth(), meetingDate.getDate());
     const diffDays = Math.round((meeting - today) / 86400000);
 
-    if      (diffDays === 7) await sendGeneralMeetingNotices(lastSun, 'invite');
-    else if (diffDays === 3) await sendGeneralMeetingNotices(lastSun, 3);
-    else if (diffDays === 2) await sendGeneralMeetingNotices(lastSun, 2); // catch-up if 3-day was missed
-    else if (diffDays === 1) await sendGeneralMeetingNotices(lastSun, 1);
+    if      (diffDays === 7) await sendGeneralMeetingNotices(meetingDate, 'invite');
+    else if (diffDays === 3) await sendGeneralMeetingNotices(meetingDate, 3);
+    else if (diffDays === 2) await sendGeneralMeetingNotices(meetingDate, 2); // catch-up if 3-day was missed
+    else if (diffDays === 1) await sendGeneralMeetingNotices(meetingDate, 1);
     else log.info(`General meeting day check: ${diffDays} day(s) to meeting — no notice needed`);
   } catch (err) {
     log.error(`checkGeneralMeetingDayReminders failed: ${err.message}`);
@@ -669,11 +680,16 @@ async function checkGeneralMeetingHourReminder() {
     const year   = etNow.getFullYear();
     const month  = etNow.getMonth();
     const today  = new Date(year, month, etNow.getDate());
-    const lastSun = getLastSundayOfMonth(year, month);
-    const meeting = new Date(lastSun.getFullYear(), lastSun.getMonth(), lastSun.getDate());
+
+    // Special case: October 2026 general meeting postponed to November 1, 2026 (a Sunday)
+    const meetingDate = (year === 2026 && month === 10 && etNow.getDate() === 1)
+      ? new Date(Date.UTC(2026, 10, 1, 12, 0, 0))
+      : getLastSundayOfMonth(year, month);
+
+    const meeting = new Date(meetingDate.getFullYear(), meetingDate.getMonth(), meetingDate.getDate());
 
     if (today.getTime() === meeting.getTime()) {
-      await sendGeneralMeetingNotices(lastSun, 'hour');
+      await sendGeneralMeetingNotices(meetingDate, 'hour');
     } else {
       log.info('General meeting hour check: not meeting day, skipping');
     }
@@ -925,6 +941,14 @@ async function sendCtsPledgeReminders() {
   log.info(`CTS pledge reminder: dispatched — ${emailCount} email(s), ${smsCount} SMS(es)`);
 }
 
+// ── One-Time: October 2026 General Meeting Postponement Notice ────────────────
+
+async function sendPostponementNotice() {
+  const nov1 = new Date(Date.UTC(2026, 10, 1, 12, 0, 0)); // November 1, 2026
+  log.info('Scheduler: sending October 2026 meeting postponement notice to all members');
+  await sendGeneralMeetingNotices(nov1, 'postponed');
+}
+
 // ── Register cron jobs ────────────────────────────────────────────────────────
 
 // January 1st at 00:01 AM — populate annual dues records for all active members
@@ -966,7 +990,7 @@ module.exports = {
   populateAnnualDues, sendAdvanceReminders, sendDueDateReminders,
   sendInactivityReminders, sendBirthdayEmails, sendEnrollmentOpenNotifications,
   checkGeneralMeetingDayReminders, checkGeneralMeetingHourReminder,
-  sendFormerMemberInvites, sendCtsPledgeReminders,
+  sendFormerMemberInvites, sendCtsPledgeReminders, sendPostponementNotice,
   // Exported for test endpoints in admin.js
   duesReminderHtml, zoomMeetingBlock, generalMeetingHtml, fmtMeetingDate, getLastSundayOfMonth, sendGeneralMeetingNotices,
 };
