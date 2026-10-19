@@ -594,6 +594,47 @@ router.post('/meeting/postponement-notice', secOrAdmin, async (req, res) => {
   }
 });
 
+// POST /api/admin/meeting/postponement-notice-test — send postponement notice to a single recipient
+router.post('/meeting/postponement-notice-test', secOrAdmin, async (req, res) => {
+  const { email, phone, name } = req.body;
+  if (!email && !phone) return res.status(400).json({ error: 'Provide at least an email or phone.' });
+  try {
+    const { sendGeneralMeetingNotices, fmtMeetingDate, getLastSundayOfMonth } = require('../scheduler');
+    const nov1    = new Date(Date.UTC(2026, 10, 1, 12, 0, 0));
+    const origDate = fmtMeetingDate(getLastSundayOfMonth(2026, 9));
+    const formatted = fmtMeetingDate(nov1);
+    const memberName = name || 'Member';
+    const results = [];
+
+    if (email) {
+      const { sendEmail } = require('../../src/mailer') || require('../mailer');
+      const { generalMeetingHtml } = require('../scheduler');
+      const badgeHtml = `<div style="background:#e65100;color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:700;">MEETING DATE CHANGE — October Meeting Postponed</div>`;
+      const introPara = `<p>Please be informed that the <strong>UCOSA-NA Monthly General Zoom Meeting</strong> originally scheduled for <strong>${origDate}</strong> has been <strong>postponed</strong> to <strong>${formatted}</strong> at <strong>5:00 PM Eastern</strong>. We apologize for any inconvenience.</p>`;
+      await sendEmail({
+        to: email,
+        subject: `[TEST] UCOSA-NA General Meeting — October Meeting Postponed to ${formatted}`,
+        html: generalMeetingHtml(memberName, formatted, badgeHtml, introPara),
+      });
+      results.push(`Email sent to ${email}`);
+    }
+
+    if (phone) {
+      const e164 = normalizePhone(phone);
+      if (!e164) return res.status(400).json({ error: 'Invalid phone number format.' });
+      const { sendSMS } = require('../sms');
+      const ZOOM_LINK = 'https://us02web.zoom.us/j/88274188382?pwd=RzVEUFZRYWYxUVl4dkFZdEVBdzhlQT09';
+      await sendSMS(e164, `[TEST] UCOSA-NA Notice: Dear ${memberName}, the October General Meeting (${origDate}) has been postponed to ${formatted} at 5:00 PM Eastern. Join: ${ZOOM_LINK} | ID: 882 7418 8382 | Passcode: 161773 — UCOSA-NA`);
+      results.push(`SMS sent to ${phone}`);
+    }
+
+    res.json({ ok: true, message: results.join(' | ') });
+  } catch (err) {
+    log.error(`Postponement notice test error: ${err.message}`);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/meeting/list-invite — send Zoom meeting invite to a custom recipient list
 router.post('/meeting/list-invite', secOrAdmin, async (req, res) => {
   const { list } = req.body;
