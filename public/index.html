@@ -190,6 +190,45 @@
     gap: 12px;
     width: 100%;
   }
+
+  /* DEV PROJECTS ACCORDION */
+  .dev-accordion {
+    margin-bottom: 12px;
+    border: 1px solid #e8dcc8;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .dev-acc-header {
+    width: 100%;
+    background: #fdf6ec;
+    border: none;
+    padding: 18px 22px;
+    text-align: left;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sidebar);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: background 0.18s;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .dev-acc-header:hover { background: #f5e9d4; }
+  .dev-acc-header.open { background: #f5e9d4; border-bottom: 2px solid var(--accent); }
+  .dev-acc-arrow {
+    font-size: 0.8rem;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .dev-acc-header.open .dev-acc-arrow { transform: rotate(180deg); }
+  .dev-acc-body {
+    display: none;
+    padding: 24px 22px 16px;
+    background: #fff;
+  }
+  .dev-acc-body.open { display: block; }
   #page-computer-lab .lab-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -3177,6 +3216,13 @@
     } catch (_) { /* silently skip if API unavailable */ }
   }
 
+  function toggleDevPanel(btn) {
+    var body = btn.nextElementSibling;
+    var isOpen = btn.classList.contains('open');
+    btn.classList.toggle('open', !isOpen);
+    body.classList.toggle('open', !isOpen);
+  }
+
   function showPage(id, clickedEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item:not(.nav-item-parent)').forEach(n => n.classList.remove('active'));
@@ -3981,76 +4027,96 @@
   <!-- DEVELOPMENT PROJECTS -->
   <section class="page" id="page-dev-projects">
     <h1 class="page-heading"><strong>UCOSA-NA Development Projects &mdash; Building a Legacy at Ugbeka College</strong></h1>
-    <p class="gallery-section-sub" style="margin-bottom:28px;">Click any photo to enlarge.</p>
+    <p class="gallery-section-sub" style="margin-bottom:28px;">Click a project to expand and view photos.</p>
 
-    <!-- Pane 1: UCOSA Development Efforts -->
-    <div class="gallery-section">
-      <div class="gallery-section-heading">UCOSA Development Efforts</div>
-      <p class="gallery-section-sub">Staff quarters, classroom blocks, and donated items — UCOSA-NA&rsquo;s contributions to Ugbeka College Evboehighae.</p>
-      <div class="lab-grid">
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/staff-quarters-1.jpg')"><img src="/photo_gallery/staff-quarters-1.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/staff-quarters-2.jpg')"><img src="/photo_gallery/staff-quarters-2.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-1.jpg')"><img src="/photo_gallery/classrooms-1.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-2.jpg')"><img src="/photo_gallery/classrooms-2.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-3.png')"><img src="/photo_gallery/classrooms-3.png" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-1.jpg')"><img src="/photo_gallery/donated-items-1.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-2.jpg')"><img src="/photo_gallery/donated-items-2.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-3.jpg')"><img src="/photo_gallery/donated-items-3.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-4.jpg')"><img src="/photo_gallery/donated-items-4.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-5.jpg')"><img src="/photo_gallery/donated-items-5.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-6.jpg')"><img src="/photo_gallery/donated-items-6.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-staff-quarters-page1.jpg')"><img src="/photo_gallery/new-staff-quarters-page1.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-classrooms-page1.jpg')"><img src="/photo_gallery/new-classrooms-page1.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-classrooms-page2.jpg')"><img src="/photo_gallery/new-classrooms-page2.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-donated-items-page1.jpg')"><img src="/photo_gallery/new-donated-items-page1.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+    <!-- Accordion 1: Principal's Building Commissioning -->
+    <div class="dev-accordion">
+      <button class="dev-acc-header" onclick="toggleDevPanel(this)">
+        Principal&rsquo;s Building Commissioning &mdash; March 2022 <span class="dev-acc-arrow">&#9660;</span>
+      </button>
+      <div class="dev-acc-body">
+        <p class="gallery-section-sub">UCOSA-NA&rsquo;s contribution to the construction and commissioning of the Principal&rsquo;s Building at Ugbeka College Evboehighae.</p>
+        <div class="lab-grid">
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1690.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1690.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1691.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1691.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1711.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1711.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1748.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1748.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1751.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1751.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1752.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1752.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2033.JPG')"><img src="/Principal_Building_Commissioning/IMG_2033.JPG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2036.JPEG')"><img src="/Principal_Building_Commissioning/IMG_2036.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2044.JPG')"><img src="/Principal_Building_Commissioning/IMG_2044.JPG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2045.JPEG')"><img src="/Principal_Building_Commissioning/IMG_2045.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2055.JPEG')"><img src="/Principal_Building_Commissioning/IMG_2055.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0032.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0032.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0036.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0036.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0037.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0037.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0040.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0040.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0041.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0041.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0017.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0017.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0019.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0019.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0020.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0020.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0022.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0022.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0023.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0023.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0026.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0026.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0030.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0030.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0047.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0047.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0052.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0052.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0054.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0054.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0014.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0014.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0015.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0015.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0016.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0016.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0019.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0019.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0020.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0020.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0021.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0021.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0022.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0022.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0023.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0023.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_.jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_.jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(1).jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(1).jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(2).jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(2).jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(5)%20-%20Copy.jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(5)%20-%20Copy.jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(6)%20-%20Copy.jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(6)%20-%20Copy.jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(11).jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(11).jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+        </div>
       </div>
     </div>
 
-    <!-- Pane 2: Principal's Building Commissioning -->
-    <div class="gallery-section">
-      <div class="gallery-section-heading">Principal&rsquo;s Building Commissioning &mdash; March 2022</div>
-      <p class="gallery-section-sub">UCOSA-NA&rsquo;s contribution to the construction and commissioning of the Principal&rsquo;s Building at Ugbeka College Evboehighae.</p>
-      <div class="lab-grid">
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1690.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1690.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1691.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1691.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1711.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1711.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1748.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1748.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1751.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1751.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1752.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1752.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2033.JPG')"><img src="/Principal_Building_Commissioning/IMG_2033.JPG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2036.JPEG')"><img src="/Principal_Building_Commissioning/IMG_2036.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2044.JPG')"><img src="/Principal_Building_Commissioning/IMG_2044.JPG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2045.JPEG')"><img src="/Principal_Building_Commissioning/IMG_2045.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_2055.JPEG')"><img src="/Principal_Building_Commissioning/IMG_2055.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0032.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0032.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0036.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0036.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0037.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0037.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0040.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0040.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220226-WA0041.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220226-WA0041.jpg" alt="Pre-Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Pre-Commissioning — Feb 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0017.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0017.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0019.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0019.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0020.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0020.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0022.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0022.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0023.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0023.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0026.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0026.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0030.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0030.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0047.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0047.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0052.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0052.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220302-WA0054.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220302-WA0054.jpg" alt="Commissioning Ceremony" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0014.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0014.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0015.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0015.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0016.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0016.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0019.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0019.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0020.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0020.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0021.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0021.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0022.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0022.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG-20220303-WA0023.jpg')"><img src="/Principal_Building_Commissioning/IMG-20220303-WA0023.jpg" alt="Day After Commissioning" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Post-Commissioning — Mar 2022</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_.jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_.jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(1).jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(1).jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(2).jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(2).jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(5)%20-%20Copy.jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(5)%20-%20Copy.jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(6)%20-%20Copy.jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(6)%20-%20Copy.jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
-        <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/Photo%20from%20_(11).jpg')"><img src="/Principal_Building_Commissioning/Photo%20from%20_(11).jpg" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
+    <!-- Accordion 2: UCOSA Development Efforts – Sports Equipment Donation -->
+    <div class="dev-accordion">
+      <button class="dev-acc-header" onclick="toggleDevPanel(this)">
+        UCOSA Development Efforts &mdash; Sports Equipment Donation <span class="dev-acc-arrow">&#9660;</span>
+      </button>
+      <div class="dev-acc-body">
+        <p class="gallery-section-sub">Staff quarters, classroom blocks, and donated items &mdash; UCOSA-NA&rsquo;s contributions to Ugbeka College Evboehighae.</p>
+        <div class="lab-grid">
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/staff-quarters-1.jpg')"><img src="/photo_gallery/staff-quarters-1.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/staff-quarters-2.jpg')"><img src="/photo_gallery/staff-quarters-2.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-1.jpg')"><img src="/photo_gallery/classrooms-1.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-2.jpg')"><img src="/photo_gallery/classrooms-2.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-3.png')"><img src="/photo_gallery/classrooms-3.png" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-1.jpg')"><img src="/photo_gallery/donated-items-1.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-2.jpg')"><img src="/photo_gallery/donated-items-2.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-3.jpg')"><img src="/photo_gallery/donated-items-3.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-4.jpg')"><img src="/photo_gallery/donated-items-4.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-5.jpg')"><img src="/photo_gallery/donated-items-5.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/donated-items-6.jpg')"><img src="/photo_gallery/donated-items-6.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-staff-quarters-page1.jpg')"><img src="/photo_gallery/new-staff-quarters-page1.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-classrooms-page1.jpg')"><img src="/photo_gallery/new-classrooms-page1.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-classrooms-page2.jpg')"><img src="/photo_gallery/new-classrooms-page2.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
+          <div class="lab-card" onclick="openLabLightbox('/photo_gallery/new-donated-items-page1.jpg')"><img src="/photo_gallery/new-donated-items-page1.jpg" alt="Donated Items" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Donated Items</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accordion 3: Educational Support Initiative – 2027 WAEC Sponsorship -->
+    <div class="dev-accordion">
+      <button class="dev-acc-header" onclick="toggleDevPanel(this)">
+        Educational Support Initiative &ndash; 2027 WAEC Sponsorship <span class="dev-acc-arrow">&#9660;</span>
+      </button>
+      <div class="dev-acc-body">
+        <p class="gallery-section-sub" style="padding:32px 0;text-align:center;color:#aaa;font-size:1rem;">
+          Content coming soon. Check back for updates on this initiative.
+        </p>
       </div>
     </div>
   </section>
