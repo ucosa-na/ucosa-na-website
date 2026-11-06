@@ -182,11 +182,9 @@
   }
   #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
   #page-computer-lab .gallery-section { width: 100%; }
-  #page-dev-principals-building.active,
-  #page-dev-sports-equipment.active,
-  #page-dev-waec.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
-  #page-dev-principals-building .lab-grid,
-  #page-dev-sports-equipment .lab-grid {
+  #page-dev-projects.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
+  #page-dev-projects .gallery-section { width: 100%; margin-bottom: 48px; }
+  #page-dev-projects .lab-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 12px;
@@ -2018,9 +2016,9 @@
     <div class="nav-dropdown">
       <span class="nav-dropdown-trigger">Development Projects ▾</span>
       <div class="nav-dropdown-menu">
-        <span onclick="showPage('dev-principals-building', null)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
-        <span onclick="showPage('dev-sports-equipment', null)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
-        <span onclick="showPage('dev-waec', null)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
+        <span onclick="showPage('dev-projects', null)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
+        <span onclick="showPage('dev-projects', null)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
+        <span onclick="showPage('dev-projects', null)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
       </div>
     </div>
     <span onclick="showPage('gallery',        null)">Photo Gallery</span>
@@ -3175,7 +3173,7 @@
   const OUTSIDE_MAIN_PAGES = new Set([
     'computer-lab', 'gallery', 'video-gallery',
     'event-golden-jubilee', 'event-staff-quarters', 'event-inaugural',
-    'dev-principals-building', 'dev-sports-equipment', 'dev-waec'
+    'dev-projects'
   ]);
 
   // Auto-navigate on load if ?page= param is present (e.g. from donate.html links)
