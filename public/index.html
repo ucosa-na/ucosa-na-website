@@ -2013,7 +2013,14 @@
       </div>
     </div>
     <span onclick="showPage('computer-lab', null)">Computer Lab</span>
-    <span onclick="showPage('dev-projects', null)">Development Projects</span>
+    <div class="nav-dropdown">
+      <span class="nav-dropdown-trigger">Development Projects ▾</span>
+      <div class="nav-dropdown-menu">
+        <span onclick="showDevProject(0)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
+        <span onclick="showDevProject(1)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
+        <span onclick="showDevProject(2)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
+      </div>
+    </div>
     <span onclick="showPage('gallery',        null)">Photo Gallery</span>
     <span onclick="showPage('video-gallery', null)">Video Gallery</span>
     <span onclick="showPage('contact',       null)">Contact Us</span>
@@ -3214,6 +3221,19 @@
       }).join('');
       container.style.display = 'block';
     } catch (_) { /* silently skip if API unavailable */ }
+  }
+
+  function showDevProject(index) {
+    showPage('dev-projects', null);
+    var headers = document.querySelectorAll('#page-dev-projects .dev-acc-header');
+    headers.forEach(function(h) {
+      h.classList.remove('open');
+      h.nextElementSibling.classList.remove('open');
+    });
+    if (headers[index]) {
+      headers[index].classList.add('open');
+      headers[index].nextElementSibling.classList.add('open');
+    }
   }
 
   function toggleDevPanel(btn) {
