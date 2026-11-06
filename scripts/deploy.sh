@@ -2,7 +2,7 @@
 # Manual deploy helper (mirrors what GitHub Actions does on the droplet)
 set -euo pipefail
 
-IMAGE="${DOCKERHUB_USERNAME:-youruser}/ucosa-na"
+IMAGE="${DOCKERHUB_USERNAME:-savenbuan}/ucosa-na"
 CONTAINER="ucosa-na-app"
 APP_DIR="/opt/ucosa-na"
 
