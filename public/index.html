@@ -182,9 +182,11 @@
   }
   #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
   #page-computer-lab .gallery-section { width: 100%; }
-  #page-dev-projects.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
-  #page-dev-projects .gallery-section { width: 100%; margin-bottom: 48px; }
-  #page-dev-projects .lab-grid {
+  #page-dev-principals-building.active,
+  #page-dev-sports-equipment.active,
+  #page-dev-waec.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
+  #page-dev-principals-building .lab-grid,
+  #page-dev-sports-equipment .lab-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 12px;
@@ -204,7 +206,7 @@
     border: none;
     padding: 18px 22px;
     text-align: left;
-    font-size: 1.1rem;
+    font-size: 50px;
     font-weight: 700;
     color: var(--sidebar);
     cursor: pointer;
@@ -2016,9 +2018,9 @@
     <div class="nav-dropdown">
       <span class="nav-dropdown-trigger">Development Projects ▾</span>
       <div class="nav-dropdown-menu">
-        <span onclick="showDevProject(0)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
-        <span onclick="showDevProject(1)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
-        <span onclick="showDevProject(2)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
+        <span onclick="showPage('dev-principals-building', null)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
+        <span onclick="showPage('dev-sports-equipment', null)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
+        <span onclick="showPage('dev-waec', null)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
       </div>
     </div>
     <span onclick="showPage('gallery',        null)">Photo Gallery</span>
@@ -3173,7 +3175,7 @@
   const OUTSIDE_MAIN_PAGES = new Set([
     'computer-lab', 'gallery', 'video-gallery',
     'event-golden-jubilee', 'event-staff-quarters', 'event-inaugural',
-    'dev-projects'
+    'dev-principals-building', 'dev-sports-equipment', 'dev-waec'
   ]);
 
   // Auto-navigate on load if ?page= param is present (e.g. from donate.html links)
@@ -3221,19 +3223,6 @@
       }).join('');
       container.style.display = 'block';
     } catch (_) { /* silently skip if API unavailable */ }
-  }
-
-  function showDevProject(index) {
-    showPage('dev-projects', null);
-    var headers = document.querySelectorAll('#page-dev-projects .dev-acc-header');
-    headers.forEach(function(h) {
-      h.classList.remove('open');
-      h.nextElementSibling.classList.remove('open');
-    });
-    if (headers[index]) {
-      headers[index].classList.add('open');
-      headers[index].nextElementSibling.classList.add('open');
-    }
   }
 
   function toggleDevPanel(btn) {
