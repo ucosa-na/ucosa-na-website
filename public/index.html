@@ -2026,7 +2026,7 @@
       <div class="nav-dropdown-menu">
         <span onclick="showPage('dev-projects', null)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
         <span onclick="showPage('dev-projects', null)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
-        <span onclick="showPage('dev-projects', null)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
+        <span onclick="showPage('dev-projects', null); openDevPanel('waec');">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
       </div>
     </div>
     <span onclick="showPage('gallery',        null)">Photo Gallery</span>
@@ -3192,6 +3192,9 @@
     const target = p || h;
     if (target === 'join') {
       openJoinModal();
+    } else if (target === 'dev-projects-waec') {
+      showPage('dev-projects', null);
+      openDevPanel('waec');
     } else if (target && document.getElementById('page-' + target)) {
       showPage(target, null);
     }
@@ -3203,10 +3206,29 @@
     const id = window.location.hash.replace('#', '');
     if (id === 'join') {
       openJoinModal();
+    } else if (id === 'dev-projects-waec') {
+      showPage('dev-projects', null);
+      openDevPanel('waec');
     } else if (id && document.getElementById('page-' + id)) {
       showPage(id, null);
     }
   });
+
+  function openDevPanel(panel) {
+    var map = { waec: 'Educational' };
+    var keyword = map[panel];
+    if (!keyword) return;
+    document.querySelectorAll('.dev-acc-header').forEach(function(h) {
+      var isTarget = h.textContent.indexOf(keyword) !== -1;
+      h.classList.toggle('open', isTarget);
+      h.nextElementSibling.classList.toggle('open', isTarget);
+    });
+    setTimeout(function() {
+      document.querySelectorAll('.dev-acc-header').forEach(function(h) {
+        if (h.textContent.indexOf(keyword) !== -1) h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }, 100);
+  }
 
   async function loadBirthdayHighlights() {
     try {
