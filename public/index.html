@@ -160,13 +160,18 @@
   #page-gallery.active,
   #page-event-golden-jubilee.active,
   #page-event-staff-quarters.active,
-  #page-event-inaugural.active {
+  #page-event-inaugural.active,
+  #page-dev-principals.active,
+  #page-dev-sports.active,
+  #page-dev-waec.active {
     flex: 1; overflow-y: auto; min-height: 0; padding: 12px; width: 100%; box-sizing: border-box; align-self: stretch;
   }
   #page-gallery [style*="display:grid"],
   #page-event-golden-jubilee [style*="display:grid"],
   #page-event-staff-quarters [style*="display:grid"],
-  #page-event-inaugural [style*="display:grid"] {
+  #page-event-inaugural [style*="display:grid"],
+  #page-dev-principals [style*="display:grid"],
+  #page-dev-sports [style*="display:grid"] {
     grid-template-columns: repeat(6,1fr) !important; width: 100%; gap: 8px !important;
   }
   #page-executive-current.active,
@@ -177,7 +182,9 @@
   #page-gallery [style*="border:1px solid #e8d8c4"],
   #page-event-golden-jubilee [style*="border:1px solid #e8d8c4"],
   #page-event-staff-quarters [style*="border:1px solid #e8d8c4"],
-  #page-event-inaugural [style*="border:1px solid #e8d8c4"] {
+  #page-event-inaugural [style*="border:1px solid #e8d8c4"],
+  #page-dev-principals [style*="border:1px solid #e8d8c4"],
+  #page-dev-sports [style*="border:1px solid #e8d8c4"] {
     border: none !important; border-radius: 0 !important; padding: 0 !important; background: none !important;
   }
   #page-computer-lab.active { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px; width: 100%; box-sizing: border-box; align-self: stretch; }
@@ -2024,9 +2031,9 @@
     <div class="nav-dropdown">
       <span class="nav-dropdown-trigger">Development Projects ▾</span>
       <div class="nav-dropdown-menu">
-        <span onclick="showPage('dev-projects', null)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
-        <span onclick="showPage('dev-projects', null)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
-        <span onclick="showPage('dev-projects', null); openDevPanel('waec');">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
+        <span onclick="showPage('dev-principals', null)">Principal&rsquo;s Building Commissioning &mdash; March 2022</span>
+        <span onclick="showPage('dev-sports', null)">UCOSA Development Efforts &mdash; Sports Equipment Donation</span>
+        <span onclick="showPage('dev-waec', null)">Educational Support Initiative &ndash; 2027 WAEC Sponsorship</span>
       </div>
     </div>
     <span onclick="showPage('gallery',        null)">Photo Gallery</span>
@@ -3181,7 +3188,7 @@
   const OUTSIDE_MAIN_PAGES = new Set([
     'computer-lab', 'gallery', 'video-gallery',
     'event-golden-jubilee', 'event-staff-quarters', 'event-inaugural',
-    'dev-projects'
+    'dev-principals', 'dev-sports', 'dev-waec'
   ]);
 
   // Auto-navigate on load if ?page= param is present (e.g. from donate.html links)
@@ -3192,9 +3199,6 @@
     const target = p || h;
     if (target === 'join') {
       openJoinModal();
-    } else if (target === 'dev-projects-waec') {
-      showPage('dev-projects', null);
-      openDevPanel('waec');
     } else if (target && document.getElementById('page-' + target)) {
       showPage(target, null);
     }
@@ -3206,9 +3210,6 @@
     const id = window.location.hash.replace('#', '');
     if (id === 'join') {
       openJoinModal();
-    } else if (id === 'dev-projects-waec') {
-      showPage('dev-projects', null);
-      openDevPanel('waec');
     } else if (id && document.getElementById('page-' + id)) {
       showPage(id, null);
     }
@@ -4061,19 +4062,14 @@
 
   </section>
 
-  <!-- DEVELOPMENT PROJECTS -->
-  <section class="page" id="page-dev-projects">
-    <h1 class="page-heading"><strong>UCOSA-NA Development Projects &mdash; Building a Legacy at Ugbeka College</strong></h1>
-    <p class="gallery-section-sub" style="margin-bottom:28px;">Click a project to expand and view photos.</p>
-
-    <!-- Accordion 1: Principal's Building Commissioning -->
-    <div class="dev-accordion">
-      <button class="dev-acc-header open" onclick="toggleDevPanel(this)">
-        Principal&rsquo;s Building Commissioning &mdash; March 2022 <span class="dev-acc-arrow">&#9660;</span>
-      </button>
-      <div class="dev-acc-body open">
-        <p class="gallery-section-sub">UCOSA-NA&rsquo;s contribution to the construction and commissioning of the Principal&rsquo;s Building at Ugbeka College Evboehighae.</p>
-        <div class="lab-grid">
+  <!-- DEVELOPMENT PROJECT: Principal's Building Commissioning -->
+  <section class="page" id="page-dev-principals">
+    <h1 class="page-heading">Principal&rsquo;s Building Commissioning &mdash; <span style="font-weight:normal;">March 2022</span></h1>
+    <p style="font-size:18px;line-height:1.4;margin-bottom:24px;"><span style="color:#c8a96e;font-weight:700;">Principal&rsquo;s Building Commissioning &mdash; March 2022</span> &mdash; <span style="color:#1a1a1a;">UCOSA-NA&rsquo;s contribution to the construction and commissioning of the Principal&rsquo;s Building at Ugbeka College Evboehighae.</span></p>
+    <div class="gallery-section">
+      <p class="gallery-section-sub">Click any photo to enlarge.</p>
+      <div tabindex="0" style="border:1px solid #e8d8c4;border-radius:10px;padding:10px;background:#fdf6ec;">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
           <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1690.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1690.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
           <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1691.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1691.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
           <div class="lab-card" onclick="openLabLightbox('/Principal_Building_Commissioning/IMG_1711.JPEG')"><img src="/Principal_Building_Commissioning/IMG_1711.JPEG" alt="Principal's Building" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Principal's Building</div></div>
@@ -4117,15 +4113,16 @@
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Accordion 2: UCOSA Development Efforts – Sports Equipment Donation -->
-    <div class="dev-accordion">
-      <button class="dev-acc-header" onclick="toggleDevPanel(this)">
-        UCOSA Development Efforts &mdash; Sports Equipment Donation <span class="dev-acc-arrow">&#9660;</span>
-      </button>
-      <div class="dev-acc-body">
-        <p class="gallery-section-sub">Staff quarters, classroom blocks, and donated items &mdash; UCOSA-NA&rsquo;s contributions to Ugbeka College Evboehighae.</p>
-        <div class="lab-grid">
+  <!-- DEVELOPMENT PROJECT: UCOSA Development Efforts – Sports Equipment Donation -->
+  <section class="page" id="page-dev-sports">
+    <h1 class="page-heading">UCOSA Development Efforts &mdash; <span style="font-weight:normal;">Sports Equipment Donation</span></h1>
+    <p style="font-size:18px;line-height:1.4;margin-bottom:24px;"><span style="color:#c8a96e;font-weight:700;">UCOSA Development Efforts &mdash; Sports Equipment Donation</span> &mdash; <span style="color:#1a1a1a;">Staff quarters, classroom blocks, and donated items &mdash; UCOSA-NA&rsquo;s contributions to Ugbeka College Evboehighae.</span></p>
+    <div class="gallery-section">
+      <p class="gallery-section-sub">Click any photo to enlarge.</p>
+      <div tabindex="0" style="border:1px solid #e8d8c4;border-radius:10px;padding:10px;background:#fdf6ec;">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
           <div class="lab-card" onclick="openLabLightbox('/photo_gallery/staff-quarters-1.jpg')"><img src="/photo_gallery/staff-quarters-1.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
           <div class="lab-card" onclick="openLabLightbox('/photo_gallery/staff-quarters-2.jpg')"><img src="/photo_gallery/staff-quarters-2.jpg" alt="Staff Quarters" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Staff Quarters</div></div>
           <div class="lab-card" onclick="openLabLightbox('/photo_gallery/classrooms-1.jpg')"><img src="/photo_gallery/classrooms-1.jpg" alt="Classrooms Block" draggable="false" oncontextmenu="return false;"><div class="lab-card-label">Classrooms Block</div></div>
@@ -4144,15 +4141,13 @@
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Accordion 3: Educational Support Initiative – 2027 WAEC Sponsorship -->
-    <div class="dev-accordion">
-      <button class="dev-acc-header" onclick="toggleDevPanel(this)">
-        Educational Support Initiative &ndash; 2027 WAEC Sponsorship <span class="dev-acc-arrow">&#9660;</span>
-      </button>
-      <div class="dev-acc-body">
-        <p style="font-size:3.6rem;line-height:1.6;margin-bottom:28px;color:var(--text);font-family:'DM Sans',sans-serif;">UCOSA-NA is proud to sponsor the following 32 students for the 2027 West African Examinations Council (WAEC) exams at Ugbeka College Evboehighae.</p>
-        <div class="exec-grid">
+  <!-- DEVELOPMENT PROJECT: Educational Support Initiative – 2027 WAEC Sponsorship -->
+  <section class="page" id="page-dev-waec">
+    <h1 class="page-heading">Educational Support Initiative &ndash; <span style="font-weight:normal;">2027 WAEC Sponsorship</span></h1>
+    <p style="font-size:3.6rem;line-height:1.6;margin-bottom:28px;color:var(--text);font-family:'DM Sans',sans-serif;">UCOSA-NA is proud to sponsor the following 32 students for the 2027 West African Examinations Council (WAEC) exams at Ugbeka College Evboehighae.</p>
+    <div class="exec-grid">
           <div class="exec-photo-card"><div class="exec-photo-wrap"><span class="exec-photo-initials">OH</span></div><div class="exec-photo-label"><div class="ep-name">1. Omorose Happy</div></div></div>
           <div class="exec-photo-card"><div class="exec-photo-wrap"><span class="exec-photo-initials">UJ</span></div><div class="exec-photo-label"><div class="ep-name">2. Ugwu Joy</div></div></div>
           <div class="exec-photo-card"><div class="exec-photo-wrap"><span class="exec-photo-initials">IG</span></div><div class="exec-photo-label"><div class="ep-name">3. Ilawe Gift</div></div></div>
@@ -4186,8 +4181,6 @@
           <div class="exec-photo-card"><div class="exec-photo-wrap"><span class="exec-photo-initials">AO</span></div><div class="exec-photo-label"><div class="ep-name">31. Aigbetu Osabuohien</div></div></div>
           <div class="exec-photo-card"><div class="exec-photo-wrap"><span class="exec-photo-initials">OL</span></div><div class="exec-photo-label"><div class="ep-name">32. Omoruyi Loveth</div></div></div>
         </div>
-      </div>
-    </div>
   </section>
 
   <!-- VIDEO GALLERY -->
